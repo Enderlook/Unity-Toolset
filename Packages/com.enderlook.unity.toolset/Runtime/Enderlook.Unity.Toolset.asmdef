@@ -1,0 +1,15 @@
+{
+    "name": "Enderlook.Unity.Toolset",
+    "references": [
+        "GUID:2961b0f4e0ca13a4dafeea1a2acfe97e",
+        "GUID:70bb7604d926506479be15f5272e3957"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}
