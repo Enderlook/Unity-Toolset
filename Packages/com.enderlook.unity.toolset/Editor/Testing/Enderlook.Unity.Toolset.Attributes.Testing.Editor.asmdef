@@ -1,0 +1,16 @@
+{
+    "name": "Enderlook.Unity.Toolset.Attributes.Testing.Editor",
+    "references": [
+        "GUID:3b94afafe5219ff4e9581b8747e5dada",
+        "GUID:3ff64ad176ab843498864d034b206ff6",
+        "GUID:2961b0f4e0ca13a4dafeea1a2acfe97e"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}

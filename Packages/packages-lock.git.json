@@ -34,6 +34,16 @@
             "name": "com.system.runtime.compiler_services.unsafe",
             "hash": "4e1388856d84de15006350d375973450c3eb04dd",
             "url": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.system.runtime.compiler_services.unsafe#com.system.runtime.compiler_services.unsafe/v4.5.3"
+        },
+        {
+            "name": "com.enderlook.enumerables",
+            "hash": "2b0f7f8944afa518c4ef1aacc89d67b41ebe1720",
+            "url": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.enumerables#com.enderlook.enumerables/v1.0.1"
+        },
+        {
+            "name": "com.enderlook.unity.utils.math",
+            "hash": "deb2912770d197ad206aebf417c0d1332605a945",
+            "url": "https://github.com/Enderlook/Unity-Extras.git?path=Packages/com.enderlook.unity.utils.math#com.enderlook.unity.utils.math/v0.1.0"
         }
     ]
 }
