@@ -1,0 +1,16 @@
+{
+    "name": "Enderlook.Unity.Toolset.Checking.Editor",
+    "references": [
+        "GUID:2961b0f4e0ca13a4dafeea1a2acfe97e"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}
