@@ -1,6 +1,6 @@
 {
   "name": "com.enderlook.unity.toolset",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "displayName": "Enderlook Unity Toolset",
   "description": "Provides attributes to improve Unity Editor quality of life.",
   "unity": "2019.2",

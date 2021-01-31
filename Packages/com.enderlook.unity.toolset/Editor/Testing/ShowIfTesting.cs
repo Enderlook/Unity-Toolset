@@ -1,4 +1,5 @@
-﻿using Enderlook.Unity.Toolset.Attributes;
+﻿using Enderlook.Reflection;
+using Enderlook.Unity.Toolset.Attributes;
 using Enderlook.Unity.Toolset.Checking;
 using Enderlook.Unity.Toolset.Checking.PostCompiling;
 using Enderlook.Unity.Toolset.Checking.PostCompiling.Attributes;
@@ -41,10 +42,9 @@ namespace Enderlook.Unity.Toolset.Testing
                 Type classType = classToCheck.Key;
                 HashSet<string> confirmFields = new HashSet<string>(classToCheck.Value.Select(e => e.nameOfConditional));
 
-                confirmFields.ExceptWith(new HashSet<string>(classType.FieldsPropertiesAndMethodsWithReturnTypeOf<bool>()));
-
-                foreach (string field in confirmFields)
-                    Debug.LogError($"{classType} does not have a field, property (with Get Method) or method (without mandatory parameters and with return type) of type {typeof(bool)} named {field} necessary for attribute {nameof(ShowIfAttribute)}.");
+                foreach ((string memberName, Type memberType) in classToCheck.Value.Select(e => (e.nameOfConditional, e.memberType)).Distinct())
+                    if (classType.GetFirstMemberInfoInMatchReturn(memberName, memberType, true) is null)
+                        Debug.LogError($"{classType} does not have a field, property (with Get Method) or method (without mandatory parameters and with return type) of type {memberType} named {memberName} necessary for attribute {nameof(ShowIfAttribute)}.");
             }
         }
     }
