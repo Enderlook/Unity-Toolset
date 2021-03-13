@@ -19,8 +19,8 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <returns><see cref="SerializedProperty"/> of the backing field of <paramref name="name"/> property.</returns>
         public static SerializedProperty FindBackingFieldOfProperty(this SerializedObject source, string name)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            if (name == null) throw new ArgumentNullException(nameof(name));
+            if (source is null) throw new ArgumentNullException(nameof(source));
+            if (name is null) throw new ArgumentNullException(nameof(name));
             if (name.Length == 0) throw new ArgumentException("Can't be empty.", nameof(name));
 
             return source.FindProperty(ReflectionExtensions.GetBackingFieldName(name));
@@ -34,12 +34,12 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <returns><see cref="SerializedProperty"/> of the field or backing field of <paramref name="name"/> property.</returns>
         public static SerializedProperty FindPropertyOrBackingField(this SerializedObject source, string name)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            if (name == null) throw new ArgumentNullException(nameof(name));
+            if (source is null) throw new ArgumentNullException(nameof(source));
+            if (name is null) throw new ArgumentNullException(nameof(name));
             if (name.Length == 0) throw new ArgumentException("Can't be empty.", nameof(name));
 
             SerializedProperty serializedProperty = source.FindProperty(name);
-            if (serializedProperty == null)
+            if (serializedProperty is null)
                 serializedProperty = source.FindProperty(ReflectionExtensions.GetBackingFieldName(name));
             return serializedProperty;
         }
