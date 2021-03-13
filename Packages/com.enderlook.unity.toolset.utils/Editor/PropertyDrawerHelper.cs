@@ -9,7 +9,7 @@ using UnityEditor;
 namespace Enderlook.Unity.Toolset.Utils
 {
     /// <summary>
-    /// A set of helper functions to developt <see cref="PropertyDrawer"/>s.
+    /// A set of helper functions to develop <see cref="PropertyDrawer"/>s.
     /// </summary>
     public static class PropertyDrawerHelper
     {
