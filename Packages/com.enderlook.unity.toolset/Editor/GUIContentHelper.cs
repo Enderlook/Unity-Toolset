@@ -2,6 +2,8 @@
 using Enderlook.Unity.Toolset.Attributes;
 using Enderlook.Unity.Toolset.Utils;
 
+using System.Reflection;
+
 using UnityEditor;
 
 using UnityEngine;
@@ -9,13 +11,13 @@ using UnityEngine;
 namespace Enderlook.Unity.Toolset
 {
     /// <summary>
-    /// A helper class to manage <see cref="GUIAttribute"/> and <see cref="NameAttribute"/>.
+    /// Helper methods to create <see cref="GUIContent"/> from <see cref="SerializedProperty"/>
     /// </summary>
-    internal static class SerializedPropertyGUIHelper
+    public static class GUIContentHelper
     {
         private static void UseNameAttribute(NameAttribute attribute, GUIContent label) => label.text = attribute.name;
 
-        private static void GetGUIContent(GUIAttribute attribute, SerializedPropertyHelper helper, ref GUIContent label)
+        private static void UseGUIContent(GUIAttribute attribute, SerializedProperty property, ref GUIContent label)
         {
             string text = null, tooltip = null;
 
@@ -32,8 +34,9 @@ namespace Enderlook.Unity.Toolset
                 else
                     reference = true;
 
-                if (reference && helper.TryGetParentTargetObjectOfProperty(out object parent))
+                if (reference)
                 {
+                    object parent = property.GetParentTargetObjectOfProperty();
                     if (attribute.nameMode == GUIAttribute.Mode.Reference)
                         text = parent.GetValueFromFirstMember<string>(attribute.name);
                     if (attribute.tooltipMode == GUIAttribute.Mode.Reference)
@@ -46,7 +49,9 @@ namespace Enderlook.Unity.Toolset
                 if (!(tooltip is null))
                     label.tooltip = tooltip;
             }
-            else if (helper.TryGetParentTargetObjectOfProperty(out object parent))
+            else
+            {
+                object parent = property.GetParentTargetObjectOfProperty();
                 try
                 {
                     label = parent.GetValueFromFirstMember<GUIContent>(attribute.guiContentOrReferenceName);
@@ -56,27 +61,31 @@ namespace Enderlook.Unity.Toolset
                     text = parent.GetValueFromFirstMember<string>(attribute.guiContentOrReferenceName);
                     label.text = text;
                 }
+            }
         }
 
         /// <summary>
         /// Check if the <see cref="SerializedProperty"/> does have a <see cref="GUIAttribute"/> <see cref="System.Attribute"/> and if has change <paramref name="label"/> by its <see cref="GUIContent"/>.
         /// </summary>
-        /// <param name="helper"></param>
+        /// <param name="property">Serialized property whose label is being modified.</param>
         /// <param name="label">Current <see cref="GUIContent"/>.</param>
         /// <returns>Whenever there was or not an special <see cref="GUIContent"/>.</returns>
-        public static bool GetGUIContent(SerializedPropertyHelper helper, ref GUIContent label)
+        internal static bool GetGUIContent(SerializedProperty property, ref GUIContent label)
         {
             bool isSpecial = false;
+            FieldInfo fieldInfo = property.GetFieldInfo();
 
-            if (helper.TryGetAttributeFromField(out NameAttribute nameAttribute))
+            NameAttribute nameAttribute = fieldInfo.GetCustomAttribute<NameAttribute>(true);
+            if (!(nameAttribute is null))
             {
                 UseNameAttribute(nameAttribute, label);
                 isSpecial = true;
             }
 
-            if (helper.TryGetAttributeFromField(out GUIAttribute guiAttribute))
+            GUIAttribute guiAttribute = fieldInfo.GetCustomAttribute<GUIAttribute>(true);
+            if (!(guiAttribute is null))
             {
-                GetGUIContent(guiAttribute, helper, ref label);
+                UseGUIContent(guiAttribute, property, ref label);
                 isSpecial = true;
             }
 
@@ -84,15 +93,15 @@ namespace Enderlook.Unity.Toolset
         }
 
         /// <summary>
-        /// Check if the <see cref="SerializedProperty"/> does have a <see cref="GUIAttribute"/> <see cref="System.Attribute"/> and if has change <paramref name="label"/> by its <see cref="GUIContent"/>.
+        /// Produce a <see cref="GUIContent"/> with the <see cref="SerializedProperty.displayName"/> as <see cref="GUIContent.text"/> and <see cref="SerializedProperty.tooltip"/> as <see cref="GUIContent.tooltip"/>.
         /// </summary>
-        /// <param name="serializedProperty"></param>
-        /// <param name="label">Current <see cref="GUIContent"/>.</param>
-        /// <returns>Whenever there was or not an special <see cref="GUIContent"/>.</returns>
-        public static bool GetGUIContent(SerializedProperty serializedProperty, ref GUIContent label)
+        /// <param name="property">Property to get its <see cref="GUIContent"/>.</param>
+        /// <returns><see cref="GUIContent"/> of <see cref="serializedProperty"/>.</returns>
+        public static GUIContent GetGUIContent(this SerializedProperty property)
         {
-            SerializedPropertyHelper helper = serializedProperty.GetHelper();
-            return GetGUIContent(helper, ref label);
+            GUIContent guiContent = new GUIContent(property.displayName, property.tooltip);
+            GetGUIContent(property, ref guiContent);
+            return guiContent;
         }
     }
 }

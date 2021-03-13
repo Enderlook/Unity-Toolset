@@ -1,5 +1,6 @@
 ﻿using Enderlook.Reflection;
 using Enderlook.Unity.Toolset.Attributes;
+using Enderlook.Unity.Toolset.Utils;
 
 using UnityEditor;
 
@@ -29,7 +30,7 @@ namespace Enderlook.Unity.Toolset.Drawers
 
             void DrawField()
             {
-                SerializedPropertyGUIHelper.GetGUIContent(helper, ref label);
+                GUIContentHelper.GetGUIContent(property, ref label);
                 EditorGUI.PropertyField(position, property, label, true);
             }
         }
@@ -44,16 +45,12 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         private bool IsActive(ShowIfAttribute showIfAttribute)
         {
-            if (helper.TryGetParentTargetObjectOfProperty(out object parent))
-            {
-                object value = parent.GetValueFromFirstMember(showIfAttribute.nameOfConditional, showIfAttribute.memberType);
-                bool active = value.Equals(showIfAttribute.compareTo);
-                if (!showIfAttribute.mustBeEqual)
-                    active = !active;
-                return active;
-            }
-
-            return false;
+            object parent = serializedProperty.GetParentTargetObjectOfProperty();
+            object value = parent.GetValueFromFirstMember(showIfAttribute.nameOfConditional, showIfAttribute.memberType);
+            bool active = value.Equals(showIfAttribute.compareTo);
+            if (!showIfAttribute.mustBeEqual)
+                active = !active;
+            return active;
         }
     }
 }

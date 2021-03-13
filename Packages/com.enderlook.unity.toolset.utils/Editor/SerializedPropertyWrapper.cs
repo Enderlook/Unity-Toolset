@@ -20,7 +20,7 @@ namespace Enderlook.Unity.Toolset.Utils
         public Type Type {
             get {
                 if (Property.objectReferenceValue)
-                    return Property.GetFieldType();
+                    return Property.GetFieldInfo().FieldType;
                 else if (FieldInfo.FieldType.TryGetElementTypeOfArrayOrList(out Type type))
                     return type;
                 else

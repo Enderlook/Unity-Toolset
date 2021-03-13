@@ -8,8 +8,6 @@ using System.Text.RegularExpressions;
 
 using UnityEditor;
 
-using UnityEngine;
-
 namespace Enderlook.Unity.Toolset.Utils
 {
     /// <summary>
@@ -185,44 +183,6 @@ namespace Enderlook.Unity.Toolset.Utils
             => new Accessors<T>(GetTargetObjectAccessors(source));
 
         /// <summary>
-        /// Produce a <see cref="GUIContent"/> with the <see cref="SerializedProperty.displayName"/> as <see cref="GUIContent.text"/> and <see cref="SerializedProperty.tooltip"/> as <see cref="GUIContent.tooltip"/>.
-        /// </summary>
-        /// <param name="source">><see cref="SerializedProperty"/> to get <see cref="GUIContent"/>.</param>
-        /// <returns><see cref="GUIContent"/> of <paramref name="source"/>.</returns>
-        public static GUIContent GetGUIContent(this SerializedProperty source) => new GUIContent(source.displayName, source.tooltip);
-
-        /// <summary>
-        /// Produce a <see cref="GUIContent"/> with the <see cref="SerializedProperty.displayName"/> as <see cref="GUIContent.text"/> and <see cref="SerializedProperty.tooltip"/> as <see cref="GUIContent.tooltip"/>, but removing the backing field tag.
-        /// </summary>
-        /// <param name="source">><see cref="SerializedProperty"/> to get <see cref="GUIContent"/>.</param>
-        /// <returns><see cref="GUIContent"/> of <paramref name="source"/>.</returns>
-        public static GUIContent GetGUIContentOfBackingField(this SerializedProperty source)
-        {
-            GUIContent guiContent = source.GetGUIContent();
-            guiContent.text = guiContent.text.Replace("<", "").Replace(">k__Backing Field", "");
-            return guiContent;
-        }
-
-        /// <summary>
-        /// Produces a <see cref="SerializedPropertyHelper"/> from <paramref name="source"/>.
-        /// </summary>
-        /// <param name="source"><see cref="SerializedProperty"/> used to produce the <see cref="SerializedPropertyHelper"/>.</param>
-        /// <returns><see cref="SerializedPropertyHelper"/> if <paramref name="source"/>.</returns>
-        public static SerializedPropertyHelper GetHelper(this SerializedProperty source) => new SerializedPropertyHelper(source);
-
-        /// <summary>
-        /// Get the <see cref="Type"/> of the current value of <paramref name="source"/>.
-        /// </summary>
-        /// <param name="source"><see cref="SerializedProperty"/> whose current <see cref="Type"/> will be get.</param>
-        /// <returns><see cref="Type"/> of the current value of <paramref name="source"/>. Or <see langword="null"/> if it is empty.</returns>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0031:Use null propagation", Justification = "It could be a Unity object which doesn't support null copropagation.")]
-        public static Type GetCurrentPropertyValueType(this SerializedProperty source)
-        {
-            object targetObject = source.GetTargetObjectOfProperty();
-            return targetObject?.GetType();
-        }
-
-        /// <summary>
         /// Get the <see cref="FieldInfo"/> of <see cref="SerializedProperty"/>.
         /// </summary>
         /// <param name="source"><see cref="SerializedProperty"/> whose <see cref="FieldInfo"/> will be get.</param>
@@ -238,15 +198,6 @@ namespace Enderlook.Unity.Toolset.Utils
             else
                 return type.GetField(name, AccessorsHelper.bindingFlags);
         }
-
-        /// <summary>
-        /// Get the field <see cref="Type"/> of <paramref name="source"/>.
-        /// </summary>
-        /// <param name="source"><see cref="SerializedProperty"/> whose <see cref="Type"/> will be get.</param>
-        /// <param name="includeInheritedPrivate">Whenever it should also search private fields of supper-classes.</param>
-        /// <returns><see cref="Type"/> of the <paramref name="source"/>.</returns>
-        public static Type GetFieldType(this SerializedProperty source, bool includeInheritedPrivate = true)
-            => source.GetFieldInfo(includeInheritedPrivate).FieldType;
 
         /// <summary>
         /// Get the index of the <paramref name="source"/> if it's an element of an array.
