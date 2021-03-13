@@ -138,7 +138,49 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <param name="source"><see cref="SerializedProperty"/> whose value will be get.</param>
         /// <param name="last">At which depth from last to first should return.</param>
         /// <returns>Value of the <paramref name="source"/> as <see cref="object"/>.</returns>
-        public static object GetTargetObjectOfProperty(this SerializedProperty source, int last = 0) => source.GetEnumerableTargetObjectOfProperty().Reverse().Skip(last).First();
+        public static object GetTargetObjectOfProperty(this SerializedProperty source, int last = 0)
+        {
+            // We optimize common cases.
+            if (last == 0)
+            {
+                using (IEnumerator<object> enumerator = source.GetEnumerableTargetObjectOfProperty().GetEnumerator())
+                {
+                    if (enumerator.MoveNext())
+                    {
+                        object obj = enumerator.Current;
+                        while (enumerator.MoveNext())
+                            obj = enumerator.Current;
+                        return obj;
+                    }
+                    // We mimic the behaviour of `.Reverse().Skip(0).First()`
+                    throw new InvalidOperationException("Sequence contains no elements");
+                }
+            }
+            else if (last == 1)
+            {
+                using (IEnumerator<object> enumerator = source.GetEnumerableTargetObjectOfProperty().GetEnumerator())
+                {
+                    if (enumerator.MoveNext())
+                    {
+                        object b = enumerator.Current;
+                        if (enumerator.MoveNext())
+                        {
+                            object a = enumerator.Current;
+                            while (enumerator.MoveNext())
+                            {
+                                b = a;
+                                a = enumerator.Current;
+                            }
+                            return b;
+                        }
+                    }
+                    // We mimic the behaviour of `.Reverse().Skip(1).First()`
+                    throw new InvalidOperationException("Sequence contains no elements");
+                }
+            }
+
+            return source.GetEnumerableTargetObjectOfProperty().Reverse().Skip(last).First();
+        }
 
         /// <summary>
         /// Gets the parent target object of <paramref name="source"/>. It does work for nested serialized properties.<br/>
