@@ -18,7 +18,7 @@ namespace Enderlook.Unity.Toolset.Attributes
         public enum Mode
         {
             /// <summary>
-            /// Use the string as value
+            /// Use the string as value.
             /// </summary>
             Value,
 
