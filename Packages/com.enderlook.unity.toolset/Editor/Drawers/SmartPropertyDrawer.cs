@@ -1,6 +1,8 @@
 ﻿using Enderlook.Unity.Toolset.Attributes;
 using Enderlook.Unity.Toolset.Utils;
 
+using System.Reflection;
+
 using UnityEditor;
 
 using UnityEngine;
@@ -12,27 +14,15 @@ namespace Enderlook.Unity.Toolset.Drawers
     [CustomPropertyDrawer(typeof(IndentedAttribute))]
     public class SmartPropertyDrawer : PropertyDrawer
     {
-        protected SerializedPropertyHelper helper;
+        protected SerializedProperty serializedProperty { get; private set; }
 
         private int identationOffset;
 
-        private void TryCreateHelper(SerializedProperty property)
-        {
-            if (helper == null)
-                helper = property.GetHelper();
-            else if (helper.serializedProperty.propertyPath == property.propertyPath)
-                helper.ResetCycle();
-            else
-                helper = property.GetHelper();
-        }
-
         private void Before(ref Rect position, ref SerializedProperty property, ref GUIContent label)
         {
-            TryCreateHelper(property);
+            GUIContentHelper.GetGUIContent(property, ref label);
 
-            SerializedPropertyGUIHelper.GetGUIContent(property, ref label);
-
-            IndentedAttribute indentedAttribute = helper.GetAttributeFromField<IndentedAttribute>(true);
+            IndentedAttribute indentedAttribute = property.GetFieldInfo(true).GetCustomAttribute<IndentedAttribute>(true);
             identationOffset = indentedAttribute?.indentationOffset ?? 0;
             EditorGUI.indentLevel += identationOffset;
         }
@@ -42,6 +32,7 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         public sealed override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
+            serializedProperty = property;
             Before(ref position, ref property, ref label);
             OnGUISmart(position, property, label);
             After(position, property, label);
@@ -52,8 +43,7 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         public sealed override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            TryCreateHelper(property);
-            SerializedPropertyGUIHelper.GetGUIContent(property, ref label);
+            GUIContentHelper.GetGUIContent(property, ref label);
             return GetPropertyHeightSmart(property, label);
         }
 

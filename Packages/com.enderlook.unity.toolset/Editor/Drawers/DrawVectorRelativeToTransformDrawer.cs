@@ -81,7 +81,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                 case SerializedPropertyType.ObjectReference:
                     if (serializedProperty.objectReferenceValue is Transform transform)
                         return transform.position;
-                    else if (serializedProperty.GetFieldType(true) == typeof(Transform))
+                    else if (serializedProperty.GetFieldInfo().FieldType == typeof(Transform))
                         return Vector3.zero;
                     DisplayErrorReference(serializedProperty.name);
                     break;
