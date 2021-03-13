@@ -1,6 +1,6 @@
 {
   "name": "com.enderlook.unity.toolset.utils",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "displayName": "Enderlook Unity Toolset Utils",
   "description": "Provides utility methods for developing Unity Editor tools.",
   "unity": "2019.2",
@@ -9,7 +9,8 @@
     "editor"
   ],
   "dependencies": {
-    "com.enderlook.unity.utils": "https://github.com/Enderlook/Unity-Extras.git?path=Packages/com.enderlook.unity.utils#com.enderlook.unity.utils/v0.1.0"
+    "com.enderlook.unity.utils": "https://github.com/Enderlook/Unity-Extras.git?path=Packages/com.enderlook.unity.utils#com.enderlook.unity.utils/v0.1.0",
+    "com.enderlook.reflection": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.reflection#com.enderlook.reflection/v0.1.0"
   },
   "author": {
     "name": "Enderlook",
