@@ -35,7 +35,7 @@ namespace Enderlook.Unity.Toolset.Utils
             if (fieldInfo.FieldType.TryGetElementTypeOfArrayOrList(out Type type))
                 return type;
             else
-                return fieldInfo.GetType();
+                return fieldInfo.FieldType;
         }
 
         /// <inheritdoc cref="IAccessors{T}.Set(T)"/>
