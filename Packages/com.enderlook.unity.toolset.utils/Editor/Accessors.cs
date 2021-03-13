@@ -103,11 +103,11 @@ namespace Enderlook.Unity.Toolset.Utils
         public object Get()
         {
             if (memberInfo is FieldInfo field)
-                field.GetValue(source);
+                return field.GetValue(source);
             else if (memberInfo is PropertyInfo property)
-                property.GetValue(source);
+                return property.GetValue(source);
             else if (source is Array array)
-                array.GetValue(index);
+                return array.GetValue(index);
 
             IEnumerator enumerator = ((IEnumerable)source).GetEnumerator();
             for (int i = 0; i <= index; i++)
