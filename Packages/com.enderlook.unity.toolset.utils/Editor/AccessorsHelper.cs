@@ -6,9 +6,9 @@ namespace Enderlook.Unity.Toolset.Utils
 {
     internal static class AccessorsHelper
     {
-        internal const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+        public const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
-        internal static T GetValue<T>(this object source, string name)
+        public static T GetValue<T>(this object source, string name)
         {
             Type type = typeof(T);
             object value = source.GetValue(name);
@@ -18,7 +18,7 @@ namespace Enderlook.Unity.Toolset.Utils
                 throw new ArgumentException($"Memeber {nameof(name)} isn't of type {typeof(T)}, but {type}.");
         }
 
-        internal static object GetValue(this object source, string name)
+        public static object GetValue(this object source, string name)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
@@ -40,7 +40,7 @@ namespace Enderlook.Unity.Toolset.Utils
             return null;
         }
 
-        internal static T GetValue<T>(this object source, string name, int index)
+        public static T GetValue<T>(this object source, string name, int index)
         {
             Type type = typeof(T);
             object value = source.GetValue(name, index);
@@ -50,7 +50,7 @@ namespace Enderlook.Unity.Toolset.Utils
                 throw new ArgumentException($"Memeber {nameof(name)} isn't of type {typeof(T)}, but {type}.");
         }
 
-        internal static object GetValue(this object source, string name, int index)
+        public static object GetValue(this object source, string name, int index)
         {
             object obj = source.GetValue(name);
             if (obj is Array array)
