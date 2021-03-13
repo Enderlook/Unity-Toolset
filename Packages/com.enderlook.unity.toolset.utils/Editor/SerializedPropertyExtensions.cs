@@ -19,7 +19,10 @@ namespace Enderlook.Unity.Toolset.Utils
     {
         // https://github.com/lordofduct/spacepuppy-unity-framework/blob/master/SpacepuppyBaseEditor/EditorHelper.cs
 
-        private static Regex isArrayRegex = new Regex(@"Array.data\[\d+\]$");
+        private static readonly Regex isArrayRegex = new Regex(@"Array.data\[\d+\]$");
+        private static readonly string[] arrayDataSeparator = new string[] { ".Array.data[" };
+        private static readonly char[] dotSeparator = new char[] { '.' }; // TODO: On .NET standard 2.1 use string.Split(char, StringSplitOptions) instead
+        private static readonly char[] openBracketSeparator = new char[] { '[' }; // TODO: On .NET standard 2.1 use string.Split(char, StringSplitOptions) instead
 
         /// <summary>
         /// Check if <paramref name="source"/> is an element from an array or list.
@@ -48,10 +51,10 @@ namespace Enderlook.Unity.Toolset.Utils
             if (source.IsArrayOrListSize())
                 path = source.propertyPath.Substring(0, source.propertyPath.Length - ".Array.size".Length);
             else if (source.IsArrayOrListElement())
-                path = source.propertyPath.Split(new string[] { ".Array.data[" }, StringSplitOptions.None).Reverse().ElementAt(1);
+                path = source.propertyPath.Split(arrayDataSeparator, StringSplitOptions.None).Reverse().ElementAt(1);
             else
                 path = source.propertyPath;
-            return path.Split('.').Last();
+            return path.Split(dotSeparator).Last();
         }
 
         /// <summary>
@@ -92,7 +95,7 @@ namespace Enderlook.Unity.Toolset.Utils
 
                 string GetNotFoundMessage(string element) => $"The element {element} was not found in {obj.GetType()} from {source.name} in path {path}.";
 
-                foreach (string element in path.Split('.'))
+                foreach (string element in path.Split(dotSeparator))
                     if (element.Contains("["))
                     {
                         string elementName = element.Substring(0, element.IndexOf("["));
@@ -147,7 +150,7 @@ namespace Enderlook.Unity.Toolset.Utils
             object parent = source.GetParentTargetObjectOfProperty();
             Type parentType = parent.GetType();
 
-            string element = source.propertyPath.Replace(".Array.data[", "[").Split('.').Last();
+            string element = source.propertyPath.Replace(".Array.data[", "[").Split(dotSeparator).Last();
             if (element.Contains("["))
             {
                 string elementName = element.Substring(0, element.IndexOf("["));
@@ -245,7 +248,7 @@ namespace Enderlook.Unity.Toolset.Utils
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
 
-            string part = source.propertyPath.Split('.').Last().Split('[').LastOrDefault();
+            string part = source.propertyPath.Split(dotSeparator).Last().Split(openBracketSeparator).LastOrDefault();
             if (part == default)
                 throw new ArgumentException("It doesn't come from an array", nameof(source));
             else
