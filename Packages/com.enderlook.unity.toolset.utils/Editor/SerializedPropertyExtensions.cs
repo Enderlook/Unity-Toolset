@@ -51,10 +51,16 @@ namespace Enderlook.Unity.Toolset.Utils
             if (source.IsArrayOrListSize())
                 path = source.propertyPath.Substring(0, source.propertyPath.Length - ".Array.size".Length);
             else if (source.IsArrayOrListElement())
-                path = source.propertyPath.Split(arrayDataSeparator, StringSplitOptions.None).Reverse().ElementAt(1);
+            {
+                string[] tmp = source.propertyPath.Split(arrayDataSeparator, StringSplitOptions.None);
+                path = tmp[tmp.Length - 2];
+            }
             else
                 path = source.propertyPath;
-            return path.Split(dotSeparator).Last();
+            {
+                string[] tmp = path.Split(dotSeparator);
+                return tmp[tmp.Length - 1];
+            }
         }
 
         /// <summary>
@@ -96,6 +102,7 @@ namespace Enderlook.Unity.Toolset.Utils
                 string GetNotFoundMessage(string element) => $"The element {element} was not found in {obj.GetType()} from {source.name} in path {path}.";
 
                 foreach (string element in path.Split(dotSeparator))
+                {
                     if (element.Contains("["))
                     {
                         string elementName = element.Substring(0, element.IndexOf("["));
@@ -108,6 +115,8 @@ namespace Enderlook.Unity.Toolset.Utils
                         {
                             if (!preferNullInsteadOfException)
                                 throw new IndexOutOfRangeException($"The element {element} has no index {index} in {obj.GetType()} from {source.name} in path {path}.", e);
+                            else
+                                obj = null;
                         }
                         if (obj == null && !preferNullInsteadOfException)
                             throw new KeyNotFoundException(GetNotFoundMessage(element));
@@ -120,6 +129,7 @@ namespace Enderlook.Unity.Toolset.Utils
                             throw new KeyNotFoundException(GetNotFoundMessage(element));
                         yield return obj;
                     }
+                }
             }
         }
 
