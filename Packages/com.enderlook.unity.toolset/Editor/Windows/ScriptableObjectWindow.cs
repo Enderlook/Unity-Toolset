@@ -60,7 +60,8 @@ namespace Enderlook.Unity.Toolset.Windows
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by Unity.")]
         [InitializeOnLoadMethod]
         private static void AddContextualPropertyMenu()
-            => ContextualPropertyMenu.contextualPropertyMenu += (GenericMenu menu, SerializedProperty property) =>
+        {
+            ContextualPropertyMenu.contextualPropertyMenu += (GenericMenu menu, SerializedProperty property) =>
             {
                 if (property.propertyPath.EndsWith(".Array.Size"))
                     return;
@@ -77,6 +78,7 @@ namespace Enderlook.Unity.Toolset.Windows
                         () => CreateWindow(property, fieldInfo)
                     );
             };
+        }
 
         private static void InitializeDerivedTypes()
         {
