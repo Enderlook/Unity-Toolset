@@ -163,8 +163,13 @@ namespace Enderlook.Unity.Toolset.Utils
                 path = gameObject?.scene.path;
 #pragma warning restore UNT0007, UNT0008
                 if (string.IsNullOrEmpty(path) && gameObject != null)
+                {
                     // Check if it's in a prefab file
-                    path = PrefabStageUtility.GetPrefabStage(gameObject).prefabAssetPath;
+                    PrefabStage prefabStage = PrefabStageUtility.GetPrefabStage(gameObject);
+                    if (!(prefabStage is null))
+                        // Object was in a prefab
+                        path = prefabStage.prefabAssetPath;
+                }
             }
             return path;
         }
