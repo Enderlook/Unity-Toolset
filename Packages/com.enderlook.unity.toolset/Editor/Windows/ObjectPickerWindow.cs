@@ -21,7 +21,8 @@ namespace Enderlook.Unity.Toolset.Windows
         private static readonly GUIContent APPLY_CONTENT = new GUIContent("Apply", "Assign object to field");
         private static readonly GUIContent INCLUDE_ASSETS_CONTENT = new GUIContent("Include Assets", "Whenever it should also look for in asset files");
 
-        private SerializedPropertyWrapper propertyWrapper;
+        private SerializedProperty property;
+        private Accessors accessors;
 
         private RestrictTypeAttribute restrictTypeAttribute;
 
@@ -56,7 +57,8 @@ namespace Enderlook.Unity.Toolset.Windows
         {
             ObjectPickerWindow window = GetWindow<ObjectPickerWindow>();
 
-            window.propertyWrapper = new SerializedPropertyWrapper(property, fieldInfo);
+            window.property = property;
+            window.accessors = property.GetTargetObjectAccessors();
 
             window.restrictTypeAttribute = fieldInfo.GetCustomAttribute<RestrictTypeAttribute>();
 
@@ -70,9 +72,9 @@ namespace Enderlook.Unity.Toolset.Windows
                 selected = objects[index];
 
             if (gatherFromAssets)
-                objects = Resources.FindObjectsOfTypeAll(propertyWrapper.Type);
+                objects = Resources.FindObjectsOfTypeAll(property.GetValueType());
             else
-                objects = FindObjectsOfType(propertyWrapper.Type);
+                objects = FindObjectsOfType(property.GetValueType());
 
             if (restrictTypeAttribute != null)
                 objects = objects.Where(e => restrictTypeAttribute.CheckIfTypeIsAllowed(e.GetType())).ToArray();
@@ -83,7 +85,7 @@ namespace Enderlook.Unity.Toolset.Windows
             {
                 index = Array.IndexOf(objects, selected);
                 if (index == -1)
-                    index = Array.IndexOf(objects, propertyWrapper.Accessors.Get());
+                    index = Array.IndexOf(objects, accessors.Get());
             }
         }
 
@@ -105,8 +107,8 @@ namespace Enderlook.Unity.Toolset.Windows
             EditorGUI.BeginDisabledGroup(index == -1);
             if (GUILayout.Button(APPLY_CONTENT))
             {
-                propertyWrapper.Accessors.Set(objects[index]);
-                propertyWrapper.ApplyModifiedProperties();
+                accessors.Set(objects[index]);
+                property.serializedObject.ApplyModifiedProperties();
             }
             EditorGUI.EndDisabledGroup();
         }
