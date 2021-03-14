@@ -30,6 +30,29 @@ namespace Enderlook.Unity.Toolset.Utils
             EditorGUILayout.LabelField(text, EditorStyles.boldLabel);
 
         /// <summary>
+        /// Add a header.
+        /// </summary>
+        /// <param name="text1">Text of header.</param>
+        /// <param name="text2">Additional text of header.</param>
+        public static void Header(string text1, string text2) =>
+            EditorGUILayout.LabelField(text1, text2, EditorStyles.boldLabel);
+
+        /// <summary>
+        /// Add a header.
+        /// </summary>
+        /// <param name="content">Content of header.</param>
+        public static void Header(GUIContent content) =>
+            EditorGUILayout.LabelField(content, EditorStyles.boldLabel);
+
+        /// <summary>
+        /// Add a header.
+        /// </summary>
+        /// <param name="content1">Content of header.</param>
+        /// <param name="content2">Additional content of header.</param>
+        public static void Header(GUIContent content1, GUIContent content2) =>
+            EditorGUILayout.LabelField(content1, content2, EditorStyles.boldLabel);
+
+        /// <summary>
         /// Draw an horizontal line of the specified color.
         /// </summary>
         /// <param name="color">Color of line.</param>
