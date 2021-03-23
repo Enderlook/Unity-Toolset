@@ -1,6 +1,6 @@
 {
   "name": "com.enderlook.unity.toolset",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "displayName": "Enderlook Unity Toolset",
   "description": "Provides attributes to improve Unity Editor quality of life.",
   "unity": "2019.2",
@@ -11,7 +11,7 @@
   "dependencies": {
     "com.enderlook.enumerables": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.enumerables#com.enderlook.enumerables/v1.0.1",
     "com.enderlook.unity.toolset.checking": "https://github.com/Enderlook/Unity-Toolset.git?path=Packages/com.enderlook.unity.toolset.checking#com.enderlook.unity.toolset.checking/v0.1.1",
-    "com.enderlook.unity.toolset.utils": "https://github.com/Enderlook/Unity-Toolset.git?path=Packages/com.enderlook.unity.toolset.utils#com.enderlook.unity.toolset.utils/v0.2.0",
+    "com.enderlook.unity.toolset.utils": "https://github.com/Enderlook/Unity-Toolset.git?path=Packages/com.enderlook.unity.toolset.utils#com.enderlook.unity.toolset.utils/v0.3.1",
     "com.enderlook.unity.utils.math": "https://github.com/Enderlook/Unity-Extras.git?path=Packages/com.enderlook.unity.utils.math#com.enderlook.unity.utils.math/v0.1.0"
   },
   "author": {
