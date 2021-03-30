@@ -1,6 +1,7 @@
 ﻿using Enderlook.Reflection;
-using Enderlook.Unity.Utils;
+using Enderlook.Unity.Toolset.Attributes;
 using Enderlook.Unity.Toolset.Utils;
+using Enderlook.Unity.Utils.Math;
 
 using System;
 using System.Reflection;
@@ -8,8 +9,6 @@ using System.Reflection;
 using UnityEditor;
 
 using UnityEngine;
-using Enderlook.Unity.Utils.Math;
-using Enderlook.Unity.Toolset.Attributes;
 
 namespace Enderlook.Unity.Toolset.Drawers
 {
@@ -205,7 +204,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                 if (texture == null)
                     texture = AssetDatabase.LoadAssetAtPath<Texture2D>(drawVectorRelativeToTransform.icon);
                 if (texture == null)
-                    texture = UnityEngine.Resources.Load<Texture2D>(drawVectorRelativeToTransform.icon);
+                    texture = Resources.Load<Texture2D>(drawVectorRelativeToTransform.icon);
 
                 if (texture == null)
                     Debug.LogError($"The Texture '{drawVectorRelativeToTransform.icon}' used by '{serializedProperty.propertyPath}' could not be found.");
