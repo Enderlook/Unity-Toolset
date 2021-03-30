@@ -56,8 +56,15 @@ namespace Enderlook.Unity.Toolset.Utils
                     // Used to skip missing components
                     if (targetObject == null)
                         continue;
-                    Type targetObjectClassType = targetObject.GetType();
-                    FieldInfo field = targetObjectClassType.GetInheritedField(serializedProperty.propertyPath, bindingFlags);
+                    FieldInfo field;
+                    try
+                    {
+                        field = serializedProperty.GetFieldInfo(true);
+                    }
+                    catch (ArgumentNullException) // Catch Unity-related fields that aren't as (like those fields which starts with `m_`)
+                    {
+                        continue;
+                    }
                     if (field == null)
                         continue;
                     Attribute attribute = field.GetCustomAttribute(typeof(T), inherit);
