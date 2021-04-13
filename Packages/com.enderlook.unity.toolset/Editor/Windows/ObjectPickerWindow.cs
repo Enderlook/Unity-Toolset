@@ -44,6 +44,9 @@ namespace Enderlook.Unity.Toolset.Windows
                     return;
 
                 FieldInfo fieldInfo = property.GetFieldInfo();
+                if (fieldInfo is null)
+                    return;
+
                 if (typeof(UnityObject).IsAssignableFrom(fieldInfo.FieldType))
                     menu.AddItem(
                         CONTEXT_PROPERTY_MENU,

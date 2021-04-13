@@ -1,6 +1,7 @@
 ﻿using Enderlook.Unity.Toolset.Utils;
 
 using System;
+using System.Linq;
 using System.Reflection;
 
 using UnityEditor;
@@ -26,6 +27,9 @@ namespace Enderlook.Unity.Toolset.Windows
                 return;
 
             FieldInfo fieldInfo = property.GetFieldInfo();
+            if (fieldInfo is null)
+                return;
+
             Type type = fieldInfo.FieldType;
             if (!(type.IsPrimitive || type == typeof(decimal) || type == typeof(string)))
                 menu.AddItem(
