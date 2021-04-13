@@ -68,7 +68,9 @@ namespace Enderlook.Unity.Toolset.Windows
                     return;
 
                 FieldInfo fieldInfo = property.GetFieldInfo();
-                Type valueType = property.GetValueType();
+                if (fieldInfo is null)
+                    return;
+
                 Type fieldType = fieldInfo.FieldType;
                 if (fieldType.IsArrayOrList())
                     fieldType = fieldType.GetElementTypeOfArrayOrList();
