@@ -75,9 +75,9 @@ namespace Enderlook.Unity.Toolset.Windows
                 selected = objects[index];
 
             if (gatherFromAssets)
-                objects = Resources.FindObjectsOfTypeAll(property.GetValueType());
+                objects = Resources.FindObjectsOfTypeAll(property.GetPropertyType());
             else
-                objects = FindObjectsOfType(property.GetValueType());
+                objects = FindObjectsOfType(property.GetPropertyType());
 
             if (restrictTypeAttribute != null)
                 objects = objects.Where(e => restrictTypeAttribute.CheckIfTypeIsAllowed(e.GetType())).ToArray();

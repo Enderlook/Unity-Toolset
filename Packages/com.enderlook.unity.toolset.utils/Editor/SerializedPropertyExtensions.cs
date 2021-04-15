@@ -242,12 +242,12 @@ namespace Enderlook.Unity.Toolset.Utils
         }
 
         /// <summary>
-        /// Get the <see cref="Type"/> of the value of the property <see cref="SerializedProperty"/>.
+        /// Get the <see cref="Type"/> of the property <see cref="SerializedProperty"/>.
         /// </summary>
         /// <param name="source"><see cref="SerializedProperty"/> whose <see cref="Type"/> will be get.</param>
         /// <param name="includeInheritedPrivate">Whenever it should also search private fields of supper-classes.</param>
         /// <returns><see cref="Type"/> of <paramref name="source"/>.</returns>
-        public static Type GetValueType(this SerializedProperty source, bool includeInheritedPrivate = true)
+        public static Type GetPropertyType(this SerializedProperty source, bool includeInheritedPrivate = true)
         {
             Type type = source.GetFieldInfo(includeInheritedPrivate).FieldType;
             if (type.TryGetElementTypeOfArrayOrList(out Type elementType))

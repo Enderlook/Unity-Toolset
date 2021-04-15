@@ -194,7 +194,7 @@ namespace Enderlook.Unity.Toolset.Windows
             window.accessors = property.GetTargetObjectAccessors();
 
             Debug.Assert(tmpList2.Count == 0);
-            foreach (Type type in GetDerivedTypes(window.property.GetValueType()))
+            foreach (Type type in GetDerivedTypes(window.property.GetPropertyType()))
                 if (!type.IsAbstract)
                     tmpList2.Add(type);
 
@@ -220,7 +220,7 @@ namespace Enderlook.Unity.Toolset.Windows
             for (int i = 0; i < allowedTypes.Count; i++)
                 window.allowedTypesNames[i] = allowedTypes[i].Name;
 
-            window.index = window.GetIndex(window.property.GetValueType());
+            window.index = window.GetIndex(window.property.GetPropertyType());
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by Unity.")]
