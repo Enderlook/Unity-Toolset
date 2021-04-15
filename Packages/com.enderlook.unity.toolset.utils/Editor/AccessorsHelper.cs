@@ -37,7 +37,7 @@ namespace Enderlook.Unity.Toolset.Utils
                 return array.GetValue(index);
 
             if (!(obj is IEnumerable enumerable))
-                return null;
+                throw new NotSupportedException($"Can only set values for collections that implements {nameof(IEnumerable)}");
 
             IEnumerator enumerator = enumerable.GetEnumerator();
 
