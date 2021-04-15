@@ -17,7 +17,7 @@ using UnityObject = UnityEngine.Object;
 
 namespace Enderlook.Unity.Toolset.Windows
 {
-    internal class ScriptableObjectWindow : EditorWindow
+    internal sealed class ScriptableObjectWindow : EditorWindow
     {
         private static readonly GUIContent CONTEXT_PROPERTY_MENU = new GUIContent("Scriptable Object Menu", "Open the Scriptable Object Menu.");
         private static readonly GUIContent TITLE_CONTENT = new GUIContent("Scriptable Object Manager");

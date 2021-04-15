@@ -9,7 +9,7 @@ namespace Enderlook.Unity.Toolset.Attributes
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
     [AttributeUsageRequireDataType(typeof(Sprite), typeof(Texture2D), typeof(string), includeEnumerableTypes = true)]
     [AttributeUsageFieldMustBeSerializableByUnity]
-    public class DrawTextureAttribute : PropertyAttribute
+    public sealed class DrawTextureAttribute : PropertyAttribute
     {
         /// <summary>
         /// Whenever the texture will be drawn on the same line as the property or in a line bellow.

@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Enderlook.Unity.Toolset.Attributes
 {
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
-    public class PropertyPopupOptionAttribute : PropertyAttribute
+    public sealed class PropertyPopupOptionAttribute : PropertyAttribute
     {
         /// <summary>
         /// Value that must match the mode field in other to show this field.

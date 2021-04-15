@@ -13,7 +13,7 @@ namespace Enderlook.Unity.Toolset.Drawers
     //[CustomPropertyDrawer(typeof(UnityEngine.Object), true)] // Will affect all objects
     //[CustomPropertyDrawer(typeof(ScriptableObject), true)] // Will only affect scriptable objects
     [CustomPropertyDrawer(typeof(ExpandableAttribute), true)]
-    internal class ExpandableDrawer : SmartPropertyDrawer
+    internal sealed class ExpandableDrawer : SmartPropertyDrawer
     {
         /// <summary>
         /// How button to open in window must be shown.

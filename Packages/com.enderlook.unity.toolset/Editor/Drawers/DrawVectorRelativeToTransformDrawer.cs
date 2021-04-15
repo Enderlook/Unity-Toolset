@@ -13,7 +13,7 @@ using UnityEngine;
 namespace Enderlook.Unity.Toolset.Drawers
 {
     [CustomPropertyDrawer(typeof(DrawVectorRelativeToTransformAttribute)), InitializeOnLoad]
-    internal class DrawVectorRelativeToTransformEditor : SmartPropertyDrawer
+    internal sealed class DrawVectorRelativeToTransformEditor : SmartPropertyDrawer
     {
         private static readonly Handles.CapFunction handleCap = Handles.SphereHandleCap;
 

@@ -3,7 +3,7 @@
 namespace Enderlook.Unity.Toolset.Attributes
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-    public class PropertyPopupAttribute : Attribute
+    public sealed class PropertyPopupAttribute : Attribute
     {
         /// <summary>
         /// Name of field used to determine which property must be used.

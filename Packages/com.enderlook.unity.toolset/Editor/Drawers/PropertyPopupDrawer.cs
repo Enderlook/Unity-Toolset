@@ -13,7 +13,7 @@ using UnityEngine;
 namespace Enderlook.Unity.Toolset.Drawers
 {
     [CustomPropertyDrawer(typeof(object), true)]
-    internal class PropertyPopupDrawer2 : SmartPropertyDrawer
+    internal sealed class PropertyPopupDrawer2 : SmartPropertyDrawer
     {
         private static readonly Dictionary<Type, PropertyPopup> alloweds = new Dictionary<Type, PropertyPopup>();
 
