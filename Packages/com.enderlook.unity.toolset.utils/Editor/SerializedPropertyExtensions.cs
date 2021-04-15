@@ -13,7 +13,7 @@ namespace Enderlook.Unity.Toolset.Utils
     /// <summary>
     /// A set of helper functions for <see cref="SerializedProperty"/>.
     /// </summary>
-    public static class SerializedPropertyExtensions
+    public static partial class SerializedPropertyExtensions
     {
         // https://github.com/lordofduct/spacepuppy-unity-framework/blob/master/SpacepuppyBaseEditor/EditorHelper.cs
 
@@ -73,122 +73,6 @@ namespace Enderlook.Unity.Toolset.Utils
 
             return source.propertyPath.EndsWith("Array.size");
         }
-
-        /// <summary>
-        /// Gets the target object hierarchy of <paramref name="source"/>. It does work for nested serialized properties.
-        /// </summary>
-        /// <param name="source"><see cref="SerializedProperty"/> whose value will be get.</param>
-        /// <param name="includeItself">If <see langword="true"/> the first returned element will be <c><paramref name="source"/>.serializedObject.targetObject</c>.</param>
-        /// <param name="preferNullInsteadOfException">If <see langword="true"/>, it will return <see langword="null"/> instead of throwing exceptions if can't find objects.</param>
-        /// <returns>Hierarchy traveled to get the target object.</returns>
-        public static IEnumerable<object> GetEnumerableTargetObjectOfProperty(this SerializedProperty source, bool includeItself = true, bool preferNullInsteadOfException = true)
-        {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
-
-            return Method();
-
-            IEnumerable<object> Method()
-            {
-                string path = source.propertyPath.Replace(".Array.data[", "[");
-
-                object obj = source.serializedObject.targetObject;
-
-                if (includeItself)
-                    yield return obj;
-
-                string GetNotFoundMessage(string element) => $"The element {element} was not found in {obj.GetType()} from {source.name} in path {path}.";
-
-                foreach (string element in path.Split(dotSeparator))
-                {
-                    if (element.Contains("["))
-                    {
-                        string elementName = element.Substring(0, element.IndexOf("["));
-                        int index = int.Parse(element.Substring(element.IndexOf("[")).Replace("[", "").Replace("]", ""));
-                        try
-                        {
-                            obj = obj.GetValue(elementName, index);
-                        }
-                        catch (ArgumentOutOfRangeException e)
-                        {
-                            if (!preferNullInsteadOfException)
-                                throw new IndexOutOfRangeException($"The element {element} has no index {index} in {obj.GetType()} from {source.name} in path {path}.", e);
-                            else
-                                obj = null;
-                        }
-                        if (obj == null && !preferNullInsteadOfException)
-                            throw new KeyNotFoundException(GetNotFoundMessage(element));
-                        yield return obj;
-                    }
-                    else
-                    {
-                        obj = obj.GetValue(element);
-                        if (obj == null && !preferNullInsteadOfException)
-                            throw new KeyNotFoundException(GetNotFoundMessage(element));
-                        yield return obj;
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets the target object of <paramref name="source"/>. It does work for nested serialized properties.<br/>
-        /// If it doesn't have parent and you look for one, it will return itself.
-        /// </summary>
-        /// <param name="source"><see cref="SerializedProperty"/> whose value will be get.</param>
-        /// <param name="last">At which depth from last to first should return.</param>
-        /// <returns>Value of the <paramref name="source"/> as <see cref="object"/>.</returns>
-        public static object GetTargetObjectOfProperty(this SerializedProperty source, int last = 0)
-        {
-            // We optimize common cases.
-            if (last == 0)
-            {
-                using (IEnumerator<object> enumerator = source.GetEnumerableTargetObjectOfProperty().GetEnumerator())
-                {
-                    if (enumerator.MoveNext())
-                    {
-                        object obj = enumerator.Current;
-                        while (enumerator.MoveNext())
-                            obj = enumerator.Current;
-                        return obj;
-                    }
-                    // We mimic the behaviour of `.Reverse().Skip(0).First()`
-                    throw new InvalidOperationException("Sequence contains no elements");
-                }
-            }
-            else if (last == 1)
-            {
-                using (IEnumerator<object> enumerator = source.GetEnumerableTargetObjectOfProperty().GetEnumerator())
-                {
-                    if (enumerator.MoveNext())
-                    {
-                        object b = enumerator.Current;
-                        if (enumerator.MoveNext())
-                        {
-                            object a = enumerator.Current;
-                            while (enumerator.MoveNext())
-                            {
-                                b = a;
-                                a = enumerator.Current;
-                            }
-                            return b;
-                        }
-                    }
-                    // We mimic the behaviour of `.Reverse().Skip(1).First()`
-                    throw new InvalidOperationException("Sequence contains no elements");
-                }
-            }
-
-            return source.GetEnumerableTargetObjectOfProperty().Reverse().Skip(last).First();
-        }
-
-        /// <summary>
-        /// Gets the parent target object of <paramref name="source"/>. It does work for nested serialized properties.<br/>
-        /// If it doesn't have parent it will return itself.
-        /// </summary>
-        /// <param name="source"><see cref="SerializedProperty"/> whose value will be get.</param>
-        /// <returns>Value of the <paramref name="source"/> as <see cref="object"/>.</returns>
-        public static object GetParentTargetObjectOfProperty(this SerializedProperty source) => source.GetTargetObjectOfProperty(1);
 
         /// <summary>
         /// Get the getter and setter of <paramref name="source"/>. It does work for nested serialized properties.<br/>
