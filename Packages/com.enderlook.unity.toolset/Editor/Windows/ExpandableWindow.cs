@@ -1,7 +1,6 @@
 ﻿using Enderlook.Unity.Toolset.Utils;
 
 using System;
-using System.Linq;
 using System.Reflection;
 
 using UnityEditor;
@@ -10,7 +9,7 @@ using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Windows
 {
-    internal class ExpandableWindow : EditorWindow
+    internal sealed class ExpandableWindow : EditorWindow
     {
         private static readonly GUIContent CONTEXT_PROPERTY_MENU = new GUIContent("Open in Window", "Open the Expandable Window");
 

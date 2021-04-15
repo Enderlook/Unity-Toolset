@@ -9,7 +9,7 @@ using UnityObject = UnityEngine.Object;
 namespace Enderlook.Unity.Toolset.Drawers
 {
     [CustomPropertyDrawer(typeof(RestrictTypeAttribute))]
-    public class RestrictTypeDrawer : SmartPropertyDrawer
+    public sealed class RestrictTypeDrawer : SmartPropertyDrawer
     {
         private float? height;
         private bool firstTime = true;

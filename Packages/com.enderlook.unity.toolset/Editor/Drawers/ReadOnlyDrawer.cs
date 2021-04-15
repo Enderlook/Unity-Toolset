@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Enderlook.Unity.Toolset.Drawers
 {
     [CustomPropertyDrawer(typeof(ReadOnlyAttribute))]
-    internal class ReadOnlyDrawer : SmartPropertyDrawer
+    internal sealed class ReadOnlyDrawer : SmartPropertyDrawer
     {
         protected override void OnGUISmart(Rect position, SerializedProperty property, GUIContent label)
         {

@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Enderlook.Unity.Toolset.Drawers
 {
     [CustomPropertyDrawer(typeof(DrawTextureAttribute))]
-    internal class DrawTextureDrawer : SmartPropertyDrawer
+    internal sealed class DrawTextureDrawer : SmartPropertyDrawer
     {
         private const int INDENT_WIDTH = 8; // TODO: This is wrong.
 
