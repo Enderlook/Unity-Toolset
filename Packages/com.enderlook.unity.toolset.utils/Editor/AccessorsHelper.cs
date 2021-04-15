@@ -8,16 +8,6 @@ namespace Enderlook.Unity.Toolset.Utils
     {
         public const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
-        public static T GetValue<T>(this object source, string name)
-        {
-            Type type = typeof(T);
-            object value = source.GetValue(name);
-            if (value is T value_)
-                return value_;
-            else
-                throw new ArgumentException($"Memeber {nameof(name)} isn't of type {typeof(T)}, but {type}.");
-        }
-
         public static object GetValue(this object source, string name)
         {
             if (source == null)
@@ -38,16 +28,6 @@ namespace Enderlook.Unity.Toolset.Utils
                 type = type.BaseType;
             }
             return null;
-        }
-
-        public static T GetValue<T>(this object source, string name, int index)
-        {
-            Type type = typeof(T);
-            object value = source.GetValue(name, index);
-            if (value is T value_)
-                return value_;
-            else
-                throw new ArgumentException($"Memeber {nameof(name)} isn't of type {typeof(T)}, but {type}.");
         }
 
         public static object GetValue(this object source, string name, int index)
