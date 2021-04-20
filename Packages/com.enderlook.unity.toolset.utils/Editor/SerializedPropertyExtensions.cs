@@ -116,7 +116,7 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <returns><see cref="FieldInfo"/> of <paramref name="source"/>.</returns>
         public static FieldInfo GetFieldInfo(this SerializedProperty source, bool includeInheritedPrivate = true)
         {
-            Type type = source.GetParentTargetObjectOfProperty().GetType();
+            Type type = source.GetParentTargetObjectOfProperty(false).GetType();
             string name = source.GetFieldName();
 
             if (includeInheritedPrivate)

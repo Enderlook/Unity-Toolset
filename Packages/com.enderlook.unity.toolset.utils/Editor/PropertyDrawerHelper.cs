@@ -61,7 +61,7 @@ namespace Enderlook.Unity.Toolset.Utils
                     {
                         field = serializedProperty.GetFieldInfo(true);
                     }
-                    catch (ArgumentNullException) // Catch Unity-related fields that aren't as (like those fields which starts with `m_`)
+                    catch (KeyNotFoundException) // Catch Unity-related fields that aren't as (like those fields which starts with `m_`)
                     {
                         continue;
                     }
