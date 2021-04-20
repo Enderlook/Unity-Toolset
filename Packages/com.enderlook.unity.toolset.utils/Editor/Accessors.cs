@@ -116,8 +116,8 @@ namespace Enderlook.Unity.Toolset.Utils
             return enumerator.Current;
         }
 
-        /// <inheritdoc cref="IAccessors{T}.GetValueType"/>
-        public Type GetValueType()
+        /// <inheritdoc cref="IAccessors{T}.GetPropertyType"/>
+        public Type GetPropertyType()
         {
             if (memberInfo is FieldInfo field)
                 return field.FieldType;

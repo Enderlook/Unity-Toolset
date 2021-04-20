@@ -1,6 +1,6 @@
 {
   "name": "com.enderlook.unity.toolset.utils",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "displayName": "Enderlook Unity Toolset Utils",
   "description": "Provides utility methods for developing Unity Editor tools.",
   "unity": "2019.2",
