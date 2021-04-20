@@ -43,6 +43,7 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         public sealed override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
+            serializedProperty = property;
             GUIContentHelper.GetGUIContent(property, ref label);
             return GetPropertyHeightSmart(property, label);
         }
