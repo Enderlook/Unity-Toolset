@@ -30,6 +30,27 @@ namespace Enderlook.Unity.Toolset.Utils
             return null;
         }
 
+        public static void SetValue(this object source, string name, object value)
+        {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source));
+
+            Type type = source.GetType();
+
+            while (type != null)
+            {
+                FieldInfo fieldInfo = type.GetField(name, bindingFlags);
+                if (fieldInfo != null)
+                    fieldInfo.SetValue(source, value);
+
+                PropertyInfo propertyInfo = type.GetProperty(name, bindingFlags);
+                if (propertyInfo != null)
+                    propertyInfo.SetValue(source, value, null);
+
+                type = type.BaseType;
+            }
+        }
+
         public static object GetValue(this object source, string name, int index)
         {
             object obj = source.GetValue(name);
@@ -46,6 +67,17 @@ namespace Enderlook.Unity.Toolset.Utils
                     throw new ArgumentOutOfRangeException($"{name} field from {source.GetType()} doesn't have an element at index {index}.");
 
             return enumerator.Current;
+        }
+
+        public static void SetValue(this object source, string name, int index, object value)
+        {
+            object obj = source.GetValue(name);
+            if (obj is Array array)
+                array.SetValue(value, index);
+            else if (obj is IList list)
+                list[index] = value;
+            else
+                throw new NotSupportedException($"Can only set values for collections that implements {nameof(IList)}");
         }
     }
 }
