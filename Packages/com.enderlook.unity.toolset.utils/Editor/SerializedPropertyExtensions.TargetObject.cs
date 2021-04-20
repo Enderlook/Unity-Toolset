@@ -20,15 +20,9 @@ namespace Enderlook.Unity.Toolset.Utils
                 throw new ArgumentNullException(nameof(source));
 
             string path = source.propertyPath.Replace(".Array.data[", "[");
+            string[] pathSections = path.Split(dotSeparator);
 
-            int total = 0;
-            for (int i = 0; i < path.Length; i++)
-            {
-                char c = path[i];
-                if (c == '.' || c == '[')
-                    total++;
-            }
-
+            int total = pathSections.Length;
             int remaining = total - count;
 
             if (count > total)
@@ -39,9 +33,9 @@ namespace Enderlook.Unity.Toolset.Utils
             if (remaining-- == 0)
                 return obj;
 
-            string GetNotFoundMessage(string element) => $"The element {element} was not found in {obj.GetType()} from {source.name} in path {path}.";
+            string GetNotFoundMessage(string element) => $"The element {element} was not found in {obj?.GetType().ToString() ?? "<NULL>"} from {source.name} in path {path}.";
 
-            foreach (string element in path.Split(dotSeparator))
+            foreach (string element in pathSections)
             {
                 if (element.Contains("["))
                 {
@@ -58,16 +52,30 @@ namespace Enderlook.Unity.Toolset.Utils
                         else
                             obj = null;
                     }
-                    if (obj == null && !preferNullInsteadOfException)
-                        throw new KeyNotFoundException(GetNotFoundMessage(element));
+
+                    if (obj == null)
+                    {
+                        if (!preferNullInsteadOfException)
+                            throw new KeyNotFoundException(GetNotFoundMessage(element));
+                        else
+                            return null;
+                    }
+
                     if (remaining-- == 0)
                         return obj;
                 }
                 else
                 {
                     obj = obj.GetValue(element);
-                    if (obj == null && !preferNullInsteadOfException)
-                        throw new KeyNotFoundException(GetNotFoundMessage(element));
+
+                    if (obj == null)
+                    {
+                        if (!preferNullInsteadOfException)
+                            throw new KeyNotFoundException(GetNotFoundMessage(element));
+                        else
+                            return null;
+                    }
+
                     if (remaining-- == 0)
                         return obj;
                 }
@@ -139,16 +147,18 @@ namespace Enderlook.Unity.Toolset.Utils
         /// </summary>
         /// <param name="source"><see cref="SerializedProperty"/> whose value will be get.</param>
         /// <param name="last">At which depth from last to first should return.</param>
+        /// <param name="preferNullInsteadOfException">If <see langword="true"/>, it will return <see langword="null"/> instead of throwing exceptions if can't find objects.</param>
         /// <returns>Value of the <paramref name="source"/> as <see cref="object"/>.</returns>
-        public static object GetTargetObjectOfProperty(this SerializedProperty source, int last = 0)
-            => source.GetLoopTargetObjectOfProperty(last);
+        public static object GetTargetObjectOfProperty(this SerializedProperty source, int last = 0, bool preferNullInsteadOfException = true)
+            => source.GetLoopTargetObjectOfProperty(last, preferNullInsteadOfException);
 
         /// <summary>
         /// Gets the parent target object of <paramref name="source"/>. It does work for nested serialized properties.
         /// </summary>
         /// <param name="source"><see cref="SerializedProperty"/> whose value will be get.</param>
+        /// <param name="preferNullInsteadOfException">If <see langword="true"/>, it will return <see langword="null"/> instead of throwing exceptions if can't find objects.</param>
         /// <returns>Value of the <paramref name="source"/> as <see cref="object"/>.</returns>
-        public static object GetParentTargetObjectOfProperty(this SerializedProperty source)
-            => source.GetTargetObjectOfProperty(1);
+        public static object GetParentTargetObjectOfProperty(this SerializedProperty source, bool preferNullInsteadOfException = true)
+            => source.GetTargetObjectOfProperty(1, preferNullInsteadOfException);
     }
 }

@@ -30,14 +30,25 @@ namespace Enderlook.Unity.Toolset.Utils
             return null;
         }
 
-        public static object GetValue(this object source, string name, int index)
+        public static object GetValue(this object source, string name, int index, bool preferNullInsteadOfThrowIfValueIsNull = true)
         {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source));
+
             object obj = source.GetValue(name);
+
+            if (obj is null)
+            {
+                if (preferNullInsteadOfThrowIfValueIsNull)
+                    return null;
+                throw new ArgumentNullException($"Value name ({name}) in source ({source}).");
+            }
+
             if (obj is Array array)
                 return array.GetValue(index);
 
             if (!(obj is IEnumerable enumerable))
-                throw new NotSupportedException($"Can only set values for collections that implements {nameof(IEnumerable)}");
+                throw new NotSupportedException("Can only get values for collections that implements " + nameof(IEnumerable) + ".");
 
             IEnumerator enumerator = enumerable.GetEnumerator();
 
