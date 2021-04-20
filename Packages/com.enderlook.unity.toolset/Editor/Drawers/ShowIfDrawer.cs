@@ -46,7 +46,7 @@ namespace Enderlook.Unity.Toolset.Drawers
         private bool IsActive(ShowIfAttribute showIfAttribute)
         {
             object parent = serializedProperty.GetParentTargetObjectOfProperty();
-            object value = parent.GetValueFromFirstMember(showIfAttribute.nameOfConditional, showIfAttribute.memberType);
+            object value = parent.GetValueFromFirstMember(showIfAttribute.nameOfConditional, showIfAttribute.memberType, true);
             bool active = value.Equals(showIfAttribute.compareTo);
             if (!showIfAttribute.mustBeEqual)
                 active = !active;
