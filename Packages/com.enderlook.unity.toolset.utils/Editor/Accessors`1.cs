@@ -14,7 +14,7 @@ namespace Enderlook.Unity.Toolset.Utils
         public Accessors(Accessors accessors)
         {
             this.accessors = accessors;
-            Type type = accessors.GetValueType();
+            Type type = accessors.GetPropertyType();
             if (type != typeof(T))
                 throw new ArgumentException($"The {nameof(accessors)} isn't of type {typeof(T)}, but {type}.");
         }
@@ -27,7 +27,7 @@ namespace Enderlook.Unity.Toolset.Utils
         public Accessors(object source, string name)
         {
             accessors = new Accessors(source, name);
-            Type type = accessors.GetValueType();
+            Type type = accessors.GetPropertyType();
             if (type != typeof(T))
                 throw new ArgumentException($"Memeber {nameof(name)} isn't of type {typeof(T)}, but {type}.");
         }
@@ -41,7 +41,7 @@ namespace Enderlook.Unity.Toolset.Utils
         public Accessors(object source, string name, int index)
         {
             accessors = new Accessors(source, name, index);
-            Type type = accessors.GetValueType();
+            Type type = accessors.GetPropertyType();
             if (type != typeof(T))
                 throw new ArgumentException($"Memeber {nameof(name)} isn't of type {typeof(T)}, but {type}.");
         }
@@ -52,8 +52,8 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <inheritdoc cref="IAccessors{T}.Set(object)"/>
         public void Set(T value) => accessors.Set(value);
 
-        /// <inheritdoc cref="IAccessors{T}.GetValueType"/>
-        public Type GetValueType() => accessors.GetValueType();
+        /// <inheritdoc cref="IAccessors{T}.GetPropertyType"/>
+        public Type GetPropertyType() => accessors.GetPropertyType();
 
         /// <inheritdoc cref="IEquatable{T}.Equals(T)"/>
         public bool Equals(Accessors<T> other) => accessors.Equals(other.accessors);

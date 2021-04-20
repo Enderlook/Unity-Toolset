@@ -23,6 +23,6 @@ namespace Enderlook.Unity.Toolset.Utils
         /// Returns the type of objects this accessor use.
         /// </summary>
         /// <returns>Type of objects this accessor use.</returns>
-        Type GetValueType();
+        Type GetPropertyType();
     }
 }
