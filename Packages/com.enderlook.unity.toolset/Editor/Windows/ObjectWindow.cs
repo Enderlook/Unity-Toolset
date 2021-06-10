@@ -58,6 +58,9 @@ namespace Enderlook.Unity.Toolset.Windows
                 if (fieldInfo is null)
                     return;
 
+                if (fieldInfo.FieldType.IsArrayOrList() && !property.propertyPath.EndsWith("]"))
+                    return;
+
                 if (typeof(UnityObject).IsAssignableFrom(property.GetPropertyType()))
                     menu.AddItem(
                         CONTEXT_PROPERTY_MENU,
