@@ -15,8 +15,8 @@ namespace Enderlook.Unity.Toolset.Utils
         {
             this.accessors = accessors;
             Type type = accessors.GetPropertyType();
-            if (type != typeof(T))
-                throw new ArgumentException($"The {nameof(accessors)} isn't of type {typeof(T)}, but {type}.");
+            if (!typeof(T).IsAssignableFrom(type))
+                ThrowTypeIsNotAssignableException(type);
         }
 
         /// <summary>
@@ -28,8 +28,8 @@ namespace Enderlook.Unity.Toolset.Utils
         {
             accessors = new Accessors(source, name);
             Type type = accessors.GetPropertyType();
-            if (type != typeof(T))
-                throw new ArgumentException($"Memeber {nameof(name)} isn't of type {typeof(T)}, but {type}.");
+            if (!typeof(T).IsAssignableFrom(type))
+                ThrowTypeIsNotAssignableException(type);
         }
 
         /// <summary>
@@ -42,8 +42,8 @@ namespace Enderlook.Unity.Toolset.Utils
         {
             accessors = new Accessors(source, name, index);
             Type type = accessors.GetPropertyType();
-            if (type != typeof(T))
-                throw new ArgumentException($"Memeber {nameof(name)} isn't of type {typeof(T)}, but {type}.");
+            if (!typeof(T).IsAssignableFrom(type))
+                ThrowTypeIsNotAssignableException(type);
         }
 
         /// <inheritdoc cref="IAccessors{T}.Get"/>
@@ -82,5 +82,7 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <param name="right">Instance to check.</param>
         /// <returns>Whenever both instances are not equal.</returns>
         public static bool operator !=(Accessors<T> left, Accessors<T> right) => !(left == right);
+
+        private static void ThrowTypeIsNotAssignableException(Type type) => throw new ArgumentException($"The accessors isn't assignable to type {typeof(T)}, but {type}.");
     }
 }
