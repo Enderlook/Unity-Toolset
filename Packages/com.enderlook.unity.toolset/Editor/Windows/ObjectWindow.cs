@@ -441,6 +441,18 @@ namespace Enderlook.Unity.Toolset.Windows
                     addToAssetButton.SetEnabled(value);
                     addToSceneButton.SetEnabled(value);
                 });
+
+#if UNITY_2020_1_OR_NEWER
+                Action<IEnumerable<object>> callback = _ =>
+                {
+                    bool value = !string.IsNullOrEmpty(nameField.value);
+                    saveAssetButton.SetEnabled(value);
+                    addToAssetButton.SetEnabled(value);
+                    addToSceneButton.SetEnabled(value);
+                };
+                list.onItemsChosen += callback;
+                list.onSelectionChange += callback;
+#else
                 list.onItemChosen += _ =>
                 {
                     bool value = !string.IsNullOrEmpty(nameField.value);
@@ -448,6 +460,14 @@ namespace Enderlook.Unity.Toolset.Windows
                     addToAssetButton.SetEnabled(value);
                     addToSceneButton.SetEnabled(value);
                 };
+                list.onSelectionChanged += _ =>
+                {
+                    bool value = !string.IsNullOrEmpty(nameField.value);
+                    saveAssetButton.SetEnabled(value);
+                    addToAssetButton.SetEnabled(value);
+                    addToSceneButton.SetEnabled(value);
+                };
+#endif
 
                 saveAssetButton.clickable.clicked += () =>
                 {
@@ -520,11 +540,19 @@ namespace Enderlook.Unity.Toolset.Windows
                         list.selectionType = SelectionType.Single;
                         list.style.flexGrow = 1;
                         list.selectedIndex = elements.Count - 1;
+#if UNITY_2020_1_OR_NEWER
+                        list.onItemsChosen += e =>
+                        {
+                            accessors.Set((UnityObject)e.First());
+                            propertyField.Set(property.objectReferenceValue);
+                        };
+#else
                         list.onItemChosen += e =>
                         {
                             accessors.Set((UnityObject)e);
                             propertyField.Set(property.objectReferenceValue);
                         };
+#endif
                     }
                     box.Add(list);
 
@@ -537,6 +565,19 @@ namespace Enderlook.Unity.Toolset.Windows
                 {
                     selectedField.style.display = DisplayStyle.None;
 
+#if UNITY_2020_1_OR_NEWER
+                    list.onSelectionChange += e =>
+                    {
+                        UnityObject objectReferenceValue = (UnityObject)e.FirstOrDefault();
+                        if (objectReferenceValue is null)
+                        {
+                            selectedField.Set(objectReferenceValue);
+                            selectedField.style.display = DisplayStyle.Flex;
+                        }
+                        else
+                            selectedField.style.display = DisplayStyle.None;
+                    };
+#else
                     list.onSelectionChanged += e =>
                     {
                         if (e.Count == 0)
@@ -548,6 +589,7 @@ namespace Enderlook.Unity.Toolset.Windows
                             selectedField.style.display = objectReferenceValue is null ? DisplayStyle.None : DisplayStyle.Flex;
                         }
                     };
+#endif
                 }
                 pickerContent.Add(selectedField);
             }
