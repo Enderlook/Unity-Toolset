@@ -168,7 +168,11 @@ namespace Enderlook.Unity.Toolset.Utils
                     PrefabStage prefabStage = PrefabStageUtility.GetPrefabStage(gameObject);
                     if (!(prefabStage is null))
                         // Object was in a prefab
+#if UNITY_2020_1_OR_NEWER
+                        path = prefabStage.assetPath;
+#else
                         path = prefabStage.prefabAssetPath;
+#endif
                 }
             }
             return path;
