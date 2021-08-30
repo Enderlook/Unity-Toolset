@@ -15,6 +15,8 @@ namespace Enderlook.Unity.Toolset.Drawers
     [CustomPropertyDrawer(typeof(DrawVectorRelativeToTransformAttribute)), InitializeOnLoad]
     internal sealed class DrawVectorRelativeToTransformEditor : SmartPropertyDrawer
     {
+        private const string MENU_NAME = "Enderlook/Toolset/Enable Draw Vector Relative To Tranform";
+
         private static readonly Handles.CapFunction handleCap = Handles.SphereHandleCap;
 
         private static readonly string vectorTypes = $"{nameof(Vector3)}, {nameof(Vector3Int)}, {nameof(Vector2)}, {nameof(Vector2Int)}, {nameof(Vector4)}";
@@ -38,6 +40,8 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         private static bool showButton;
 
+        private static bool enableFeature;
+
         protected override void OnGUISmart(Rect position, SerializedProperty property, GUIContent label)
         {
             EditorGUI.BeginProperty(position, label, property);
@@ -45,7 +49,22 @@ namespace Enderlook.Unity.Toolset.Drawers
             EditorGUI.EndProperty();
         }
 
-        static DrawVectorRelativeToTransformEditor() => SceneView.duringSceneGui += RenderSceneGUI;
+        static DrawVectorRelativeToTransformEditor()
+        {
+            SceneView.duringSceneGui += RenderSceneGUI;
+            enableFeature = EditorPrefs.GetBool(MENU_NAME, true);
+            EditorApplication.delayCall += () => SetFeature(enableFeature);
+        }
+
+        [MenuItem(MENU_NAME)]
+        private static void ToggleFeatureButton() => SetFeature(!enableFeature);
+
+        private static void SetFeature(bool enabled)
+        {
+            enableFeature = enabled;
+            Menu.SetChecked(MENU_NAME, enabled);
+            EditorPrefs.SetBool(MENU_NAME, enabled);
+        }
 
         private static Vector3 DrawHandle(Vector3 position, bool usePositionHandle)
         {
@@ -230,6 +249,9 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         private static void RenderSceneGUI(SceneView sceneview)
         {
+            if (!enableFeature)
+                return;
+
             if (Event.current != null)
             {
                 if (Event.current.type == EventType.KeyDown && Event.current.control)
