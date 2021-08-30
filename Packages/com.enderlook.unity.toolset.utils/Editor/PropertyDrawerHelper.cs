@@ -68,7 +68,7 @@ namespace Enderlook.Unity.Toolset.Utils
                     if (field == null)
                         continue;
                     Attribute attribute = field.GetCustomAttribute(typeof(T), inherit);
-                    if (attribute != null && attribute.GetType() == typeof(T))
+                    if (attribute?.GetType() == typeof(T))
                         yield return (serializedProperty, field, (T)attribute, editor);
                 }
             }
