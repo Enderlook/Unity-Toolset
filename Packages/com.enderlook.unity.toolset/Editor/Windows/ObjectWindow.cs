@@ -23,9 +23,10 @@ namespace Enderlook.Unity.Toolset.Windows
     {
         private static readonly GUIContent CONTEXT_PROPERTY_MENU = new GUIContent("Object Menu", "Open the Object Menu");
         private static readonly GUIContent TITLE_CONTENT = new GUIContent("Object Menu");
+        private const string EDIT_POPUP = "Edit";
         private const string SELECT_POPUP = "Select";
         private const string CREATE_POPUP = "Create";
-        private static readonly List<string> POPUP_OPTIONS = new List<string>() { SELECT_POPUP, CREATE_POPUP };
+        private static readonly List<string> POPUP_OPTIONS = new List<string>() { EDIT_POPUP, SELECT_POPUP, CREATE_POPUP };
         private static readonly List<HideFlags> HIDE_FLAGS = new List<HideFlags>((HideFlags[])Enum.GetValues(typeof(HideFlags)));
         private static readonly char[] SPLIT = new char[] { '/' };
 
@@ -276,38 +277,39 @@ namespace Enderlook.Unity.Toolset.Windows
                 {
                     scroll.style.flexGrow = 1;
 
-                    Field propertyField = new Field("Property", property);
-                    {
-                        propertyField.style.flexGrow = .25f;
-                    }
-                    scroll.Add(propertyField);
-
-                    VisualElement middleContent = DrawMiddle(propertyField);
+                    VisualElement middleContent = DrawMiddle();
                     scroll.Add(middleContent);
                 }
                 rootVisualElement.Add(scroll);
             });
         }
 
-        private VisualElement DrawMiddle(Field propertyField)
+        private VisualElement DrawMiddle()
         {
             VisualElement middleContent = new VisualElement();
             {
                 middleContent.style.flexGrow = 1;
 
-                PopupField<string> middleTab = new PopupField<string>("Panel", POPUP_OPTIONS, "Select");
+                PopupField<string> middleTab = new PopupField<string>("Panel", POPUP_OPTIONS, EDIT_POPUP);
                 {
                     middleTab.SetEnabled(allowedTypesToInstantiate.Count > 0);
                 }
                 middleContent.Add(middleTab);
 
+                Field propertyField = new Field("", property);
+                {
+                    propertyField.style.display = DisplayStyle.Flex;
+                }
+
+                middleContent.Add(propertyField);
+
                 VisualElement pickerContent = DrawPickerContent(propertyField);
                 {
-                    pickerContent.style.display = DisplayStyle.Flex;
+                    pickerContent.style.display = DisplayStyle.None;
                 }
                 middleContent.Add(pickerContent);
 
-                VisualElement createContent = DrawCreateContent(propertyField);
+                VisualElement createContent = DrawCreateContent();
                 {
                     createContent.style.display = DisplayStyle.None;
                 }
@@ -317,11 +319,18 @@ namespace Enderlook.Unity.Toolset.Windows
                 {
                     switch (e.newValue)
                     {
-                        case "Select":
+                        case EDIT_POPUP:
+                            propertyField.style.display = DisplayStyle.Flex;
+                            pickerContent.style.display = DisplayStyle.None;
+                            createContent.style.display = DisplayStyle.None;
+                            break;
+                        case SELECT_POPUP:
+                            propertyField.style.display = DisplayStyle.None;
                             pickerContent.style.display = DisplayStyle.Flex;
                             createContent.style.display = DisplayStyle.None;
                             break;
-                        case "Create":
+                        case CREATE_POPUP:
+                            propertyField.style.display = DisplayStyle.None;
                             pickerContent.style.display = DisplayStyle.None;
                             createContent.style.display = DisplayStyle.Flex;
                             break;
@@ -332,18 +341,11 @@ namespace Enderlook.Unity.Toolset.Windows
             return middleContent;
         }
 
-        private VisualElement DrawCreateContent(Field propertyField)
+        private VisualElement DrawCreateContent()
         {
             VisualElement createContent = new VisualElement();
             {
                 createContent.style.flexGrow = 1;
-
-                Label label = new Label("Creator");
-                {
-                    label.style.alignSelf = Align.Center;
-                    label.style.unityFontStyleAndWeight = FontStyle.Bold;
-                }
-                createContent.Add(label);
 
                 TextField nameField = new TextField("Name");
                 {
@@ -430,47 +432,25 @@ namespace Enderlook.Unity.Toolset.Windows
                 }
                 createContent.Add(box);
 
-                textField.RegisterValueChangedCallback(_ =>
-                {
-                    bool value = !string.IsNullOrEmpty(nameField.name) && list.selectedItem != null;
-                    saveAssetButton.SetEnabled(value);
-                    addToAssetButton.SetEnabled(value);
-                    addToSceneButton.SetEnabled(value);
-                });
-                nameField.RegisterValueChangedCallback(e =>
-                {
-                    bool value = !string.IsNullOrEmpty(e.newValue) && list.selectedItem != null;
-                    saveAssetButton.SetEnabled(value);
-                    addToAssetButton.SetEnabled(value);
-                    addToSceneButton.SetEnabled(value);
-                });
+                textField.RegisterValueChangedCallback(_ => Check(nameField.value));
+                nameField.RegisterValueChangedCallback(e => Check(e.newValue));
 
 #if UNITY_2020_1_OR_NEWER
-                Action<IEnumerable<object>> callback = _ =>
-                {
-                    bool value = !string.IsNullOrEmpty(nameField.value);
-                    saveAssetButton.SetEnabled(value);
-                    addToAssetButton.SetEnabled(value);
-                    addToSceneButton.SetEnabled(value);
-                };
+                Action<IEnumerable<object>> callback = _ => Check(nameField.value);
                 list.onItemsChosen += callback;
                 list.onSelectionChange += callback;
 #else
-                list.onItemChosen += _ =>
-                {
-                    bool value = !string.IsNullOrEmpty(nameField.value);
-                    saveAssetButton.SetEnabled(value);
-                    addToAssetButton.SetEnabled(value);
-                    addToSceneButton.SetEnabled(value);
-                };
-                list.onSelectionChanged += _ =>
-                {
-                    bool value = !string.IsNullOrEmpty(nameField.value);
-                    saveAssetButton.SetEnabled(value);
-                    addToAssetButton.SetEnabled(value);
-                    addToSceneButton.SetEnabled(value);
-                };
+                list.onItemChosen += _ => Check(nameField.value);
+                list.onSelectionChanged += _ => Check(nameField.value);
 #endif
+
+                void Check(string text)
+                {
+                    bool value = !string.IsNullOrEmpty(text) && list.selectedItem != null;
+                    saveAssetButton.SetEnabled(value);
+                    addToAssetButton.SetEnabled(value);
+                    addToSceneButton.SetEnabled(value);
+                }
 
                 saveAssetButton.clickable.clicked += () =>
                 {
@@ -497,13 +477,6 @@ namespace Enderlook.Unity.Toolset.Windows
             VisualElement pickerContent = new VisualElement();
             {
                 pickerContent.style.flexGrow = 1;
-
-                Label label = new Label("Picker");
-                {
-                    label.style.alignSelf = Align.Center;
-                    label.style.unityFontStyleAndWeight = FontStyle.Bold;
-                }
-                pickerContent.Add(label);
 
                 Button searchInContext, searchInAssets;
                 VisualElement buttonsBar = new VisualElement();
