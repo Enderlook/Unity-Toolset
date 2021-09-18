@@ -5,7 +5,6 @@ using Enderlook.Unity.Toolset.Checking.PostCompiling.Attributes;
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 
 using UnityEngine;
@@ -14,21 +13,18 @@ namespace Enderlook.Unity.Toolset.Testing
 {
     internal static class GUITesting
     {
-        private static readonly Dictionary<Type, List<GUIAttribute>> typesAndAttributes = new Dictionary<Type, List<GUIAttribute>>();
+        private static readonly Dictionary<Type, List<(FieldInfo field, GUIAttribute attribute)>> typesAndAttributes = new Dictionary<Type, List<(FieldInfo field, GUIAttribute attribute)>>();
 
         [ExecuteOnEachFieldOfEachTypeWhenScriptsReloads(FieldSerialization.SerializableByUnity, 0)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper")]
         private static void GetFields(FieldInfo fieldInfo)
         {
-            if (fieldInfo.CheckIfShouldBeIgnored(typeof(GUIAttribute)))
-                return;
-            if (fieldInfo.GetCustomAttribute<GUIAttribute>() is GUIAttribute attribute)
+            if (fieldInfo.GetCustomAttribute<GUIAttribute>() is GUIAttribute attribute && !fieldInfo.CheckIfShouldBeIgnored(typeof(GUIAttribute)))
             {
                 Type type = fieldInfo.DeclaringType;
-                if (typesAndAttributes.TryGetValue(type, out List<GUIAttribute> list))
-                    list.Add(attribute);
-                else
-                    typesAndAttributes.Add(type, new List<GUIAttribute>() { attribute });
+                if (!typesAndAttributes.TryGetValue(type, out List<(FieldInfo field, GUIAttribute attribute)> list))
+                    typesAndAttributes.Add(type, (list = new List<(FieldInfo field, GUIAttribute attribute)>()));
+                list.Add((fieldInfo, attribute));
             }
         }
 
@@ -36,39 +32,84 @@ namespace Enderlook.Unity.Toolset.Testing
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper")]
         private static void CheckFields()
         {
-            foreach (KeyValuePair<Type, List<GUIAttribute>> classToCheck in typesAndAttributes)
+            Stack<HashSet<string>> stack = new Stack<HashSet<string>>();
+            Dictionary<string, HashSet<string>> strings = new Dictionary<string, HashSet<string>>();
+
+            foreach (KeyValuePair<Type, List<(FieldInfo field, GUIAttribute attribute)>> classToCheck in typesAndAttributes)
             {
-                Type classType = classToCheck.Key;
-                List<GUIAttribute> attributes = classToCheck.Value;
+                for (int i = 0; i < classToCheck.Value.Count; i++)
+                {
+                    (FieldInfo field, GUIAttribute attribute) = classToCheck.Value[i];
 
-                HashSet<string> strings = new HashSet<string>(
-                    attributes
-                        .Where(e => e.nameMode == GUIAttribute.Mode.Reference)
-                        .Select(e => e.name)
-                        .Concat(
-                            attributes
-                                .Where(e => e.tooltipMode == GUIAttribute.Mode.Reference)
-                                .Select(e => e.tooltip)
-                        )
-                        .Where(e => e != null)
-                    );
+                    string name = attribute.name;
+                    if (attribute.nameMode == GUIAttribute.Mode.Reference && name != null)
+                    {
+                        if (!strings.TryGetValue(name, out HashSet<string> hashSet))
+                        {
+                            if (!stack.TryPop(out hashSet))
+                                hashSet = new HashSet<string>();
+                            strings.Add(name, hashSet);
+                        }
+                        hashSet.Add(field.Name);
+                    }
 
-                HashSet<string> members = new HashSet<string>(classType.FieldsPropertiesAndMethodsWithReturnTypeOf<string>());
+                    string tooltip = attribute.tooltip;
+                    if (attribute.tooltipMode == GUIAttribute.Mode.Reference && tooltip != null)
+                    {
+                        if (!strings.TryGetValue(tooltip, out HashSet<string> hashSet))
+                        {
+                            if (!stack.TryPop(out hashSet))
+                                hashSet = new HashSet<string>();
+                            strings.Add(tooltip, hashSet);
+                        }
+                        hashSet.Add(field.Name);
+                    }
+                }
 
-                strings.ExceptWith(members);
+                foreach (string member in classToCheck.Key.FieldsPropertiesAndMethodsWithReturnTypeOf<string>())
+                    strings.Remove(member);
 
-                foreach (string field in strings)
-                    Debug.LogError($"Type {classType} does not have a field, property (with Get Method) or method (with only optional or params pameters and with a return type other than void) of type {typeof(string)} named {field} necessary for attribute {nameof(GUIAttribute)}.");
+                foreach (KeyValuePair<string, HashSet<string>> kvp in strings)
+                    foreach (string name in kvp.Value)
+                        Debug.LogError($"Type {classToCheck.Key} does not have a field, property (with Get method) or method (with only optional or params pameters and with a return type other than void) of type {typeof(string)} named '{kvp.Key}' necessary for attribute {nameof(GUIAttribute)} on field named {name}.");
 
-                HashSet<string> stringOrGUIContent = new HashSet<string>(
-                    attributes
-                        .Select(e => e.guiContentOrReferenceName)
-                        .Where(e => e != null)
-                    );
+                foreach (HashSet<string> hashset in strings.Values)
+                {
+                    hashset.Clear();
+                    stack.Push(hashset);
+                }
+                strings.Clear();
 
-                members.UnionWith(classType.FieldsPropertiesAndMethodsWithReturnTypeOf<GUIContent>());
+                for (int i = 0; i < classToCheck.Value.Count; i++)
+                {
+                    (FieldInfo field, GUIAttribute attribute) = classToCheck.Value[i];
 
-                stringOrGUIContent.ExceptWith(members);
+                    string name = attribute.guiContentOrReferenceName;
+                    if (name != null)
+                    {
+                        if (!strings.TryGetValue(name, out HashSet<string> hashSet))
+                        {
+                            if (!stack.TryPop(out hashSet))
+                                hashSet = new HashSet<string>();
+                            strings.Add(name, hashSet);
+                        }
+                        hashSet.Add(field.Name);
+                    }
+                }
+
+                foreach (string member in classToCheck.Key.FieldsPropertiesAndMethodsWithReturnTypeOf<GUIContent>())
+                    strings.Remove(member);
+
+                foreach (KeyValuePair<string, HashSet<string>> kvp in strings)
+                    foreach (string name in kvp.Value)
+                        Debug.LogError($"Type {classToCheck.Key} does not have a field, property (with Get method) or method (with only optional or params pameters and with a return type other than void) of type {typeof(GUIContent)} named '{kvp.Key}' necessary for attribute {nameof(GUIAttribute)} on field named {name}.");
+
+                foreach (HashSet<string> hashset in strings.Values)
+                {
+                    hashset.Clear();
+                    stack.Push(hashset);
+                }
+                strings.Clear();
             }
         }
     }
