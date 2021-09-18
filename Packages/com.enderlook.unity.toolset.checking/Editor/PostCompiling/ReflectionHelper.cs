@@ -121,23 +121,26 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
         /// <param name="class">Type where member are looked for.</param>
         /// <param name="return">Return type for criteria.</param>
         /// <returns>Member names which matches the criteria.</returns>
-        public static IEnumerable<string> FieldsPropertiesAndMethodsWithReturnTypeOf(this Type @class, Type @return) => @class
-                .GetFields(bindingFlags)
-                .Where(field => field.FieldType.IsCastableTo(@return) && field.CanBeSerializedByUnity())
-                .Cast<MemberInfo>()
-                .Concat(
-                    @class
-                        .GetProperties(bindingFlags)
-                        .Where(property => property.PropertyType.IsCastableTo(@return) && property.CanRead)
-                        .Cast<MemberInfo>()
-                )
-                .Concat(
-                    @class
-                        .GetMethods(bindingFlags)
-                        .Where(method => method.ReturnType.IsCastableTo(@return) && method.HasNoMandatoryParameters())
-                        .Cast<MemberInfo>()
-                )
-                .Select(member => member.Name);
+        public static IEnumerable<string> FieldsPropertiesAndMethodsWithReturnTypeOf(this Type @class, Type @return)
+        {
+            foreach (FieldInfo field in @class.GetFields(bindingFlags))
+            {
+                if (field.FieldType.IsCastableTo(@return) && field.CanBeSerializedByUnity())
+                    yield return field.Name;
+            }
+
+            foreach (PropertyInfo property in @class.GetProperties(bindingFlags))
+            {
+                if (property.PropertyType.IsCastableTo(@return) && property.CanRead)
+                    yield return property.Name;
+            }
+
+            foreach (MethodInfo method in @class.GetMethods(bindingFlags))
+            {
+                if (method.ReturnType.IsCastableTo(@return) && method.HasNoMandatoryParameters())
+                    yield return method.Name;
+            }
+        }
 
         /// <summary>
         /// Get all member names of <paramref name="class"/> which:
