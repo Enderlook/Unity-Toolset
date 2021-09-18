@@ -12,83 +12,71 @@ namespace Enderlook.Unity.Toolset.Attributes
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = true, Inherited = true)]
     public sealed class ShowIfAttribute : PropertyAttribute
     {
-        /// <summary>
-        /// Action to take depending of the condition.
-        /// </summary>
-        public enum ActionMode
-        {
-            /// <summary>
-            /// The property will be hidden or show depending of the condition.
-            /// </summary>
-            ShowHide,
+        private static readonly object TRUE = true;
 
-            /// <summary>
-            /// The property will be disabled or enabled depending of the condition.
-            /// </summary>
-            EnableDisable,
-        }
-
-        public readonly string nameOfConditional;
-        public readonly ActionMode mode;
-        public readonly bool mustBeEqual;
+        public readonly DisplayMode displayMode;
+        public readonly string firstProperty;
+        public readonly string secondProperty;
         public readonly object compareTo;
-        public readonly Type memberType;
+        public readonly ComparisonMode comparison;
+        public readonly Mode mode;
+        public readonly bool chain;
+
+        public enum Mode
+        {
+            WithObject,
+            WithProperty,
+            Single,
+        }
 
         /// <summary>
-        /// Action to take depending of the condition.
+        /// Hide, show, enable or disable a property depending on a condition.
         /// </summary>
-        /// <param name="nameOfConditional">Action to take depending of the condition.</param>
-        /// <param name="memberType">Type of the <see cref="nameOfConditional"/>.</param>
+        /// <param name="property">Value compared to <paramref name="compareTo"/>.</param>
         /// <param name="compareTo">The conditional will be compated to this value.</param>
-        public ShowIfAttribute(string nameOfConditional, Type memberType, object compareTo, ActionMode mode = ActionMode.ShowHide)
+        /// <param name="comparison">Comparison mode between <paramref name="property"/> and <paramref name="compareTo"/>.</param>
+        /// <param name="mode">How property should be displayed.</param>
+        /// <param name="chain">If <see cref="true"/> and <paramref name="property"/> has attribute <see cref="ShowIfAttribute"/>, this will execute only if <paramref name="property"/> was success.</param>
+        public ShowIfAttribute(string property, object compareTo, ComparisonMode comparison = ComparisonMode.Equal, DisplayMode mode = DisplayMode.ShowHide, bool chain = true)
         {
-            this.nameOfConditional = nameOfConditional;
-            this.memberType = memberType;
-            this.mode = mode;
+            this.mode = Mode.WithObject;
+            displayMode = mode;
+            firstProperty = property;
             this.compareTo = compareTo;
-            mustBeEqual = true;
+            this.comparison = comparison;
+            this.chain = chain;
         }
 
         /// <summary>
-        /// Action to take depending of the condition.
+        /// Hide, show, enable or disable a property depending on a condition.
         /// </summary>
-        /// <param name="nameOfConditional">Action to take depending of the condition.</param>
-        /// <param name="memberType">Type of the <see cref="nameOfConditional"/>.</param>
-        /// <param name="compareTo">The conditional will be compated to this value.</param>
-        /// <param name="mustBeEqual">Whenever the conditional value must match or not <paramref name="compareTo"/>.</param>
-        /// <param name="mode"></param>
-        public ShowIfAttribute(string nameOfConditional, Type memberType, object compareTo, bool mustBeEqual = true, ActionMode mode = ActionMode.ShowHide)
+        /// <param name="comparison">Comparison mode between <paramref name="firstProperty"/> and <paramref name="secondProperty"/>.</param>
+        /// <param name="firstProperty">Value compared to <paramref name="secondProperty"/>.</param>
+        /// <param name="secondProperty">Value compared to <paramref name="firstProperty"/>.</param>
+        /// <param name="mode">How property should be displayed.</param>
+        /// <param name="chain">If <see cref="true"/> and <paramref name="property"/> has attribute <see cref="ShowIfAttribute"/>, this will execute only if <paramref name="property"/> was success.</param>
+        public ShowIfAttribute(ComparisonMode comparison, string firstProperty, string secondProperty, DisplayMode mode = DisplayMode.ShowHide, bool chain = true)
         {
-            this.nameOfConditional = nameOfConditional;
-            this.mode = mode;
-            this.compareTo = compareTo;
-            this.mustBeEqual = mustBeEqual;
-            this.memberType = memberType;
+            this.mode = Mode.WithProperty;
+            displayMode = mode;
+            this.firstProperty = firstProperty;
+            this.secondProperty = secondProperty;
+            this.comparison = comparison;
+            this.chain = chain;
         }
 
         /// <summary>
-        /// Action to take depending of the condition.
+        /// Hide, show, enable or disable a property depending if <paramref name="property"/> is <see cref="true"/>.
         /// </summary>
-        /// <param name="goal">The conditional must be a boolean value equal to this.</param>
-        public ShowIfAttribute(string nameOfConditional, bool goal, ActionMode mode = ActionMode.ShowHide)
+        /// <param name="chain">If <see cref="true"/> and <paramref name="property"/> has attribute <see cref="ShowIfAttribute"/>, this will execute only if <paramref name="property"/> was success.</param>
+        public ShowIfAttribute(string property, DisplayMode mode = DisplayMode.ShowHide, bool chain = true)
         {
-            this.nameOfConditional = nameOfConditional;
-            this.mode = mode;
-            mustBeEqual = true;
-            compareTo = goal;
-            memberType = typeof(bool);
-        }
-
-        /// <summary>
-        /// Action to take if <paramref name="nameOfConditional"/> results in <see langword="true"/>.
-        /// </summary>
-        public ShowIfAttribute(string nameOfConditional, ActionMode mode = ActionMode.ShowHide)
-        {
-            this.nameOfConditional = nameOfConditional;
-            this.mode = mode;
-            mustBeEqual = true;
-            compareTo = true;
-            memberType = typeof(bool);
+            this.mode = Mode.Single;
+            displayMode = mode;
+            firstProperty = property;
+            compareTo = TRUE;
+            comparison = ComparisonMode.Equal;
+            this.chain = chain;
         }
     }
 }

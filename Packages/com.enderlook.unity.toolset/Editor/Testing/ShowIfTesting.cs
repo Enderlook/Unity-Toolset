@@ -1,12 +1,10 @@
 ﻿using Enderlook.Reflection;
 using Enderlook.Unity.Toolset.Attributes;
 using Enderlook.Unity.Toolset.Checking;
-using Enderlook.Unity.Toolset.Checking.PostCompiling;
 using Enderlook.Unity.Toolset.Checking.PostCompiling.Attributes;
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 
 using UnityEngine;
@@ -15,7 +13,8 @@ namespace Enderlook.Unity.Toolset.Testing
 {
     internal static class ShowfIfTesting
     {
-        private static readonly Dictionary<Type, List<ShowIfAttribute>> typesAndAttributes = new Dictionary<Type, List<ShowIfAttribute>>();
+        private static readonly Type[] type2 = new Type[2];
+        private static readonly Dictionary<Type, List<(FieldInfo field, ShowIfAttribute attribute)>> typesAndAttributes = new Dictionary<Type, List<(FieldInfo field, ShowIfAttribute attribute)>>();
 
         [ExecuteOnEachFieldOfEachTypeWhenScriptsReloads(FieldSerialization.SerializableByUnity, 0)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper")]
@@ -26,10 +25,9 @@ namespace Enderlook.Unity.Toolset.Testing
             if (fieldInfo.GetCustomAttribute<ShowIfAttribute>() is ShowIfAttribute attribute)
             {
                 Type type = fieldInfo.DeclaringType;
-                if (typesAndAttributes.TryGetValue(type, out List<ShowIfAttribute> list))
-                    list.Add(attribute);
-                else
-                    typesAndAttributes.Add(type, new List<ShowIfAttribute>() { attribute });
+                if (!typesAndAttributes.TryGetValue(type, out List<(FieldInfo field, ShowIfAttribute attribute)> list))
+                    typesAndAttributes.Add(type, (list = new List<(FieldInfo field, ShowIfAttribute attribute)>()));
+                list.Add((fieldInfo, attribute));
             }
         }
 
@@ -37,15 +35,91 @@ namespace Enderlook.Unity.Toolset.Testing
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper")]
         private static void CheckFields()
         {
-            foreach (KeyValuePair<Type, List<ShowIfAttribute>> classToCheck in typesAndAttributes)
-            {
-                Type classType = classToCheck.Key;
-                HashSet<string> confirmFields = new HashSet<string>(classToCheck.Value.Select(e => e.nameOfConditional));
+            // TODO: This could be optimized by deduplicating similar checkings.
 
-                foreach ((string memberName, Type memberType) in classToCheck.Value.Select(e => (e.nameOfConditional, e.memberType)).Distinct())
-                    if (classType.GetFirstMemberInfoInMatchReturn(memberName, memberType, true) is null)
-                        Debug.LogError($"{classType} does not have a field, property (with Get Method) or method (without mandatory parameters and with return type) of type {memberType} named {memberName} necessary for attribute {nameof(ShowIfAttribute)}.");
+            foreach (KeyValuePair<Type, List<(FieldInfo field, ShowIfAttribute attribute)>> kvp in typesAndAttributes)
+            {
+                foreach ((FieldInfo field, ShowIfAttribute attribute) in kvp.Value)
+                {
+                    string firstProperty = attribute.firstProperty;
+                    if (firstProperty is null)
+                    {
+                        Debug.LogError($"Value of property {nameof(attribute.firstProperty)} is null or empty in attribute {nameof(ShowIfAttribute)} in field {field.Name} of type {field.ReflectedType.Name}.");
+                        continue;
+                    }
+
+                    Type firstType = GetType(kvp.Key, firstProperty);
+                    if (firstType is null)
+                    {
+                        Debug.LogError($"No field, property (with Get method), or method with no mandatory parameters of name '{attribute.firstProperty}' in attribute {nameof(ShowIfAttribute)} in field {field.Name} of type {field.ReflectedType.Name} was found.");
+                        continue;
+                    }
+
+                    switch (attribute.mode)
+                    {
+                        case ShowIfAttribute.Mode.Single:
+                        {
+                            if (firstType != typeof(bool))
+                                Debug.LogError($"Value of property {nameof(attribute.firstProperty)} in attribute {nameof(ShowIfAttribute)} in field {field.Name} of type {field.ReflectedType.Name} is not boolean, but no other property nor compared object was specified.");
+                            break;
+                        }
+                        case ShowIfAttribute.Mode.WithObject:
+                        {
+                            // TODO: Check if the comparison is legal.
+                            break;
+                        }
+                        case ShowIfAttribute.Mode.WithProperty:
+                        {
+                            string secondProperty = attribute.secondProperty;
+                            if (secondProperty is null)
+                            {
+                                Debug.LogError($"Value of property {nameof(attribute.secondProperty)} is null or empty in attribute {nameof(ShowIfAttribute)} in field {field.Name} of type {field.ReflectedType.Name}.");
+                                break;
+                            }
+
+                            Type secondType = GetType(kvp.Key, secondProperty);
+                            if (secondType is null)
+                            {
+                                Debug.LogError($"No field, property (with Get method), or method with no mandatory parameters of name '{attribute.secondProperty}' in attribute {nameof(ShowIfAttribute)} in field {field.Name} of type {field.ReflectedType.Name} was found.");
+                                break;
+                            }
+
+                            // TODO: Check if the comparison is legal.
+                            break;
+                        }
+                        default:
+                        {
+                            Debug.Assert(false, "Impossible state.");
+                            break;
+                        }
+                    }
+                }
             }
+        }
+
+        private static Type GetType(Type originalType, string name)
+        {
+            Type type = originalType;
+            start:
+            foreach (MemberInfo memberInfo in type.GetMembers(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
+            {
+                if (memberInfo.Name != name)
+                    continue;
+
+                if (memberInfo is FieldInfo fieldInfo)
+                    return fieldInfo.FieldType;
+
+                if (memberInfo is PropertyInfo propertyInfo && propertyInfo.CanRead)
+                    return propertyInfo.PropertyType;
+
+                if (memberInfo is MethodInfo methodInfo && methodInfo.ReturnType != typeof(void) && methodInfo.HasNoMandatoryParameters())
+                    return methodInfo.ReturnType;
+            }
+
+            type = type.BaseType;
+            if (type == null)
+                return default;
+            goto start;
         }
     }
 }
