@@ -22,9 +22,7 @@ namespace Enderlook.Unity.Toolset.Testing
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper")]
         private static void GetTypes(Type type)
         {
-            if (type.CheckIfShouldBeIgnored(typeof(PropertyPopupAttribute)))
-                return;
-            if (type.GetCustomAttribute<PropertyPopupAttribute>() is PropertyPopupAttribute attribute)
+            if (type.GetCustomAttribute<PropertyPopupAttribute>() is PropertyPopupAttribute attribute && !type.CheckIfShouldBeIgnored(typeof(PropertyPopupAttribute)))
             {
                 typesAndAttributes.Add(type, attribute);
                 FieldInfo fieldInfo = type.GetInheritedField(attribute.modeName, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
@@ -39,15 +37,12 @@ namespace Enderlook.Unity.Toolset.Testing
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper")]
         private static void GetFields(FieldInfo fieldInfo)
         {
-            if (fieldInfo.CheckIfShouldBeIgnored(typeof(PropertyPopupOptionAttribute)))
-                return;
-            if (fieldInfo.GetCustomAttribute<PropertyPopupOptionAttribute>() is PropertyPopupOptionAttribute)
+            if (fieldInfo.GetCustomAttribute<PropertyPopupOptionAttribute>() is PropertyPopupOptionAttribute && !fieldInfo.CheckIfShouldBeIgnored(typeof(PropertyPopupOptionAttribute)))
             {
                 Type type = fieldInfo.DeclaringType;
-                if (typesAndFieldAttributes.TryGetValue(type, out List<FieldInfo> list))
-                    list.Add(fieldInfo);
-                else
-                    typesAndFieldAttributes.Add(type, new List<FieldInfo>() { fieldInfo });
+                if (!typesAndFieldAttributes.TryGetValue(type, out List<FieldInfo> list))
+                    typesAndFieldAttributes.Add(type, (list = new List<FieldInfo>()));
+                list.Add(fieldInfo);
             }
         }
 
