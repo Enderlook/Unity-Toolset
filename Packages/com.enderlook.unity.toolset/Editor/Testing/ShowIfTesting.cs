@@ -59,8 +59,7 @@ namespace Enderlook.Unity.Toolset.Testing
                     {
                         case ShowIfAttribute.Mode.Single:
                         {
-                            if (firstType != typeof(bool))
-                                Debug.LogError($"Value of property {nameof(attribute.firstProperty)} in attribute {nameof(ShowIfAttribute)} in field {field.Name} of type {field.ReflectedType.Name} is not boolean, but no other property nor compared object was specified.");
+                            // TODO: Check if the comparison is legal.
                             break;
                         }
                         case ShowIfAttribute.Mode.WithObject:

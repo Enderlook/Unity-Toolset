@@ -1,6 +1,7 @@
 ﻿using Enderlook.Reflection;
 using Enderlook.Unity.Toolset.Attributes;
 using Enderlook.Unity.Toolset.Utils;
+using Enderlook.Utils;
 
 using System;
 using System.Collections.Generic;
@@ -20,8 +21,12 @@ namespace Enderlook.Unity.Toolset.Drawers
         private static readonly Dictionary<(Type type, FieldInfo fieldInfo), Func<object, bool>> members = new Dictionary<(Type type, FieldInfo fieldInfo), Func<object, bool>>();
         private static readonly MethodInfo emptyArrayMethodInfo = typeof(Array).GetMethod(nameof(Array.Empty));
         private static readonly MethodInfo debugLogErrorMethodInfo = typeof(Debug).GetMethod(nameof(Debug.LogError), new Type[] { typeof(object) });
+        private static readonly MethodInfo isNullOrEmptyMethodInfo = typeof(string).GetMethod(nameof(string.IsNullOrEmpty), new Type[] { typeof(string) });
+        private static readonly MethodInfo equalsMethodInfo = typeof(object).GetMethod("Equals", new Type[] { typeof(object) });
+        private static readonly PropertyInfo arrayLength = typeof(Array).GetProperty(nameof(Array.Length));
         private static readonly ParameterExpression parameter = Expression.Parameter(typeof(object));
         private static readonly Expression trueConstant = Expression.Constant(true);
+        private static readonly Expression nullConstant = Expression.Constant(null);
         private static readonly Type[] type1 = new Type[1];
         private static readonly object zero = 0;
         private static readonly Type[][] conversions = new Type[][]
@@ -35,6 +40,24 @@ namespace Enderlook.Unity.Toolset.Drawers
             new Type[] { typeof(long),      typeof(float), typeof(double), typeof(decimal) },
             new Type[] { typeof(ulong),     typeof(float), typeof(double), typeof(decimal) },
             new Type[] { typeof(float),     typeof(double) },
+        };
+        private static readonly (Type key, Expression value)[] numericTypes = new (Type key, Expression value)[]
+        {
+            (typeof(sbyte), Expression.Constant((sbyte)0)),
+            (typeof(byte), Expression.Constant((byte)0)),
+            (typeof(short), Expression.Constant((short)0)),
+            (typeof(ushort), Expression.Constant((ushort)0)),
+            (typeof(int), Expression.Constant((int)0)),
+            (typeof(uint), Expression.Constant((uint)0)),
+            (typeof(long), Expression.Constant((long)0)),
+            (typeof(ulong), Expression.Constant((ulong)0)),
+            (typeof(float), Expression.Constant((float)0)),
+            (typeof(double), Expression.Constant((double)0)),
+            (typeof(decimal), Expression.Constant((decimal)0)),
+        };
+        private static readonly string[] tryNumericNames = new string[] { "Length", "Count", "GetCount", "GetLength" };
+        private static readonly (string key, bool value)[] tryBooleanNames = new (string key, bool value)[] {
+            ("HasValue", true), ("HasAny", true), ("IsDefault", false), ("IsDefaultOrEmpty", false), ("IsEmpty", false)
         };
 
         [DidReloadScripts]
@@ -94,7 +117,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                 if (string.IsNullOrEmpty(showIfAttribute.firstProperty))
                     return DebugLogError($"Value of property {nameof(showIfAttribute.firstProperty)} is null or empty in attribute {nameof(ShowIfAttribute)} in field {field.Name} of type {field.ReflectedType.Name}.");
 
-                (Expression expression, Type type, FieldInfo field) first = GetValue(showIfAttribute.firstProperty);
+                (Expression expression, Type type, FieldInfo field) first = GetValue(originalType, convertedExpression, showIfAttribute.firstProperty);
                 if (first == default)
                     return DebugLogError($"No field, property (with Get method), or method with no mandatory parameters of name '{showIfAttribute.firstProperty}' in attribute {nameof(ShowIfAttribute)} in field {field.Name} of type {field.ReflectedType.Name} was found in object of type {parent.GetType()}.");
 
@@ -102,9 +125,63 @@ namespace Enderlook.Unity.Toolset.Drawers
                 {
                     case ShowIfAttribute.Mode.Single:
                     {
-                        if (first.type != typeof(bool))
-                            return DebugLogError($"Value of property {nameof(showIfAttribute.firstProperty)} in attribute {nameof(ShowIfAttribute)} in field {field.Name} of type {field.ReflectedType.Name} is not boolean, but no other property nor compared object was specified.");
-                        return first.expression;
+                        if (first.type == typeof(bool))
+                            return first.expression;
+
+                        Expression result = null;
+                        foreach ((string key, bool value) in tryBooleanNames)
+                        {
+                            (Expression subExpression, Type subType, _) = GetValue(first.type, first.expression, key);
+                            if (subType == typeof(bool))
+                            {
+                                result = value ? subExpression : Expression.Not(subExpression);
+                                goto next;
+                            }
+                        }
+
+                        foreach (string name in tryNumericNames)
+                        {
+                            (Expression subExpression, Type subType, _) = GetValue(first.type, first.expression, name);
+                            if (subType is null)
+                                continue;
+                            for (int i = 0; i < numericTypes.Length; i++)
+                            {
+                                if (numericTypes[i].key == subType)
+                                {
+                                    result = Expression.GreaterThan(subExpression, numericTypes[i].value);
+                                    goto next;
+                                }
+                            }
+                        }
+
+                        if (result is null)
+                        {
+                            MethodInfo trueOperator = first.type.GetMethod("op_True"); 
+                            if (!(trueOperator is null) && trueOperator.IsStatic && trueOperator.ReturnType == typeof(bool))
+                            {
+                                ParameterInfo[] parameterInfos = trueOperator.GetParameters();
+                                if (parameterInfos.Length == 1 && parameterInfos[0].ParameterType.IsAssignableFrom(first.type))
+                                    result = Expression.IsTrue(first.expression);
+                            }
+                        }
+
+                        next:
+                        if (!first.type.IsValueType)
+                        {
+                            Expression notNull;
+                            if (typeof(UnityEngine.Object).IsAssignableFrom(first.type))
+                                notNull = Expression.Not(Expression.Call(first.expression, equalsMethodInfo, nullConstant));
+                            else
+                                notNull = Expression.NotEqual(first.expression, nullConstant);
+                            if (result is null)
+                                return notNull;
+                            return Expression.And(notNull, result);
+                        }
+
+                        if (result is null)
+                            return DebugLogError($"Value of property {nameof(showIfAttribute.firstProperty)} in attribute {nameof(ShowIfAttribute)} in field {field.Name} of type {field.ReflectedType.Name} and no other property nor compared object was specified.\n" +
+                                $"Valid types are {nameof(Boolean)}, reference types, types that can be casted to {nameof(Boolean)}, or any type with field, property (with Get method) or method with no mandatory parameters of name 'Length', 'Count', 'GetLength' or 'GetCount' that returns a numeric type or 'HasAny', 'IsEmpty', 'IsDefault' or 'IsDefaultOrEmpty' that returns {nameof(Boolean)}.");
+                        return result;
                     }
                     case ShowIfAttribute.Mode.WithObject:
                     {
@@ -114,7 +191,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                     }
                     case ShowIfAttribute.Mode.WithProperty:
                     {
-                        (Expression expression, Type type, FieldInfo field) second = GetValue(showIfAttribute.secondProperty);
+                        (Expression expression, Type type, FieldInfo field) second = GetValue(originalType, convertedExpression, showIfAttribute.secondProperty);
                         if (second == default)
                             return DebugLogError($"No field, property (with Get method), or method with no mandatory parameters of name '{showIfAttribute.secondProperty}' in attribute {nameof(ShowIfAttribute)} in field {field.Name} of type {field.ReflectedType.Name} was found in object of type {parent.GetType()}.");
                         return Compare(first, second, showIfAttribute.comparison);
@@ -126,9 +203,9 @@ namespace Enderlook.Unity.Toolset.Drawers
                     }
                 }
 
-                (Expression expression, Type type, FieldInfo field) GetValue(string name)
+                (Expression expression, Type type, FieldInfo field) GetValue(Type inputType, Expression expression, string name)
                 {
-                    Type type = originalType;
+                    Type type = inputType;
                     start:
                     foreach (MemberInfo memberInfo in type.GetMembers(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
                     {
@@ -136,10 +213,10 @@ namespace Enderlook.Unity.Toolset.Drawers
                             continue;
 
                         if (memberInfo is FieldInfo fieldInfo)
-                            return (Expression.Field(fieldInfo.IsStatic ? null : convertedExpression, fieldInfo), fieldInfo.FieldType, showIfAttribute.chain ? fieldInfo : null);
+                            return (Expression.Field(fieldInfo.IsStatic ? null : expression, fieldInfo), fieldInfo.FieldType, showIfAttribute.chain ? fieldInfo : null);
 
                         if (memberInfo is PropertyInfo propertyInfo && propertyInfo.CanRead)
-                            return (Expression.Property(propertyInfo.GetMethod.IsStatic ? null : convertedExpression, propertyInfo), propertyInfo.PropertyType, null);
+                            return (Expression.Property(propertyInfo.GetMethod.IsStatic ? null : expression, propertyInfo), propertyInfo.PropertyType, null);
 
                         if (memberInfo is MethodInfo methodInfo && methodInfo.ReturnType != typeof(void) && methodInfo.HasNoMandatoryParameters())
                         {
@@ -158,7 +235,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                                     constant = parameterInfos[i].DefaultValue;
                                 expressions[i] = Expression.Constant(constant);
                             }
-                            return (Expression.Call(methodInfo.IsStatic ? null : convertedExpression, methodInfo, expressions), methodInfo.ReturnType, null);
+                            return (Expression.Call(methodInfo.IsStatic ? null : expression, methodInfo, expressions), methodInfo.ReturnType, null);
                         }
                     }
 
