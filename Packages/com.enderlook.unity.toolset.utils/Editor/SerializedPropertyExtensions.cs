@@ -112,10 +112,15 @@ namespace Enderlook.Unity.Toolset.Utils
         /// </summary>
         /// <param name="source"><see cref="SerializedProperty"/> whose <see cref="FieldInfo"/> will be get.</param>
         /// <param name="includeInheritedPrivate">Whenever it should also search private fields of supper-classes.</param>
+        /// <param name="preferNullInsteadOfException">If <see langword="true"/>, it will return <see langword="null"/> instead of throwing exceptions if can't find objects.</param>
         /// <returns><see cref="FieldInfo"/> of <paramref name="source"/>.</returns>
-        public static FieldInfo GetFieldInfo(this SerializedProperty source, bool includeInheritedPrivate = true)
+        public static FieldInfo GetFieldInfo(this SerializedProperty source, bool includeInheritedPrivate = true, bool preferNullInsteadOfException = false)
         {
-            Type type = source.GetParentTargetObjectOfProperty(false).GetType();
+            object parent = source.GetParentTargetObjectOfProperty(preferNullInsteadOfException);
+            if (preferNullInsteadOfException && parent is null)
+                return null;
+
+            Type type = parent.GetType();
             string name = source.GetFieldName();
 
             if (includeInheritedPrivate)

@@ -56,16 +56,8 @@ namespace Enderlook.Unity.Toolset.Utils
                     // Used to skip missing components
                     if (targetObject == null)
                         continue;
-                    FieldInfo field;
-                    try
-                    {
-                        field = serializedProperty.GetFieldInfo(true);
-                    }
-                    catch (KeyNotFoundException) // Catch Unity-related fields that aren't as (like those fields which starts with `m_`)
-                    {
-                        continue;
-                    }
-                    if (field == null)
+                    FieldInfo field = serializedProperty.GetFieldInfo(includeInheritedPrivate: true, preferNullInsteadOfException: true);
+                    if (field is null) // Catch all properties with errors, such as Unity-related fields that aren't as (like those fields which starts with `m_`)
                         continue;
                     Attribute attribute = field.GetCustomAttribute(typeof(T), inherit);
                     if (attribute?.GetType() == typeof(T))
