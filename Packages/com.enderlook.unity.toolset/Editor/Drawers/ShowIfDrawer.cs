@@ -22,7 +22,7 @@ namespace Enderlook.Unity.Toolset.Drawers
         private static readonly MethodInfo emptyArrayMethodInfo = typeof(Array).GetMethod(nameof(Array.Empty));
         private static readonly MethodInfo debugLogErrorMethodInfo = typeof(Debug).GetMethod(nameof(Debug.LogError), new Type[] { typeof(object) });
         private static readonly MethodInfo isNullOrEmptyMethodInfo = typeof(string).GetMethod(nameof(string.IsNullOrEmpty), new Type[] { typeof(string) });
-        private static readonly MethodInfo equalsMethodInfo = typeof(object).GetMethod("Equals", new Type[] { typeof(object) });
+        private static readonly MethodInfo equalsMethodInfo = typeof(object).GetMethod("Equals", new Type[] { typeof(UnityEngine.Object) });
         private static readonly PropertyInfo arrayLength = typeof(Array).GetProperty(nameof(Array.Length));
         private static readonly ParameterExpression parameter = Expression.Parameter(typeof(object));
         private static readonly Expression trueConstant = Expression.Constant(true);
@@ -156,7 +156,7 @@ namespace Enderlook.Unity.Toolset.Drawers
 
                         if (result is null)
                         {
-                            MethodInfo trueOperator = first.type.GetMethod("op_True"); 
+                            MethodInfo trueOperator = first.type.GetMethod("op_True");
                             if (!(trueOperator is null) && trueOperator.IsStatic && trueOperator.ReturnType == typeof(bool))
                             {
                                 ParameterInfo[] parameterInfos = trueOperator.GetParameters();
@@ -168,11 +168,9 @@ namespace Enderlook.Unity.Toolset.Drawers
                         next:
                         if (!first.type.IsValueType)
                         {
-                            Expression notNull;
+                            Expression notNull = Expression.NotEqual(first.expression, nullConstant);
                             if (typeof(UnityEngine.Object).IsAssignableFrom(first.type))
-                                notNull = Expression.Not(Expression.Call(first.expression, equalsMethodInfo, nullConstant));
-                            else
-                                notNull = Expression.NotEqual(first.expression, nullConstant);
+                                notNull = Expression.AndAlso(notNull, Expression.Not(Expression.Call(first.expression, equalsMethodInfo, nullConstant)));
                             if (result is null)
                                 return notNull;
                             return Expression.And(notNull, result);
