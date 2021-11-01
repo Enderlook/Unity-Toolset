@@ -56,9 +56,10 @@ namespace Enderlook.Unity.Toolset.Utils
                     // Used to skip missing components
                     if (targetObject == null)
                         continue;
-                    FieldInfo field = serializedProperty.GetFieldInfo(includeInheritedPrivate: true, preferNullInsteadOfException: true);
-                    if (field is null) // Catch all properties with errors, such as Unity-related fields that aren't as (like those fields which starts with `m_`)
+                    if (!serializedProperty.TryGetMemberInfo(out MemberInfo memberInfo)) // Catch all properties with errors, such as Unity-related fields that aren't as (like those fields which starts with `m_`)
                         continue;
+                    // TODO: The cast (FieldInfo) is here because that method previously returned FieldInfo, maybe this method should now use MemberInfo instead of FieldInfo.
+                    FieldInfo field = (FieldInfo)memberInfo;
                     Attribute attribute = field.GetCustomAttribute(typeof(T), inherit);
                     if (attribute?.GetType() == typeof(T))
                         yield return (serializedProperty, field, (T)attribute, editor);

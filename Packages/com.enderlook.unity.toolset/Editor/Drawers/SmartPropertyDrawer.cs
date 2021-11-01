@@ -22,7 +22,7 @@ namespace Enderlook.Unity.Toolset.Drawers
         {
             GUIContentHelper.GetGUIContent(property, ref label);
 
-            IndentedAttribute indentedAttribute = property.GetFieldInfo(true).GetCustomAttribute<IndentedAttribute>(true);
+            IndentedAttribute indentedAttribute = property.GetMemberInfo().GetCustomAttribute<IndentedAttribute>(true);
             identationOffset = indentedAttribute?.indentationOffset ?? 0;
             EditorGUI.indentLevel += identationOffset;
         }

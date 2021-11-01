@@ -83,9 +83,10 @@ namespace Enderlook.Unity.Toolset.Drawers
             int newUsagePopupIndex = EditorGUI.Popup(buttonRect, popupIndex, popupOptions, popupStyle);
             if (newUsagePopupIndex != popupIndex)
             {
-                object parent = mode.GetParentTargetObjectOfProperty();
+                object parent = mode.GetParentTargetObject();
                 object value = modes[newUsagePopupIndex].target;
-                FieldInfo fieldInfo = mode.GetFieldInfo();
+                // TODO: The cast should be removed.
+                FieldInfo fieldInfo = (FieldInfo)mode.GetMemberInfo();
                 Type fieldType = fieldInfo.FieldType;
                 if (fieldType.IsEnum)
                     fieldInfo.SetValue(parent, Enum.ToObject(fieldType, value));
@@ -147,12 +148,15 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         private static object GetValue(SerializedProperty mode)
         {
-            object value = mode.GetTargetObjectOfProperty();
-            // We give special treat with enums
-            Type type = value.GetType();
-            if (value != null && type.IsEnum)
-                value = ((Enum)value).GetUnderlyingValue();
-            return value;
+            if (mode.TryGetTargetObject(out object value))
+            {
+                // We give special treat with enums
+                Type type = value.GetType();
+                if (type.IsEnum)
+                    value = ((Enum)value).GetUnderlyingValue();
+                return value;
+            }
+            return null;
         }
 
         /// <summary>

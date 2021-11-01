@@ -66,7 +66,7 @@ namespace Enderlook.Unity.Toolset.Drawers
         protected override void OnGUISmart(Rect position, SerializedProperty property, GUIContent label)
         {
             ShowIfAttribute showIfAttribute = (ShowIfAttribute)attribute;
-            object parent = serializedProperty.GetParentTargetObjectOfProperty();
+            object parent = serializedProperty.GetParentTargetObject();
             DisplayMode mode = showIfAttribute.displayMode;
 
             if (mode == DisplayMode.ShowHide)
@@ -91,7 +91,7 @@ namespace Enderlook.Unity.Toolset.Drawers
         protected override float GetPropertyHeightSmart(SerializedProperty property, GUIContent label)
         {
             ShowIfAttribute showIfAttribute = (ShowIfAttribute)attribute;
-            object parent = serializedProperty.GetParentTargetObjectOfProperty();
+            object parent = serializedProperty.GetParentTargetObject();
             if (IsActive(showIfAttribute, parent) || showIfAttribute.displayMode == DisplayMode.EnableDisable)
                 return EditorGUI.GetPropertyHeight(property, label, true);
             return 0;

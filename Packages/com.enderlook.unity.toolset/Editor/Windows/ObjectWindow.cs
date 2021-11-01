@@ -38,7 +38,6 @@ namespace Enderlook.Unity.Toolset.Windows
         private static ILookup<Type, Type> derivedTypes;
 
         private SerializedProperty property;
-        private Accessors<UnityObject> accessors;
         private RestrictTypeAttribute restrictTypeAttribute;
 
         private string propertyPath;
@@ -52,22 +51,23 @@ namespace Enderlook.Unity.Toolset.Windows
         {
             EditorApplication.contextualPropertyMenu += (GenericMenu menu, SerializedProperty property) =>
             {
-                if (property.propertyPath.EndsWith(".Array.Size"))
+                if (property.IsArrayOrListSize())
                     return;
 
-                FieldInfo fieldInfo = property.GetFieldInfo();
-                if (fieldInfo is null)
-                    return;
-
-                if (fieldInfo.FieldType.IsArrayOrList() && !property.propertyPath.EndsWith("]"))
+                if (property.IsArrayOrListElement())
                     return;
 
                 if (typeof(UnityObject).IsAssignableFrom(property.GetPropertyType()))
+                {
+                    if (!property.TryGetMemberInfo(out MemberInfo memberInfo))
+                        return;
+
                     menu.AddItem(
                         CONTEXT_PROPERTY_MENU,
                         false,
-                        () => CreateWindow(property, fieldInfo)
+                        () => CreateWindow(property, memberInfo)
                     );
+                }
             };
         }
 
@@ -143,7 +143,7 @@ namespace Enderlook.Unity.Toolset.Windows
             }
         }
 
-        private static void CreateWindow(SerializedProperty property, FieldInfo fieldInfo)
+        private static void CreateWindow(SerializedProperty property, MemberInfo memberInfo)
         {
             if (derivedTypes is null)
                 InitializeDerivedTypes();
@@ -151,12 +151,9 @@ namespace Enderlook.Unity.Toolset.Windows
             ObjectWindow window = GetWindow<ObjectWindow>();
             window.titleContent = TITLE_CONTENT;
 
-            Accessors<UnityObject> accessors = property.GetTargetObjectAccessors<UnityObject>();
-
             window.property = property;
-            window.accessors = accessors;
-            window.original = accessors.Get();
-            window.restrictTypeAttribute = fieldInfo.GetCustomAttribute<RestrictTypeAttribute>();
+            window.original = property.GetValue<UnityObject>();
+            window.restrictTypeAttribute = memberInfo.GetCustomAttribute<RestrictTypeAttribute>();
             window.propertyPath = AssetDatabaseHelper.GetAssetPath(property);
             window.SetAllowedTypesToInstantiate();
         }
@@ -194,7 +191,7 @@ namespace Enderlook.Unity.Toolset.Windows
                 }
             }
 
-            UnityObject current = accessors.Get();
+            UnityObject current = property.GetValue<UnityObject>();
             if (current != null && elements.IndexOf(current) == -1)
             {
                 if (found is UnityObject[] found_)
@@ -269,7 +266,7 @@ namespace Enderlook.Unity.Toolset.Windows
             rootVisualElement.schedule.Execute(() =>
             {
                 elements.Add(null);
-                UnityObject current = accessors.Get();
+                UnityObject current = property.GetValue<UnityObject>();
                 if (current != null)
                     elements.Add(current);
 
@@ -519,13 +516,13 @@ namespace Enderlook.Unity.Toolset.Windows
 #if UNITY_2020_1_OR_NEWER
                         list.onItemsChosen += e =>
                         {
-                            accessors.Set((UnityObject)e.First());
+                            property.SetValue((UnityObject)e.First());
                             propertyField.Set(property.objectReferenceValue);
                         };
 #else
                         list.onItemChosen += e =>
                         {
-                            accessors.Set((UnityObject)e);
+                            property.SetValue((UnityObject)e);
                             propertyField.Set(property.objectReferenceValue);
                         };
 #endif
@@ -578,7 +575,7 @@ namespace Enderlook.Unity.Toolset.Windows
             UnityObject createdObject = CreateInstance(type);
             createdObject.name = name;
             createdObject.hideFlags = hideFlag;
-            accessors.Set(createdObject);
+            property.SetValue(createdObject);
             property.serializedObject.ApplyModifiedProperties();
             return createdObject;
         }

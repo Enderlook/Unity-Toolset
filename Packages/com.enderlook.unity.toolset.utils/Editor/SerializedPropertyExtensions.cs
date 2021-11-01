@@ -2,7 +2,6 @@
 
 using System;
 using System.Linq;
-using System.Reflection;
 using System.Text.RegularExpressions;
 
 using UnityEditor;
@@ -71,77 +70,6 @@ namespace Enderlook.Unity.Toolset.Utils
             if (source is null) throw new ArgumentNullException(nameof(source));
 
             return source.propertyPath.EndsWith("Array.size");
-        }
-
-        /// <summary>
-        /// Get the getter and setter of <paramref name="source"/>. It does work for nested serialized properties.<br/>
-        /// </summary>
-        /// <param name="source"><see cref="SerializedProperty"/> whose getter and setter will be get.</param>
-        /// <returns>Getter and setter of the <paramref name="source"/>.</returns>
-        public static Accessors GetTargetObjectAccessors(this SerializedProperty source)
-        {
-            object parent = source.GetParentTargetObjectOfProperty();
-            Type parentType = parent.GetType();
-
-            string element = source.propertyPath.Replace(".Array.data[", "[").Split(dotSeparator).Last();
-            if (element.Contains("["))
-            {
-                string elementName = element.Substring(0, element.IndexOf("["));
-                int index = int.Parse(element.Substring(element.IndexOf("[")).Replace("[", "").Replace("]", ""));
-                Accessors accessors = new Accessors(parent, elementName, index);
-                try
-                {
-                    accessors.Get();
-                }
-                catch (ArgumentOutOfRangeException e)
-                {
-                    throw new IndexOutOfRangeException($"The element {element} has no index {index} in {parentType} from {source.name} in path {element}.", e);
-                }
-                return accessors;
-            }
-            else
-                return new Accessors(parent, element);
-        }
-
-        /// <inheritdoc cref="GetTargetObjectAccessors(SerializedProperty)"/>
-        public static Accessors<T> GetTargetObjectAccessors<T>(this SerializedProperty source)
-            => new Accessors<T>(GetTargetObjectAccessors(source));
-
-        /// <summary>
-        /// Get the <see cref="FieldInfo"/> of <see cref="SerializedProperty"/>.
-        /// </summary>
-        /// <param name="source"><see cref="SerializedProperty"/> whose <see cref="FieldInfo"/> will be get.</param>
-        /// <param name="includeInheritedPrivate">Whenever it should also search private fields of supper-classes.</param>
-        /// <param name="preferNullInsteadOfException">If <see langword="true"/>, it will return <see langword="null"/> instead of throwing exceptions if can't find objects.</param>
-        /// <returns><see cref="FieldInfo"/> of <paramref name="source"/>.</returns>
-        public static FieldInfo GetFieldInfo(this SerializedProperty source, bool includeInheritedPrivate = true, bool preferNullInsteadOfException = false)
-        {
-            object parent = source.GetParentTargetObjectOfProperty(preferNullInsteadOfException);
-            if (preferNullInsteadOfException && parent is null)
-                return null;
-
-            Type type = parent.GetType();
-            string name = source.GetFieldName();
-
-            if (includeInheritedPrivate)
-                return type.GetInheritedField(name, AccessorsHelper.bindingFlags);
-            else
-                return type.GetField(name, AccessorsHelper.bindingFlags);
-        }
-
-        /// <summary>
-        /// Get the <see cref="Type"/> of the property <see cref="SerializedProperty"/>.
-        /// </summary>
-        /// <param name="source"><see cref="SerializedProperty"/> whose <see cref="Type"/> will be get.</param>
-        /// <param name="includeInheritedPrivate">Whenever it should also search private fields of supper-classes.</param>
-        /// <returns><see cref="Type"/> of <paramref name="source"/>.</returns>
-        public static Type GetPropertyType(this SerializedProperty source, bool includeInheritedPrivate = true)
-        {
-            Type type = source.GetFieldInfo(includeInheritedPrivate).FieldType;
-            if (type.TryGetElementTypeOfArrayOrList(out Type elementType))
-                return elementType;
-            else
-                return type;
         }
 
         /// <summary>

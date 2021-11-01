@@ -36,7 +36,7 @@ namespace Enderlook.Unity.Toolset
 
                 if (reference)
                 {
-                    object parent = property.GetParentTargetObjectOfProperty();
+                    object parent = property.GetParentTargetObject();
                     if (attribute.nameMode == GUIAttribute.Mode.Reference)
                         text = parent.GetValueFromFirstMember<string>(attribute.name);
                     if (attribute.tooltipMode == GUIAttribute.Mode.Reference)
@@ -51,7 +51,7 @@ namespace Enderlook.Unity.Toolset
             }
             else
             {
-                object parent = property.GetParentTargetObjectOfProperty();
+                object parent = property.GetParentTargetObject();
                 try
                 {
                     label = parent.GetValueFromFirstMember<GUIContent>(attribute.guiContentOrReferenceName);
@@ -73,16 +73,16 @@ namespace Enderlook.Unity.Toolset
         internal static bool GetGUIContent(SerializedProperty property, ref GUIContent label)
         {
             bool isSpecial = false;
-            FieldInfo fieldInfo = property.GetFieldInfo();
+            MemberInfo memberInfo = property.GetMemberInfo();
 
-            NameAttribute nameAttribute = fieldInfo.GetCustomAttribute<NameAttribute>(true);
+            NameAttribute nameAttribute = memberInfo.GetCustomAttribute<NameAttribute>(true);
             if (!(nameAttribute is null))
             {
                 UseNameAttribute(nameAttribute, label);
                 isSpecial = true;
             }
 
-            GUIAttribute guiAttribute = fieldInfo.GetCustomAttribute<GUIAttribute>(true);
+            GUIAttribute guiAttribute = memberInfo.GetCustomAttribute<GUIAttribute>(true);
             if (!(guiAttribute is null))
             {
                 UseGUIContent(guiAttribute, property, ref label);

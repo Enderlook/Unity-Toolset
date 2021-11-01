@@ -22,14 +22,10 @@ namespace Enderlook.Unity.Toolset.Windows
         [InitializeOnLoadMethod]
         private static void AddContextualPropertyMenu() => ContextualPropertyMenu.contextualPropertyMenu += (GenericMenu menu, SerializedProperty property) =>
         {
-            if (property.propertyPath.EndsWith(".Array.Size"))
+            if (property.IsArrayOrListSize())
                 return;
 
-            FieldInfo fieldInfo = property.GetFieldInfo();
-            if (fieldInfo is null)
-                return;
-
-            Type type = fieldInfo.FieldType;
+            Type type = property.GetPropertyType();
             if (!(type.IsPrimitive || type == typeof(decimal) || type == typeof(string)))
                 menu.AddItem(
                     CONTEXT_PROPERTY_MENU,

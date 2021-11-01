@@ -137,7 +137,7 @@ namespace Enderlook.Unity.Toolset.Drawers
             Type type = property.serializedObject.targetObject.GetType();
             if (!type.IsSubclassOf(typeof(UnityEngine.Object)))
             {
-                Debug.LogError($"{nameof(ExpandableAttribute)} can only be used on types subclasses of {nameof(UnityEngine.Object)}. {property.name} from {property.GetParentTargetObjectOfProperty()} (path {property.propertyPath}) is type {type}.");
+                Debug.LogError($"{nameof(ExpandableAttribute)} can only be used on types subclasses of {nameof(UnityEngine.Object)}. {property.name} from {property.GetParentTargetObject()} (path {property.propertyPath}) is type {type}.");
                 EditorGUI.PropertyField(position, property, GUIContent.none, true);
                 return;
             }
