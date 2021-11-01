@@ -1,6 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections;
 using System.Diagnostics;
+using System.Linq;
+using System.Reflection;
 
 using UnityEditor;
 
@@ -8,138 +10,177 @@ namespace Enderlook.Unity.Toolset.Utils
 {
     public static partial class SerializedPropertyExtensions
     {
+        private const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+
         /// <summary>
         /// Gets the target object hierarchy of <paramref name="source"/>. It does work for nested serialized properties.
         /// </summary>
         /// <param name="source"><see cref="SerializedProperty"/> whose value will be get.</param>
-        /// <param name="preferNullInsteadOfException">If <see langword="true"/>, it will return <see langword="null"/> instead of throwing exceptions if can't find objects.</param>
-        /// <returns>Hierarchy traveled to get the target object.</returns>
-        private static object GetLoopTargetObjectOfProperty(this SerializedProperty source, int count, bool preferNullInsteadOfException = true)
+        /// <param name="count">Depth in the hierarchy to travel.</param>
+        /// <param name="throwIfError">Whenever it should throw if there is an error.</param>
+        /// <param name="target">Hierarchy traveled to get the target object.</param>
+        /// <returns>If <see langword="true"/> <paramref name="target"/> was found. Otherwise <paramref name="target"/> contains an undefined value.</returns>
+        private static bool GetLoopTargetObjectOfProperty(this SerializedProperty source, int count, bool throwIfError, out object target)
         {
             if (source == null)
-                throw new ArgumentNullException(nameof(source));
+            {
+                if (throwIfError)
+                    ThrowSourceIsNull();
+                target = null;
+                return false;
+            }
 
             string path = source.propertyPath.Replace(".Array.data[", "[");
             string[] pathSections = path.Split(dotSeparator);
-
             int total = pathSections.Length;
-            int remaining = total - count;
 
             if (count > total)
-                throw new ArgumentOutOfRangeException(nameof(count), "Value was too large for this path.");
+            {
+                if (throwIfError)
+                    ThrowCountMustBeLowerThanTotal();
+                target = null;
+                return false;
+            }
 
-            object obj = source.serializedObject.targetObject;
+            int remaining = total - count;
+            target = source.serializedObject.targetObject;
 
             if (remaining-- == 0)
-                return obj;
+                return true;
 
-            string GetNotFoundMessage(string element) => $"The element {element} was not found in {obj?.GetType().ToString() ?? "<NULL>"} from {source.name} in path {path}.";
-
-            foreach (string element in pathSections)
+            if (target == null)
             {
+                if (throwIfError)
+                    ThrowTargetObjectIsNull();
+                return false;
+            }
+
+            for (int i = 0; i < pathSections.Length; i++)
+            {
+                string element = pathSections[i];
                 if (element.Contains("["))
                 {
                     string elementName = element.Substring(0, element.IndexOf("["));
                     int index = int.Parse(element.Substring(element.IndexOf("[")).Replace("[", "").Replace("]", ""));
-                    try
+
+                    if (!SetObj(elementName, target, out target))
+                        return false;
+
+                    if (target is null)
                     {
-                        obj = obj.GetValue(elementName, index);
-                    }
-                    catch (ArgumentOutOfRangeException e)
-                    {
-                        if (!preferNullInsteadOfException)
-                            throw new IndexOutOfRangeException($"The element {element} has no index {index} in {obj.GetType()} from {source.name} in path {path}.", e);
-                        else
-                            obj = null;
+                        if (throwIfError)
+                            ThrowArrayDataIsNull();
+                        return false;
                     }
 
-                    if (obj == null)
+                    void ThrowArrayDataIsNull()
+                        => throw new ArgumentException($"source.serializedObject.targetObject.{string.Join(".", pathSections.Take(i)).Replace("[", ".Array.data[")}.{elementName}.Array.data");
+
+                    if (target is IList list)
                     {
-                        if (!preferNullInsteadOfException)
-                            throw new KeyNotFoundException(GetNotFoundMessage(element));
+                        if (list.Count < index)
+                        {
+                            target = list[index];
+                            goto next;
+                        }
+                        else if (throwIfError)
+                            ThrowIndexMustBeLowerThanArraySize();
                         else
-                            return null;
+                            return false;
                     }
 
-                    if (remaining-- == 0)
-                        return obj;
+                    void ThrowIndexMustBeLowerThanArraySize()
+                        => throw new ArgumentException($"source.serializedObject.targetObject.{string.Join(".", pathSections.Take(i + 1)).Replace("[", ".Array.data[")}", $"Index {index} at 'source.serializedObject.targetObject.{string.Join(".", pathSections.Take(i + 1)).Replace("[", ".Array.data[")}' must be lower than 'source.serializedObject.targetObject.{string.Join(".", pathSections.Take(i)).Replace("[", ".Array.data[")}.{elementName}.Array.arraySize' ({list.Count})");
+
+                    if (target is IEnumerable enumerable)
+                    {
+                        IEnumerator enumerator = enumerable.GetEnumerator();
+
+                        for (int j = 0; j <= index; j++)
+                        {
+                            if (!enumerator.MoveNext())
+                            {
+                                if (throwIfError)
+                                    ThrowEnumerableExhausted();
+                                return false;
+                            }
+
+                            void ThrowEnumerableExhausted()
+                                => throw new ArgumentException($"source.serializedObject.targetObject.{string.Join(".", pathSections.Take(i + 1)).Replace("[", ".Array.data[")}", $"Index {index} at 'source.serializedObject.targetObject.{string.Join(".", pathSections.Take(i + 1)).Replace("[", ".Array.data[")}' must be lower than 'source.serializedObject.targetObject.{string.Join(".", pathSections.Take(i)).Replace("[", ".Array.data[")}.{elementName}.Array.arraySize' ({j})");
+                        }
+
+                        target = enumerator.Current;
+                        goto next;
+                    }
+                    else
+                        Debug.Assert(false, "Impossible state.");
+
+                    next:;
                 }
-                else
-                {
-                    obj = obj.GetValue(element);
+                else if (!SetObj(element, target, out target))
+                    return false;
 
-                    if (obj == null)
+                if (remaining-- == 0)
+                    return true;
+
+                if (target == null)
+                {
+                    if (throwIfError)
+                        ThrowTargetNull();
+                    return false;
+
+                    void ThrowTargetNull()
+                        => throw new ArgumentException($"source.serializedObject.targetObject.{string.Join(".", pathSections.Take(i + 1)).Replace("[", ".Array.data[")}");
+                }
+
+                bool SetObj(string name, object target_, out object target__)
+                {
+                    Type type = target_.GetType();
+
+                    while (true)
                     {
-                        if (!preferNullInsteadOfException)
-                            throw new KeyNotFoundException(GetNotFoundMessage(element));
-                        else
-                            return null;
+                        FieldInfo fieldInfo = type.GetField(name, bindingFlags);
+                        if (fieldInfo != null)
+                        {
+                            target__ = fieldInfo.GetValue(target_);
+                            break;
+                        }
+
+                        PropertyInfo propertyInfo = type.GetProperty(name, bindingFlags);
+                        if (propertyInfo != null)
+                        {
+                            target__ = propertyInfo.GetValue(target_, null);
+                            break;
+                        }
+
+                        type = type.BaseType;
+
+                        if (type is null)
+                        {
+                            if (throwIfError)
+                                ThrowMemberNotFound();
+                            target__ = default;
+                            return false;
+                        }
                     }
 
-                    if (remaining-- == 0)
-                        return obj;
+                    return true;
+
+                    void ThrowMemberNotFound() => throw new InvalidOperationException($"From path 'source.serializedObject.targetObject.{source.propertyPath}', member '{name}' (at 'source.serializedObject.targetObject.{string.Join(".", pathSections.Take(i)).Replace("[", ".Array.data[")}.{name}') was not found.");
                 }
             }
 
             Debug.Assert(false, "Impossible state.");
-            return null;
-        }
+            return false;
 
-        /// <summary>
-        /// Gets the target object hierarchy of <paramref name="source"/>. It does work for nested serialized properties.
-        /// </summary>
-        /// <param name="source"><see cref="SerializedProperty"/> whose value will be get.</param>
-        /// <param name="includeItself">If <see langword="true"/> the first returned element will be <c><paramref name="source"/>.serializedObject.targetObject</c>.</param>
-        /// <param name="preferNullInsteadOfException">If <see langword="true"/>, it will return <see langword="null"/> instead of throwing exceptions if can't find objects.</param>
-        /// <returns>Hierarchy traveled to get the target object.</returns>
-        private static IEnumerable<object> GetEnumerableTargetObjectOfProperty(this SerializedProperty source, bool includeItself = true, bool preferNullInsteadOfException = true)
-        {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
+            void ThrowSourceIsNull()
+                => throw new ArgumentNullException(nameof(source));
 
-            return Method();
+            void ThrowCountMustBeLowerThanTotal()
+                => throw new ArgumentOutOfRangeException(nameof(count), $"Path of '{source.displayName}' property ('{source.propertyPath}') contains {total} sections, but count was {count}, which is not a lower number.");
 
-            IEnumerable<object> Method()
-            {
-                string path = source.propertyPath.Replace(".Array.data[", "[");
-
-                object obj = source.serializedObject.targetObject;
-
-                if (includeItself)
-                    yield return obj;
-
-                string GetNotFoundMessage(string element) => $"The element {element} was not found in {obj.GetType()} from {source.name} in path {path}.";
-
-                foreach (string element in path.Split(dotSeparator))
-                {
-                    if (element.Contains("["))
-                    {
-                        string elementName = element.Substring(0, element.IndexOf("["));
-                        int index = int.Parse(element.Substring(element.IndexOf("[")).Replace("[", "").Replace("]", ""));
-                        try
-                        {
-                            obj = obj.GetValue(elementName, index);
-                        }
-                        catch (ArgumentOutOfRangeException e)
-                        {
-                            if (!preferNullInsteadOfException)
-                                throw new IndexOutOfRangeException($"The element {element} has no index {index} in {obj.GetType()} from {source.name} in path {path}.", e);
-                            else
-                                obj = null;
-                        }
-                        if (obj == null && !preferNullInsteadOfException)
-                            throw new KeyNotFoundException(GetNotFoundMessage(element));
-                        yield return obj;
-                    }
-                    else
-                    {
-                        obj = obj.GetValue(element);
-                        if (obj == null && !preferNullInsteadOfException)
-                            throw new KeyNotFoundException(GetNotFoundMessage(element));
-                        yield return obj;
-                    }
-                }
-            }
+            void ThrowTargetObjectIsNull()
+                => throw new ArgumentException("source.serializedObject.targetObject");
         }
 
         /// <summary>
@@ -150,7 +191,11 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <param name="preferNullInsteadOfException">If <see langword="true"/>, it will return <see langword="null"/> instead of throwing exceptions if can't find objects.</param>
         /// <returns>Value of the <paramref name="source"/> as <see cref="object"/>.</returns>
         public static object GetTargetObjectOfProperty(this SerializedProperty source, int last = 0, bool preferNullInsteadOfException = true)
-            => source.GetLoopTargetObjectOfProperty(last, preferNullInsteadOfException);
+        {
+            if (source.GetLoopTargetObjectOfProperty(last, preferNullInsteadOfException, out object target))
+                return target;
+            return null;
+        }
 
         /// <summary>
         /// Gets the parent target object of <paramref name="source"/>. It does work for nested serialized properties.
