@@ -268,91 +268,93 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <returns>Value of target object.</returns>
         public static T GetValue<T>(this SerializedProperty source)
         {
-            switch (source.propertyType)
+            // Insert JIT optimizable fast paths to expected values:
+
+            SerializedPropertyType propertyType = source.propertyType;
+
+            if (!typeof(T).IsValueType)
             {
-                case SerializedPropertyType.AnimationCurve:
-                    return (T)(object)source.animationCurveValue;
-                case SerializedPropertyType.ArraySize:
-                    return (T)(object)source.arraySize;
-                case SerializedPropertyType.FixedBufferSize:
-                    return (T)(object)source.fixedBufferSize;
-                case SerializedPropertyType.Integer:
+                switch (propertyType)
                 {
-                    switch (source.type)
-                    {
-                        case "long":
-                            return (T)(object)source.longValue;
-                        case "int":
-                            return (T)(object)source.intValue;
-                        case "short":
-                            return (T)(object)(short)source.intValue;
-                        case "byte":
-                            return (T)(object)(byte)source.intValue;
-                        case "ulong":
-                            return (T)(object)(ulong)source.intValue;
-                        case "uint":
-                            return (T)(object)(uint)source.longValue;
-                        case "ushort":
-                            return (T)(object)(ushort)source.intValue;
-                        case "sbyte":
-                            return (T)(object)(sbyte)source.intValue;
-                        default:
-                            goto fallback;
-                    }
+                    case SerializedPropertyType.AnimationCurve:
+                        return (T)(object)source.animationCurveValue;
+                    case SerializedPropertyType.String:
+                        return (T)(object)source.stringValue;
+                    case SerializedPropertyType.Enum:
+                        return FromEnum();
+                    case SerializedPropertyType.ObjectReference:
+                        return (T)(object)source.objectReferenceValue;
+                    case SerializedPropertyType.ExposedReference:
+                        return (T)(object)source.exposedReferenceValue;
+                    case SerializedPropertyType.Gradient:
+                    case SerializedPropertyType.Generic:
+                        return (T)source.GetTargetObject();
                 }
-                case SerializedPropertyType.Boolean:
-                    return (T)(object)source.boolValue;
-                case SerializedPropertyType.Bounds:
-                    return (T)(object)source.boundsValue;
-                case SerializedPropertyType.BoundsInt:
-                    return (T)(object)source.boundsIntValue;
-                case SerializedPropertyType.Character:
-                    return (T)(object)(char)source.intValue;
-                case SerializedPropertyType.Color:
-                    return (T)(object)source.colorValue;
-                case SerializedPropertyType.Float:
-                    switch (source.type)
-                    {
-                        case "float":
-                            return (T)(object)source.floatValue;
-                        case "double":
-                            return (T)(object)source.doubleValue;
-                        default:
-                            goto fallback;
-                    }
-                case SerializedPropertyType.LayerMask:
-                    return (T)(object)(LayerMask)source.intValue;
-                case SerializedPropertyType.Quaternion:
-                    return (T)(object)source.quaternionValue;
-                case SerializedPropertyType.Rect:
-                    return (T)(object)source.rectValue;
-                case SerializedPropertyType.RectInt:
-                    return (T)(object)source.rectIntValue;
-                case SerializedPropertyType.String:
-                    return (T)(object)source.stringValue;
-                case SerializedPropertyType.Vector2:
-                    return (T)(object)source.vector2Value;
-                case SerializedPropertyType.Vector2Int:
-                    return (T)(object)source.vector2IntValue;
-                case SerializedPropertyType.Vector3:
-                    return (T)(object)source.vector3Value;
-                case SerializedPropertyType.Vector3Int:
-                    return (T)(object)source.vector3IntValue;
-                case SerializedPropertyType.Vector4:
-                    return (T)(object)source.vector4Value;
-                case SerializedPropertyType.Enum:
-                    return FromEnum();
-                case SerializedPropertyType.Gradient:
-                case SerializedPropertyType.Generic:
-                    goto fallback;
-                case SerializedPropertyType.ObjectReference:
-                    return (T)(object)source.objectReferenceValue;
-                case SerializedPropertyType.ExposedReference:
-                    return (T)(object)source.exposedReferenceValue;
-                default:
-                    fallback:
-                    return (T)GetTargetObject(source);
             }
+
+            if (typeof(T) == typeof(bool) && propertyType == SerializedPropertyType.Boolean)
+                return (T)(object)source.boolValue;
+            if (typeof(T) == typeof(int))
+            {
+                switch (propertyType)
+                {
+                    case SerializedPropertyType.ArraySize:
+                        return (T)(object)source.arraySize;
+                    case SerializedPropertyType.Integer when source.type == "int":
+                        return (T)(object)source.intValue;
+                    case SerializedPropertyType.FixedBufferSize:
+                        return (T)(object)source.fixedBufferSize;
+                }
+            }
+            if (typeof(T) == typeof(long) && propertyType == SerializedPropertyType.Integer && source.type == "long")
+                return (T)(object)source.longValue;
+            if (typeof(T) == typeof(short) && propertyType == SerializedPropertyType.Integer && source.type == "short")
+                return (T)(object)(short)source.intValue;
+            if (typeof(T) == typeof(byte) && propertyType == SerializedPropertyType.Integer && source.type == "byte")
+                return (T)(object)(byte)source.intValue;
+            if (typeof(T) == typeof(uint) && propertyType == SerializedPropertyType.Integer && source.type == "uint")
+                return (T)(object)(uint)source.longValue;
+            if (typeof(T) == typeof(ulong) && propertyType == SerializedPropertyType.Integer && source.type == "ulong")
+                return (T)(object)(ulong)source.longValue;
+            if (typeof(T) == typeof(ushort) && propertyType == SerializedPropertyType.Integer && source.type == "ushort")
+                return (T)(object)(ushort)source.intValue;
+            if (typeof(T) == typeof(sbyte) && propertyType == SerializedPropertyType.Integer && source.type == "sbyte")
+                return (T)(object)(sbyte)source.intValue;
+            if (typeof(T) == typeof(float) && propertyType == SerializedPropertyType.Float && source.type == "float")
+                return (T)(object)source.floatValue;
+            if (typeof(T) == typeof(double) && propertyType == SerializedPropertyType.Float && source.type == "double")
+                return (T)(object)source.doubleValue;
+            if (typeof(T) == typeof(char) && propertyType == SerializedPropertyType.Character)
+                return (T)(object)(char)source.intValue;
+            if (typeof(T) == typeof(LayerMask) && propertyType == SerializedPropertyType.LayerMask)
+                return (T)(object)(LayerMask)source.intValue;
+            if (typeof(T) == typeof(Bounds) && propertyType == SerializedPropertyType.Bounds)
+                return (T)(object)source.boundsValue;
+            if (typeof(T) == typeof(BoundsInt) && propertyType == SerializedPropertyType.BoundsInt)
+                return (T)(object)source.boundsIntValue;
+            if (typeof(T) == typeof(Color) && propertyType == SerializedPropertyType.Color)
+                return (T)(object)source.colorValue;
+            if (typeof(T) == typeof(Quaternion) && propertyType == SerializedPropertyType.Quaternion)
+                return (T)(object)source.quaternionValue;
+            if (typeof(T) == typeof(Rect) && propertyType == SerializedPropertyType.Rect)
+                return (T)(object)source.rectValue;
+            if (typeof(T) == typeof(RectInt) && propertyType == SerializedPropertyType.RectInt)
+                return (T)(object)source.rectIntValue;
+            if (typeof(T) == typeof(Vector2) && propertyType == SerializedPropertyType.Vector2)
+                return (T)(object)source.vector2Value;
+            if (typeof(T) == typeof(Vector2Int) && propertyType == SerializedPropertyType.Vector2Int)
+                return (T)(object)source.vector2IntValue;
+            if (typeof(T) == typeof(Vector3) && propertyType == SerializedPropertyType.Vector3)
+                return (T)(object)source.vector3Value;
+            if (typeof(T) == typeof(Vector3Int) && propertyType == SerializedPropertyType.Vector3Int)
+                return (T)(object)source.vector3IntValue;
+            if (typeof(T) == typeof(Vector4) && propertyType == SerializedPropertyType.Vector4)
+                return (T)(object)source.vector4Value;
+            if (typeof(T).IsValueType && typeof(T) == typeof(Enum) && propertyType == SerializedPropertyType.Enum)
+                return FromEnum();
+
+            // Fallback to slower method since the type is not expected.
+            return SlowPath();
 
             T FromEnum()
             {
@@ -379,6 +381,94 @@ namespace Enderlook.Unity.Toolset.Utils
                 if (underlyingType == typeof(char))
                     return (T)Enum.ToObject(typeof(T), (char)source.intValue);
                 return (T)Enum.ToObject(typeof(T), GetTargetObject(source));
+            }
+
+            T SlowPath()
+            {
+                switch (source.propertyType)
+                {
+                    case SerializedPropertyType.AnimationCurve:
+                        return (T)(object)source.animationCurveValue;
+                    case SerializedPropertyType.ArraySize:
+                        return (T)(object)source.arraySize;
+                    case SerializedPropertyType.FixedBufferSize:
+                        return (T)(object)source.fixedBufferSize;
+                    case SerializedPropertyType.Integer:
+                    {
+                        switch (source.type)
+                        {
+                            case "long":
+                                return (T)(object)source.longValue;
+                            case "int":
+                                return (T)(object)source.intValue;
+                            case "short":
+                                return (T)(object)(short)source.intValue;
+                            case "byte":
+                                return (T)(object)(byte)source.intValue;
+                            case "ulong":
+                                return (T)(object)(ulong)source.intValue;
+                            case "uint":
+                                return (T)(object)(uint)source.longValue;
+                            case "ushort":
+                                return (T)(object)(ushort)source.intValue;
+                            case "sbyte":
+                                return (T)(object)(sbyte)source.intValue;
+                            default:
+                                goto fallback;
+                        }
+                    }
+                    case SerializedPropertyType.Boolean:
+                        return (T)(object)source.boolValue;
+                    case SerializedPropertyType.Bounds:
+                        return (T)(object)source.boundsValue;
+                    case SerializedPropertyType.BoundsInt:
+                        return (T)(object)source.boundsIntValue;
+                    case SerializedPropertyType.Character:
+                        return (T)(object)(char)source.intValue;
+                    case SerializedPropertyType.Color:
+                        return (T)(object)source.colorValue;
+                    case SerializedPropertyType.Float:
+                        switch (source.type)
+                        {
+                            case "float":
+                                return (T)(object)source.floatValue;
+                            case "double":
+                                return (T)(object)source.doubleValue;
+                            default:
+                                goto fallback;
+                        }
+                    case SerializedPropertyType.LayerMask:
+                        return (T)(object)(LayerMask)source.intValue;
+                    case SerializedPropertyType.Quaternion:
+                        return (T)(object)source.quaternionValue;
+                    case SerializedPropertyType.Rect:
+                        return (T)(object)source.rectValue;
+                    case SerializedPropertyType.RectInt:
+                        return (T)(object)source.rectIntValue;
+                    case SerializedPropertyType.String:
+                        return (T)(object)source.stringValue;
+                    case SerializedPropertyType.Vector2:
+                        return (T)(object)source.vector2Value;
+                    case SerializedPropertyType.Vector2Int:
+                        return (T)(object)source.vector2IntValue;
+                    case SerializedPropertyType.Vector3:
+                        return (T)(object)source.vector3Value;
+                    case SerializedPropertyType.Vector3Int:
+                        return (T)(object)source.vector3IntValue;
+                    case SerializedPropertyType.Vector4:
+                        return (T)(object)source.vector4Value;
+                    case SerializedPropertyType.Enum:
+                        return FromEnum();
+                    case SerializedPropertyType.ObjectReference:
+                        return (T)(object)source.objectReferenceValue;
+                    case SerializedPropertyType.ExposedReference:
+                        return (T)(object)source.exposedReferenceValue;
+                    case SerializedPropertyType.Gradient:
+                    case SerializedPropertyType.Generic:
+                    default:
+                        fallback:
+                        return (T)GetTargetObject(source);
+                }
             }
         }
 
@@ -521,124 +611,106 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <param name="newValue">New target value.</param>
         public static void SetValue<T>(this SerializedProperty source, T newValue)
         {
-            switch (source.propertyType)
+            // Insert JIT optimizable fast paths to expected values:
+
+            SerializedPropertyType propertyType = source.propertyType;
+
+            if (!typeof(T).IsValueType)
             {
-                case SerializedPropertyType.AnimationCurve:
-                    source.animationCurveValue = (AnimationCurve)(object)newValue;
-                    break;
-                case SerializedPropertyType.ArraySize:
-                    source.arraySize = (int)(object)newValue;
-                    break;
-                case SerializedPropertyType.FixedBufferSize:
-                    throw new InvalidOperationException("Can't mutate size of a Fixed Buffer.");
-                case SerializedPropertyType.Integer:
+                switch (propertyType)
                 {
-                    switch (source.type)
-                    {
-                        case "long":
-                            source.longValue = (long)(object)newValue;
-                            break;
-                        case "int":
-                            source.intValue = (int)(object)newValue;
-                            break;
-                        case "short":
-                            source.intValue = (short)(object)newValue;
-                            break;
-                        case "byte":
-                            source.intValue = (byte)(object)newValue;
-                            break;
-                        case "ulong":
-                            source.longValue = (long)(object)newValue;
-                            break;
-                        case "uint":
-                            source.longValue = (uint)(object)newValue;
-                            break;
-                        case "ushort":
-                            source.intValue = (ushort)(object)newValue;
-                            break;
-                        case "sbyte":
-                            source.intValue = (sbyte)(object)newValue;
-                            break;
-                        default:
-                            goto fallback;
-                    }
-                    break;
+                    case SerializedPropertyType.AnimationCurve:
+                        source.animationCurveValue = (AnimationCurve)(object)newValue;
+                        return;
+                    case SerializedPropertyType.String:
+                        source.stringValue = (string)(object)newValue;
+                        return;
+                    case SerializedPropertyType.Enum:
+                        FromEnum();
+                        return;
+                    case SerializedPropertyType.ObjectReference:
+                        source.objectReferenceValue = (UnityEngine.Object)(object)newValue;
+                        return;
+                    case SerializedPropertyType.ExposedReference:
+                        source.exposedReferenceValue = (UnityEngine.Object)(object)newValue;
+                        return;
+                    case SerializedPropertyType.Gradient:
+                    case SerializedPropertyType.Generic:
+                        source.SetTargetObject(newValue, false);
+                        return;
+                    default:
+                        goto slow;
                 }
-                case SerializedPropertyType.Boolean:
-                    source.boolValue = (bool)(object)newValue;
-                    break;
-                case SerializedPropertyType.Bounds:
-                    source.boundsValue = (Bounds)(object)newValue;
-                    break;
-                case SerializedPropertyType.BoundsInt:
-                    source.boundsIntValue = (BoundsInt)(object)newValue;
-                    break;
-                case SerializedPropertyType.Character:
-                    source.intValue = (char)(object)newValue;
-                    break;
-                case SerializedPropertyType.Color:
-                    source.colorValue = (Color)(object)newValue;
-                    break;
-                case SerializedPropertyType.Float:
-                    switch (source.type)
-                    {
-                        case "float":
-                            source.floatValue = (float)(object)newValue;
-                            break;
-                        case "double":
-                            source.doubleValue = (double)(object)newValue;
-                            break;
-                        default:
-                            goto fallback;
-                    }
-                    break;
-                case SerializedPropertyType.LayerMask:
-                    source.intValue = (LayerMask)(object)newValue;
-                    break;
-                case SerializedPropertyType.Quaternion:
-                    source.quaternionValue = (Quaternion)(object)newValue;
-                    break;
-                case SerializedPropertyType.Rect:
-                    source.rectValue = (Rect)(object)newValue;
-                    break;
-                case SerializedPropertyType.RectInt:
-                    source.rectIntValue = (RectInt)(object)newValue;
-                    break;
-                case SerializedPropertyType.String:
-                    source.stringValue = (string)(object)newValue;
-                    break;
-                case SerializedPropertyType.Vector2:
-                    source.vector2Value = (Vector2)(object)newValue;
-                    break;
-                case SerializedPropertyType.Vector2Int:
-                    source.vector2IntValue = (Vector2Int)(object)newValue;
-                    break;
-                case SerializedPropertyType.Vector3:
-                    source.vector3Value = (Vector3)(object)newValue;
-                    break;
-                case SerializedPropertyType.Vector3Int:
-                    source.vector3IntValue = (Vector3Int)(object)newValue;
-                    break;
-                case SerializedPropertyType.Vector4:
-                    source.vector4Value = (Vector4)(object)newValue;
-                    break;
-                case SerializedPropertyType.Enum:
-                    FromEnum();
-                    break;
-                case SerializedPropertyType.Gradient:
-                case SerializedPropertyType.Generic:
-                    goto fallback;
-                case SerializedPropertyType.ObjectReference:
-                    source.objectReferenceValue = (UnityEngine.Object)(object)newValue;
-                    break;
-                case SerializedPropertyType.ExposedReference:
-                    source.exposedReferenceValue = (UnityEngine.Object)(object)newValue;
-                    break;
-                default:
-                    fallback:
-                    source.SetTargetObject(newValue, false);
-                    break;
             }
+            else if (typeof(T) == typeof(bool) && propertyType == SerializedPropertyType.Boolean)
+                source.boolValue = (bool)(object)newValue;
+            else if (typeof(T) == typeof(int))
+            {
+                switch (propertyType)
+                {
+                    case SerializedPropertyType.ArraySize:
+                        source.arraySize = (int)(object)newValue;
+                        return;
+                    case SerializedPropertyType.Integer when source.type == "int":
+                        source.intValue = (int)(object)newValue;
+                        return;
+                    default:
+                        goto slow;
+                }
+            }
+            else if (typeof(T) == typeof(long) && propertyType == SerializedPropertyType.Integer && source.type == "long")
+                source.longValue = (long)(object)newValue;
+            else if (typeof(T) == typeof(short) && propertyType == SerializedPropertyType.Integer && source.type == "short")
+                source.intValue = (short)(object)newValue;
+            else if (typeof(T) == typeof(byte) && propertyType == SerializedPropertyType.Integer && source.type == "byte")
+                source.intValue = (byte)(object)newValue;
+            else if (typeof(T) == typeof(uint) && propertyType == SerializedPropertyType.Integer && source.type == "uint")
+                source.longValue = (uint)(object)newValue;
+            else if (typeof(T) == typeof(ulong) && propertyType == SerializedPropertyType.Integer && source.type == "ulong")
+                source.longValue = (long)(ulong)(object)newValue;
+            else if (typeof(T) == typeof(ushort) && propertyType == SerializedPropertyType.Integer && source.type == "ushort")
+                source.intValue = (ushort)(object)newValue;
+            else if (typeof(T) == typeof(sbyte) && propertyType == SerializedPropertyType.Integer && source.type == "sbyte")
+                source.intValue = (sbyte)(object)newValue;
+            else if (typeof(T) == typeof(float) && propertyType == SerializedPropertyType.Float && source.type == "float")
+                source.floatValue = (float)(object)newValue;
+            else if (typeof(T) == typeof(double) && propertyType == SerializedPropertyType.Float && source.type == "double")
+                source.doubleValue = (double)(object)newValue;
+            else if (typeof(T) == typeof(char) && propertyType == SerializedPropertyType.Character)
+                source.intValue = (char)(object)newValue;
+            else if (typeof(T) == typeof(LayerMask) && propertyType == SerializedPropertyType.LayerMask)
+                source.intValue = (LayerMask)(object)newValue;
+            else if (typeof(T) == typeof(Bounds) && propertyType == SerializedPropertyType.Bounds)
+                source.boundsValue = (Bounds)(object)newValue;
+            else if (typeof(T) == typeof(BoundsInt) && propertyType == SerializedPropertyType.BoundsInt)
+                source.boundsIntValue = (BoundsInt)(object)newValue;
+            else if (typeof(T) == typeof(Color) && propertyType == SerializedPropertyType.Color)
+                source.colorValue = (Color)(object)newValue;
+            else if (typeof(T) == typeof(Quaternion) && propertyType == SerializedPropertyType.Quaternion)
+                source.quaternionValue = (Quaternion)(object)newValue;
+            else if (typeof(T) == typeof(Rect) && propertyType == SerializedPropertyType.Rect)
+                source.rectValue = (Rect)(object)newValue;
+            else if (typeof(T) == typeof(RectInt) && propertyType == SerializedPropertyType.RectInt)
+                source.rectIntValue = (RectInt)(object)newValue;
+            else if (typeof(T) == typeof(Vector2) && propertyType == SerializedPropertyType.Vector2)
+                source.vector2Value = (Vector2)(object)newValue;
+            else if (typeof(T) == typeof(Vector2Int) && propertyType == SerializedPropertyType.Vector2Int)
+                source.vector2IntValue = (Vector2Int)(object)newValue;
+            else if (typeof(T) == typeof(Vector3) && propertyType == SerializedPropertyType.Vector3)
+                source.vector3Value = (Vector3)(object)newValue;
+            else if (typeof(T) == typeof(Vector3Int) && propertyType == SerializedPropertyType.Vector3Int)
+                source.vector3IntValue = (Vector3Int)(object)newValue;
+            else if (typeof(T) == typeof(Vector4) && propertyType == SerializedPropertyType.Vector4)
+                source.vector4Value = (Vector4)(object)newValue;
+            else if (typeof(T).IsValueType && typeof(T) == typeof(Enum) && propertyType == SerializedPropertyType.Enum)
+                FromEnum();
+            else
+                goto slow;
+
+            return;
+            slow:
+            // Fallback to slower method since the type is not expected.
+            SlowPath();
 
             void FromEnum()
             {
@@ -676,6 +748,128 @@ namespace Enderlook.Unity.Toolset.Utils
                     source.intValue = (char)(object)newValue;
 
                 source.SetTargetObject(newValue, false);
+            }
+
+            void SlowPath()
+            {
+                switch (source.propertyType)
+                {
+                    case SerializedPropertyType.AnimationCurve:
+                        source.animationCurveValue = (AnimationCurve)(object)newValue;
+                        break;
+                    case SerializedPropertyType.ArraySize:
+                        source.arraySize = (int)(object)newValue;
+                        break;
+                    case SerializedPropertyType.FixedBufferSize:
+                        throw new InvalidOperationException("Can't mutate size of a Fixed Buffer.");
+                    case SerializedPropertyType.Integer:
+                    {
+                        switch (source.type)
+                        {
+                            case "long":
+                                source.longValue = (long)(object)newValue;
+                                break;
+                            case "int":
+                                source.intValue = (int)(object)newValue;
+                                break;
+                            case "short":
+                                source.intValue = (short)(object)newValue;
+                                break;
+                            case "byte":
+                                source.intValue = (byte)(object)newValue;
+                                break;
+                            case "ulong":
+                                source.longValue = (long)(object)newValue;
+                                break;
+                            case "uint":
+                                source.longValue = (uint)(object)newValue;
+                                break;
+                            case "ushort":
+                                source.intValue = (ushort)(object)newValue;
+                                break;
+                            case "sbyte":
+                                source.intValue = (sbyte)(object)newValue;
+                                break;
+                            default:
+                                goto fallback;
+                        }
+                        break;
+                    }
+                    case SerializedPropertyType.Boolean:
+                        source.boolValue = (bool)(object)newValue;
+                        break;
+                    case SerializedPropertyType.Bounds:
+                        source.boundsValue = (Bounds)(object)newValue;
+                        break;
+                    case SerializedPropertyType.BoundsInt:
+                        source.boundsIntValue = (BoundsInt)(object)newValue;
+                        break;
+                    case SerializedPropertyType.Character:
+                        source.intValue = (char)(object)newValue;
+                        break;
+                    case SerializedPropertyType.Color:
+                        source.colorValue = (Color)(object)newValue;
+                        break;
+                    case SerializedPropertyType.Float:
+                        switch (source.type)
+                        {
+                            case "float":
+                                source.floatValue = (float)(object)newValue;
+                                break;
+                            case "double":
+                                source.doubleValue = (double)(object)newValue;
+                                break;
+                            default:
+                                goto fallback;
+                        }
+                        break;
+                    case SerializedPropertyType.LayerMask:
+                        source.intValue = (LayerMask)(object)newValue;
+                        break;
+                    case SerializedPropertyType.Quaternion:
+                        source.quaternionValue = (Quaternion)(object)newValue;
+                        break;
+                    case SerializedPropertyType.Rect:
+                        source.rectValue = (Rect)(object)newValue;
+                        break;
+                    case SerializedPropertyType.RectInt:
+                        source.rectIntValue = (RectInt)(object)newValue;
+                        break;
+                    case SerializedPropertyType.String:
+                        source.stringValue = (string)(object)newValue;
+                        break;
+                    case SerializedPropertyType.Vector2:
+                        source.vector2Value = (Vector2)(object)newValue;
+                        break;
+                    case SerializedPropertyType.Vector2Int:
+                        source.vector2IntValue = (Vector2Int)(object)newValue;
+                        break;
+                    case SerializedPropertyType.Vector3:
+                        source.vector3Value = (Vector3)(object)newValue;
+                        break;
+                    case SerializedPropertyType.Vector3Int:
+                        source.vector3IntValue = (Vector3Int)(object)newValue;
+                        break;
+                    case SerializedPropertyType.Vector4:
+                        source.vector4Value = (Vector4)(object)newValue;
+                        break;
+                    case SerializedPropertyType.Enum:
+                        FromEnum();
+                        break;
+                    case SerializedPropertyType.Gradient:
+                    case SerializedPropertyType.Generic:
+                        goto fallback;
+                    case SerializedPropertyType.ObjectReference:
+                        source.objectReferenceValue = (UnityEngine.Object)(object)newValue;
+                        break;
+                    case SerializedPropertyType.ExposedReference:
+                        source.exposedReferenceValue = (UnityEngine.Object)(object)newValue;
+                        break;
+                    default:
+                        fallback:
+                        source.SetTargetObject(newValue, false);
+                        break;
+                }
             }
         }
 
