@@ -44,7 +44,7 @@ namespace Enderlook.Unity.Toolset.Utils
             nodes.Clear();
 
             string path = source.propertyPath.Replace(".Array.data[", "[");
-            string[] pathSections = path.Split(dotSeparator);
+            string[] pathSections = path.Split(Helper.DOT_SEPARATOR);
             int total = pathSections.Length;
 
             if (count > total)

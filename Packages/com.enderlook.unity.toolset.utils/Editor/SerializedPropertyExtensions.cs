@@ -17,7 +17,6 @@ namespace Enderlook.Unity.Toolset.Utils
 
         private static readonly Regex isArrayRegex = new Regex(@"Array.data\[\d+\]$");
         private static readonly string[] arrayDataSeparator = new string[] { ".Array.data[" };
-        private static readonly char[] dotSeparator = new char[] { '.' }; // TODO: On .NET standard 2.1 use string.Split(char, StringSplitOptions) instead
         private static readonly char[] openBracketSeparator = new char[] { '[' }; // TODO: On .NET standard 2.1 use string.Split(char, StringSplitOptions) instead
 
         /// <summary>
@@ -54,7 +53,7 @@ namespace Enderlook.Unity.Toolset.Utils
             else
                 path = source.propertyPath;
             {
-                string[] tmp = path.Split(dotSeparator);
+                string[] tmp = path.Split(Helper.DOT_SEPARATOR);
                 return tmp[tmp.Length - 1];
             }
         }
@@ -82,7 +81,7 @@ namespace Enderlook.Unity.Toolset.Utils
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
 
-            string part = source.propertyPath.Split(dotSeparator).Last().Split(openBracketSeparator).LastOrDefault();
+            string part = source.propertyPath.Split(Helper.DOT_SEPARATOR).Last().Split(openBracketSeparator).LastOrDefault();
             if (part == default)
                 throw new ArgumentException("It doesn't come from an array", nameof(source));
             else

@@ -17,7 +17,7 @@ namespace Enderlook.Unity.Toolset.Utils
     /// </summary>
     public static class AssetDatabaseHelper
     {
-        private const string CAN_NOT_BE_EMPTY = "Can't be empty";
+        private static readonly char[] slashSeparator = new char[] { '/' }; // TODO: On .NET standard 2.1 use string.Split(char, StringSplitOptions) instead
         private const string NOT_FOUND_ASSET = "Not found asset";
 
         private static string GetPathFromAssets(string path)
@@ -36,7 +36,7 @@ namespace Enderlook.Unity.Toolset.Utils
             }
             catch (ArgumentException)
             {
-                string[] paths = directory.Split('/');
+                string[] paths = directory.Split(slashSeparator);
                 for (int i = 0; i < paths.Length - 1; i++)
                     AssetDatabase.CreateFolder(string.Join("/", paths.Take(i + 1)), paths[i + 1]);
             }
@@ -52,9 +52,9 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <return>Path to created file.</return>
         public static string CreateAsset(UnityObject asset, string path, bool generateUniquePath = false)
         {
-            if (asset == null) throw new ArgumentNullException(nameof(asset));
-            if (path == null) throw new ArgumentNullException(nameof(path));
-            if (path.Length == 0) throw new ArgumentException(CAN_NOT_BE_EMPTY, nameof(path));
+            if (asset == null) Helper.ThrowArgumentNullException_Asset();
+            if (path is null) Helper.ThrowArgumentNullException_Path();
+            if (path.Length == 0) Helper.ThrowArgumentException_PathCannotBeEmpty();
 
             path = GetPathFromAssets(path);
             CreateDirectoryIfDoesNotExist(path);
@@ -77,9 +77,9 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <return>Path to created file.</return>
         public static void CreateAssetFromObjects(IEnumerable<UnityObject> objects, string path, bool generateUniquePath = false)
         {
-            if (objects == null) throw new ArgumentNullException(nameof(objects));
-            if (path == null) throw new ArgumentNullException(nameof(path));
-            if (path.Length == 0) throw new ArgumentException(CAN_NOT_BE_EMPTY, nameof(path));
+            if (objects == null) Helper.ThrowArgumentNullException_Asset();
+            if (path is null) Helper.ThrowArgumentNullException_Path();
+            if (path.Length == 0) Helper.ThrowArgumentException_PathCannotBeEmpty();
 
             path = CreateAsset(objects.First(), path, generateUniquePath);
             foreach (UnityObject @object in objects.Skip(1))
@@ -100,9 +100,9 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <return>Path to created or modified file.</return>
         public static string AddObjectToAsset(UnityObject objectToAdd, string path, bool createIfNotExist = false)
         {
-            if (objectToAdd == null) throw new ArgumentNullException(nameof(objectToAdd));
-            if (path == null) throw new ArgumentNullException(nameof(path));
-            if (path.Length == 0) throw new ArgumentException(CAN_NOT_BE_EMPTY, nameof(path));
+            if (objectToAdd == null) Helper.ThrowArgumentNullException_ObjectToAdd();
+            if (path is null) Helper.ThrowArgumentNullException_Path();
+            if (path.Length == 0) Helper.ThrowArgumentException_PathCannotBeEmpty();
 
             path = GetPathFromAssets(path);
             CreateDirectoryIfDoesNotExist(path);
@@ -114,11 +114,13 @@ namespace Enderlook.Unity.Toolset.Utils
                 if (createIfNotExist)
                     AssetDatabase.CreateAsset(objectToAdd, path);
                 else
-                    throw new FileNotFoundException(NOT_FOUND_ASSET, path);
+                    Throw();
             }
             AssetDatabase.Refresh();
             AssetDatabase.SaveAssets();
             return path;
+
+            void Throw() => throw new FileNotFoundException(NOT_FOUND_ASSET, path);
         }
 
         /// <summary>
@@ -131,12 +133,13 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <return>Path to created or modified file.</return>
         public static string AddObjectToAsset(IEnumerable<UnityObject> objectsToAdd, string path, bool createIfNotExist = false)
         {
-            if (objectsToAdd == null) throw new ArgumentNullException(nameof(objectsToAdd));
-            if (path == null) throw new ArgumentNullException(nameof(path));
-            if (path.Length == 0) throw new ArgumentException(CAN_NOT_BE_EMPTY, nameof(path));
+            if (objectsToAdd == null) Helper.ThrowArgumentNullException_ObjectToAdd();
+            if (path is null) Helper.ThrowArgumentNullException_Path();
+            if (path.Length == 0) Helper.ThrowArgumentException_PathCannotBeEmpty();
 
             foreach (UnityObject objectToAdd in objectsToAdd)
                 path = AddObjectToAsset(objectToAdd, path, createIfNotExist);
+
             return path;
         }
 
@@ -312,9 +315,9 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <returns>New sub asset. <see langword="null"/> if <paramref name="subAsset"/> was a main asset.</returns>
         public static UnityObject ExtractSubAsset(UnityObject subAsset, string newPath)
         {
-            if (subAsset == null) throw new ArgumentNullException(nameof(subAsset));
-            if (newPath == null) throw new ArgumentNullException(nameof(newPath));
-            if (newPath.Length == 0) throw new ArgumentException(CAN_NOT_BE_EMPTY, nameof(newPath));
+            if (subAsset == null) Helper.ThrowArgumentNullException_SubAsset();
+            if (newPath is null) Helper.ThrowArgumentNullException_NewPath();
+            if (newPath.Length == 0) Helper.ThrowArgumentException_NewPathCannotBeEmpty();
 
             string path = AssetDatabase.GetAssetPath(subAsset);
             if (AssetDatabase.LoadMainAssetAtPath(path) != subAsset)
@@ -336,9 +339,9 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <param name="newPath">Path to new asset file.</param>
         public static void ExtractSubAsset(ref UnityObject subAsset, string newPath)
         {
-            if (subAsset == null) throw new ArgumentNullException(nameof(subAsset));
-            if (newPath == null) throw new ArgumentNullException(nameof(newPath));
-            if (newPath.Length == 0) throw new ArgumentException(CAN_NOT_BE_EMPTY, nameof(newPath));
+            if (subAsset == null) Helper.ThrowArgumentNullException_SubAsset();
+            if (newPath is null) Helper.ThrowArgumentNullException_NewPath();
+            if (newPath.Length == 0) Helper.ThrowArgumentException_NewPathCannotBeEmpty();
 
             subAsset = ExtractSubAsset(subAsset, newPath);
         }
@@ -350,7 +353,7 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <returns>New sub asset path, if fail this path is invalid.</returns>
         public static string ExtractSubAsset(ref UnityObject subAsset)
         {
-            if (subAsset == null) throw new ArgumentNullException(nameof(subAsset));
+            if (subAsset == null) Helper.ThrowArgumentNullException_SubAsset();
 
             string path = $"{string.Concat(AssetDatabase.GetAssetPath(subAsset).Split('.').Reverse().Skip(1).Reverse())} {subAsset.name}.asset";
             ExtractSubAsset(ref subAsset, path);
@@ -365,16 +368,18 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <returns><paramref name="source"/> with a <paramref name="extension"/> as replacement of its last '.' segment.</returns>
         public static string WithDifferentExtension(this string source, string extension)
         {
-            if (source is null) throw new ArgumentNullException(nameof(source));
-            if (extension is null) throw new ArgumentNullException(nameof(extension));
-            if (source.Length == 0) throw new ArgumentException(CAN_NOT_BE_EMPTY, nameof(source));
-            if (extension.Length == 0) throw new ArgumentException(CAN_NOT_BE_EMPTY, nameof(extension));
+            if (source is null) Helper.ThrowArgumentNullException_Source();
+            if (extension is null) Helper.ThrowArgumentNullException_Extension();
+            if (source.Length == 0) Helper.ThrowArgumentException_SourceCannotBeEmpty();
+            if (extension.Length == 0) Helper.ThrowArgumentException_ExtensionCannotBeEmpty();
 
-            string[] parts = source.Split('.');
+            string[] parts = source.Split(Helper.DOT_SEPARATOR);
             if (parts.Length == 1)
-                throw new ArgumentException("Must have at least one '.'.", nameof(source));
+                Throw();
             parts[parts.Length - 1] = extension;
             return string.Join(".", parts);
+
+            void Throw() => throw new ArgumentException("Must have at least one '.'.", nameof(source));
         }
     }
 }
