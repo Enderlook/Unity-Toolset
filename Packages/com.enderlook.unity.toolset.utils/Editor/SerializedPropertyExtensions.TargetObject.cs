@@ -110,7 +110,11 @@ namespace Enderlook.Unity.Toolset.Utils
                     }
 
                     void ThrowIndexMustBeLowerThanArraySize()
-                        => throw new ArgumentException($"source.serializedObject.targetObject.{string.Join(".", pathSections.Take(i + 1)).Replace("[", ".Array.data[")}", $"Index {index} at 'source.serializedObject.targetObject.{string.Join(".", pathSections.Take(i + 1)).Replace("[", ".Array.data[")}' must be lower than 'source.serializedObject.targetObject.{string.Join(".", pathSections.Take(i)).Replace("[", ".Array.data[")}.{elementName}.Array.arraySize' ({list.Count})");
+                    {
+                        string subPath = string.Join(".", pathSections.Take(i)).Replace("[", ".Array.data[");
+                        string subPathPlusOne = string.Join(".", pathSections.Take(i + 1)).Replace("[", ".Array.data[");
+                        throw new ArgumentException($"source.serializedObject.targetObject.{subPathPlusOne}", $"Index {index} at 'source.serializedObject.targetObject.{subPathPlusOne}' must be lower than 'source.serializedObject.targetObject.{subPath}{(string.IsNullOrEmpty(subPath) ? "" : ".")}{elementName}.Array.arraySize' ({list.Count})");
+                    }
 
                     if (target is IEnumerable enumerable)
                     {
@@ -126,7 +130,11 @@ namespace Enderlook.Unity.Toolset.Utils
                             }
 
                             void ThrowEnumerableExhausted()
-                                => throw new ArgumentException($"source.serializedObject.targetObject.{string.Join(".", pathSections.Take(i + 1)).Replace("[", ".Array.data[")}", $"Index {index} at 'source.serializedObject.targetObject.{string.Join(".", pathSections.Take(i + 1)).Replace("[", ".Array.data[")}' must be lower than 'source.serializedObject.targetObject.{string.Join(".", pathSections.Take(i)).Replace("[", ".Array.data[")}.{elementName}.Array.arraySize' ({j})");
+                            {
+                                string subPath = string.Join(".", pathSections.Take(i)).Replace("[", ".Array.data[");
+                                string subPathPlusOne = string.Join(".", pathSections.Take(i + 1)).Replace("[", ".Array.data[");
+                                throw new ArgumentException($"source.serializedObject.targetObject.{subPathPlusOne}", $"Index {index} at 'source.serializedObject.targetObject.{subPathPlusOne}' must be lower than 'source.serializedObject.targetObject.{subPath}{(string.IsNullOrEmpty(subPath) ? "" : ".")}{elementName}.Array.arraySize' ({j})");
+                            }
                         }
 
                         target = enumerator.Current;
@@ -205,7 +213,10 @@ namespace Enderlook.Unity.Toolset.Utils
                     return true;
 
                     void ThrowMemberNotFound()
-                        => throw new InvalidOperationException($"From path 'source.serializedObject.targetObject.{source.propertyPath}', member '{name}' (at 'source.serializedObject.targetObject.{string.Join(".", pathSections.Take(i)).Replace("[", ".Array.data[")}.{name}') was not found.");
+                    {
+                        string subPath = string.Join(".", pathSections.Take(i)).Replace("[", ".Array.data[");
+                        throw new InvalidOperationException($"From path 'source.serializedObject.targetObject.{source.propertyPath}', member '{name}' (at 'source.serializedObject.targetObject.{subPath}{(string.IsNullOrEmpty(subPath) ? "" : ".")}{name}') was not found.");
+                    }
                 }
             }
 
