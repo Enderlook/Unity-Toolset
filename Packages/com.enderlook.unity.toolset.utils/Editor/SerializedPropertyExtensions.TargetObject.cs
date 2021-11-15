@@ -100,7 +100,7 @@ namespace Enderlook.Unity.Toolset.Utils
 
                     if (target is IList list)
                     {
-                        if (list.Count < index)
+                        if (list.Count > index)
                         {
                             target = list[index];
                             goto next;
