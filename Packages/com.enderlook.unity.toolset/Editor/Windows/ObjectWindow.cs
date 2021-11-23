@@ -448,19 +448,19 @@ namespace Enderlook.Unity.Toolset.Windows
 
                 saveAssetButton.clickable.clicked += () =>
                 {
-                    UnityObject createdObject = InstantiateAndApply((Type)list.selectedItem, property.serializedObject.targetObject, nameField.name, hideFlags.value, saveAssetButton.text);
+                    UnityObject createdObject = InstantiateAndApply((Type)list.selectedItem, property.serializedObject.targetObject, nameField.value, hideFlags.value, saveAssetButton.text);
                     AssetDatabaseHelper.CreateAsset(createdObject, $"Assets/{textField.value}.asset");
                     AssetDatabase.Refresh();
                 };
 
                 addToAssetButton.clickable.clicked += () =>
                 {
-                    UnityObject createdObject = InstantiateAndApply((Type)list.selectedItem, property.serializedObject.targetObject, nameField.name, hideFlags.value, saveAssetButton.text);
+                    UnityObject createdObject = InstantiateAndApply((Type)list.selectedItem, property.serializedObject.targetObject, nameField.value, hideFlags.value, saveAssetButton.text);
                     AssetDatabase.AddObjectToAsset(createdObject, propertyPath);
                     AssetDatabase.Refresh();
                 };
 
-                addToSceneButton.clickable.clicked += () => InstantiateAndApply((Type)list.selectedItem, property.serializedObject.targetObject, nameField.name, hideFlags.value, saveAssetButton.text);
+                addToSceneButton.clickable.clicked += () => InstantiateAndApply((Type)list.selectedItem, property.serializedObject.targetObject, nameField.value, hideFlags.value, saveAssetButton.text);
             }
 
             return createContent;
