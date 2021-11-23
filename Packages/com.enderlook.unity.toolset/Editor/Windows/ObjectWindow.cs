@@ -54,9 +54,6 @@ namespace Enderlook.Unity.Toolset.Windows
                 if (property.IsArrayOrListSize())
                     return;
 
-                if (property.IsArrayOrListElement())
-                    return;
-
                 if (typeof(UnityObject).IsAssignableFrom(property.GetPropertyType()))
                 {
                     if (!property.TryGetMemberInfo(out MemberInfo memberInfo))
