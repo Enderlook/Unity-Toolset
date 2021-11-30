@@ -936,85 +936,114 @@ namespace Enderlook.Unity.Toolset.Utils
             // TODO: Some checks may be redundant or unnecesary.
             string typeName = default;
             Type defaultType = default;
+            Type type;
             switch (source.propertyType)
             {
                 case SerializedPropertyType.AnimationCurve:
-                    return typeof(AnimationCurve);
+                    type = typeof(AnimationCurve);
+                    goto done;
                 case SerializedPropertyType.ArraySize:
                 case SerializedPropertyType.FixedBufferSize:
-                    return typeof(int);
+                    type = typeof(int);
+                    goto done;
                 case SerializedPropertyType.Integer:
                 {
                     typeName = source.type;
                     switch (typeName)
                     {
                         case "long":
-                            return typeof(long);
+                            type = typeof(long);
+                            goto done;
                         case "int":
-                            return typeof(int);
+                            type = typeof(int);
+                            goto done;
                         case "short":
-                            return typeof(short);
+                            type = typeof(short);
+                            goto done;
                         case "byte":
-                            return typeof(byte);
+                            type = typeof(byte);
+                            goto done;
                         case "ulong":
-                            return typeof(ulong);
+                            type = typeof(ulong);
+                            goto done;
                         case "uint":
-                            return typeof(uint);
+                            type = typeof(uint);
+                            goto done;
                         case "ushort":
-                            return typeof(ushort);
+                            type = typeof(ushort);
+                            goto done;
                         case "sbyte":
-                            return typeof(sbyte);
+                            type = typeof(sbyte);
+                            goto done;
                         default:
                             defaultType = typeof(int);
                             goto find;
                     }
                 }
                 case SerializedPropertyType.Boolean:
-                    return typeof(bool);
+                    type = typeof(bool);
+                    goto done;
                 case SerializedPropertyType.Bounds:
-                    return typeof(Bounds);
+                    type = typeof(Bounds);
+                    goto done;
                 case SerializedPropertyType.BoundsInt:
-                    return typeof(BoundsInt);
+                    type = typeof(BoundsInt);
+                    goto done;
                 case SerializedPropertyType.Character:
-                    return typeof(char);
+                    type = typeof(char);
+                    goto done;
                 case SerializedPropertyType.Color:
-                    return typeof(Color);
+                    type = typeof(Color);
+                    goto done;
                 case SerializedPropertyType.Float:
                 {
                     typeName = source.type;
                     switch (typeName)
                     {
                         case "float":
-                            return typeof(float);
+                            type = typeof(float);
+                            goto done;
                         case "double":
-                            return typeof(double);
+                            type = typeof(double);
+                            goto done;
                         default:
                             defaultType = typeof(float);
                             goto find;
                     }
                 }
                 case SerializedPropertyType.Gradient:
-                    return typeof(Gradient);
+                    type = typeof(Gradient);
+                    goto done;
                 case SerializedPropertyType.LayerMask:
-                    return typeof(LayerMask);
+                    type = typeof(LayerMask);
+                    goto done;
                 case SerializedPropertyType.Quaternion:
-                    return typeof(Quaternion);
+                    type = typeof(Quaternion);
+                    goto done;
                 case SerializedPropertyType.Rect:
-                    return typeof(Rect);
+                    type = typeof(Rect);
+                    goto done;
                 case SerializedPropertyType.RectInt:
-                    return typeof(RectInt);
+                    type = typeof(RectInt);
+                    goto done;
                 case SerializedPropertyType.String:
-                    return typeof(string);
+                    type = typeof(string);
+                    goto done;
                 case SerializedPropertyType.Vector2:
-                    return typeof(Vector2);
+                    type = typeof(Vector2);
+                    goto done;
                 case SerializedPropertyType.Vector2Int:
-                    return typeof(Vector2Int);
+                    type = typeof(Vector2Int);
+                    goto done;
                 case SerializedPropertyType.Vector3:
-                    return typeof(Vector3);
+                    type = typeof(Vector3);
+                    goto done;
                 case SerializedPropertyType.Vector3Int:
-                    return typeof(Vector3Int);
+                    type = typeof(Vector3Int);
+                    goto done;
                 case SerializedPropertyType.Vector4:
-                    return typeof(Vector4);
+                    type = typeof(Vector4);
+                    goto done;
                 case SerializedPropertyType.Generic:
                 {
                     typeName = source.type;
@@ -1034,12 +1063,27 @@ namespace Enderlook.Unity.Toolset.Utils
             }
 
             find:
-            if (types.TryGetValue(typeName, out Type type))
-                return type;
-            return FindType();
+            {
+                if (types.TryGetValue(typeName, out Type type_))
+                    type = type_;
+                else
+                    type = FindType();
+            }
+
+            done:
+            if (source.isArray)
+            {
+                defaultType = type.MakeArrayType();
+                goto fallback;
+            }
+            else
+                goto end;
 
             fallback:
-            return Fallback();
+            type = Fallback();
+
+            end:
+            return type;
 
             Type FindType()
             {
