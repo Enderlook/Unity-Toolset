@@ -32,7 +32,7 @@ namespace Enderlook.Unity.Toolset.Drawers
         private static readonly GUIContent RELATIVE_POSITION_CONTENT = new GUIContent("Relative Position", "Determines the relative position of this property.");
         private static readonly GUIContent REFERENCE_POSITION_CONTENT = new GUIContent("Reference Position", "Determines the reference position of this property.");
 
-        private static (SerializedProperty serializedProperty, Vector3 position, DrawVectorRelativeToTransformAttribute drawVectorRelativeToTransform, FieldInfo field) selected;
+        private static (SerializedProperty serializedProperty, Vector3 position, DrawVectorRelativeToTransformAttribute drawVectorRelativeToTransform, MemberInfo memberInfo) selected;
 
         private static readonly GUIContent OBJECT_LABEL = new GUIContent();
         private static readonly GUIContent PROPERTY_PATH_LABEL = new GUIContent();
@@ -211,7 +211,7 @@ namespace Enderlook.Unity.Toolset.Drawers
             }
         }
 
-        private static void RenderSingleSerializedProperty(SerializedProperty serializedProperty, DrawVectorRelativeToTransformAttribute drawVectorRelativeToTransform, Vector3 reference, FieldInfo field)
+        private static void RenderSingleSerializedProperty(SerializedProperty serializedProperty, DrawVectorRelativeToTransformAttribute drawVectorRelativeToTransform, Vector3 reference, MemberInfo memberInfo)
         {
             Vector3 absolutePosition = ToAbsolutePosition(serializedProperty, reference);
             absolutePosition = DrawHandle(absolutePosition, drawVectorRelativeToTransform.usePositionHandler);
@@ -231,10 +231,10 @@ namespace Enderlook.Unity.Toolset.Drawers
                     Handles.Label(absolutePosition, texture);
             }
 
-            CheckForSelection(absolutePosition, serializedProperty, drawVectorRelativeToTransform, field);
+            CheckForSelection(absolutePosition, serializedProperty, drawVectorRelativeToTransform, memberInfo);
         }
 
-        private static void CheckForSelection(Vector3 position, SerializedProperty serializedProperty, DrawVectorRelativeToTransformAttribute drawVectorRelativeToTransform, FieldInfo field)
+        private static void CheckForSelection(Vector3 position, SerializedProperty serializedProperty, DrawVectorRelativeToTransformAttribute drawVectorRelativeToTransform, MemberInfo memberInfo)
         {
             if (!showButton)
                 return;
@@ -242,7 +242,7 @@ namespace Enderlook.Unity.Toolset.Drawers
             float size = GetSize(position);
 
             if (Handles.Button(position, Quaternion.identity, size, size, handleCap))
-                selected = (serializedProperty.Copy(), position, drawVectorRelativeToTransform, field);
+                selected = (serializedProperty.Copy(), position, drawVectorRelativeToTransform, memberInfo);
         }
 
         private static float GetSize(Vector3 position) => HandleUtility.GetHandleSize(position) * .1f;
@@ -260,7 +260,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                     showButton = false;
             }
 
-            foreach ((SerializedProperty serializedProperty, FieldInfo field, DrawVectorRelativeToTransformAttribute drawVectorRelativeToTransform, Editor editor) in PropertyDrawerHelper.FindAllSerializePropertiesInActiveEditorWithTheAttribute<DrawVectorRelativeToTransformAttribute>())
+            foreach ((SerializedProperty serializedProperty, MemberInfo memberInfo, DrawVectorRelativeToTransformAttribute drawVectorRelativeToTransform, Editor editor) in PropertyDrawerHelper.FindAllSerializePropertiesInActiveEditorWithTheAttribute<DrawVectorRelativeToTransformAttribute>())
             {
                 serializedProperty.serializedObject.Update();
                 Vector3 reference = GetReference(serializedProperty, drawVectorRelativeToTransform.reference);
@@ -269,10 +269,10 @@ namespace Enderlook.Unity.Toolset.Drawers
                     for (int i = 0; i < serializedProperty.arraySize; i++)
                     {
                         SerializedProperty item = serializedProperty.GetArrayElementAtIndex(i);
-                        RenderSingleSerializedProperty(item, drawVectorRelativeToTransform, reference, field);
+                        RenderSingleSerializedProperty(item, drawVectorRelativeToTransform, reference, memberInfo);
                     }
                 else
-                    RenderSingleSerializedProperty(serializedProperty, drawVectorRelativeToTransform, reference, field);
+                    RenderSingleSerializedProperty(serializedProperty, drawVectorRelativeToTransform, reference, memberInfo);
 
                 serializedProperty.serializedObject.ApplyModifiedProperties();
             }
@@ -296,7 +296,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                     OBJECT_LABEL.text = selected.serializedProperty.serializedObject.targetObject.name;
                     EditorGUILayout.LabelField(OBJECT_CONTENT, OBJECT_LABEL);
 
-                    PROPERTY_PATH_LABEL.text = $"{selected.field.DeclaringType.Name}.{selected.serializedProperty.propertyPath.Replace(".Array.data", "")}";
+                    PROPERTY_PATH_LABEL.text = $"{selected.memberInfo.DeclaringType.Name}.{selected.serializedProperty.propertyPath.Replace(".Array.data", "")}";
                     EditorGUILayout.LabelField(PATH_CONTENT, PROPERTY_PATH_LABEL);
 
                     if (selected.serializedProperty.propertyPath.EndsWith("]"))

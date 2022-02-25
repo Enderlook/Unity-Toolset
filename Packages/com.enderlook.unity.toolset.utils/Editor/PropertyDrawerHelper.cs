@@ -45,7 +45,7 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <typeparam name="T">Attribute type to look for.</typeparam>
         /// <param name="inherit">Whenever it should look for inherited attributes.</param>
         /// <returns>An enumerable with all the properties, fields, attributes and the editor where they were taken.</returns>
-        public static IEnumerable<(SerializedProperty serializedProperty, FieldInfo field, T attribute, Editor editor)> FindAllSerializePropertiesInActiveEditorWithTheAttribute<T>(bool inherit = true) where T : Attribute
+        public static IEnumerable<(SerializedProperty serializedProperty, MemberInfo memberInfo, T attribute, Editor editor)> FindAllSerializePropertiesInActiveEditorWithTheAttribute<T>(bool inherit = true) where T : Attribute
         {
             foreach (Editor editor in ActiveEditorTracker.sharedTracker.activeEditors)
             {
@@ -58,11 +58,9 @@ namespace Enderlook.Unity.Toolset.Utils
                         continue;
                     if (!serializedProperty.TryGetMemberInfo(out MemberInfo memberInfo)) // Catch all properties with errors, such as Unity-related fields that aren't as (like those fields which starts with `m_`)
                         continue;
-                    // TODO: The cast (FieldInfo) is here because that method previously returned FieldInfo, maybe this method should now use MemberInfo instead of FieldInfo.
-                    FieldInfo field = (FieldInfo)memberInfo;
-                    Attribute attribute = field.GetCustomAttribute(typeof(T), inherit);
+                    Attribute attribute = memberInfo.GetCustomAttribute(typeof(T), inherit);
                     if (attribute?.GetType() == typeof(T))
-                        yield return (serializedProperty, field, (T)attribute, editor);
+                        yield return (serializedProperty, memberInfo, (T)attribute, editor);
                 }
             }
         }
