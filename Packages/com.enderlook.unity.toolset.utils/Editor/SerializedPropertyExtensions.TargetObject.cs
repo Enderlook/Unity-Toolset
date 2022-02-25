@@ -922,7 +922,7 @@ namespace Enderlook.Unity.Toolset.Utils
                 node = nodes[--i];
             nodes.Clear();
 
-            memberInfo= node.MemberInfo;
+            memberInfo = node.MemberInfo;
             return true;
         }
 
