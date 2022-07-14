@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Attributes
 {
-    [AttributeUsageFieldMustBeSerializableByUnityAttribute]
+    [AttributeUsageFieldMustBeSerializableByUnity]
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
     public sealed class IsPropertyAttribute : PropertyAttribute { }
 }
