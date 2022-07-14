@@ -46,6 +46,7 @@ namespace Enderlook.Unity.Toolset.Windows
         private List<UnityObject> elements = new List<UnityObject>();
         private UnityObject original;
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by Unity.")]
         [InitializeOnLoadMethod]
         private static void AddContextualPropertyMenu()
         {
@@ -258,6 +259,7 @@ namespace Enderlook.Unity.Toolset.Windows
             allowedTypesToInstantiate.Sort(compareTypes);
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by Unity.")]
         private void OnEnable()
         {
             rootVisualElement.schedule.Execute(() =>
