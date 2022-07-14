@@ -6,6 +6,7 @@ using System.Reflection;
 using UnityEditor;
 
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Enderlook.Unity.Toolset.Windows
 {
@@ -42,21 +43,25 @@ namespace Enderlook.Unity.Toolset.Windows
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by Unity.")]
-        private void OnGUI()
+        private void OnEnable()
         {
-            titleContent = new GUIContent("Expandable Window " + property.displayName);
-
-            if (editor == null)
-                Editor.CreateCachedEditor(property.objectReferenceValue, null, ref editor);
-
-            // Check again because it may not be created by the Editor.CreateChachedEditor
-            if (editor != null)
+            rootVisualElement.schedule.Execute(() =>
             {
-                EditorGUI.BeginChangeCheck();
-                editor.OnInspectorGUI();
-                if (EditorGUI.EndChangeCheck())
-                    property.serializedObject.ApplyModifiedProperties();
-            }
+                titleContent = new GUIContent("Expandable Window " + property.displayName);
+                Add();
+
+                void Add()
+                {
+                    if (editor == null)
+                        Editor.CreateCachedEditor(property.objectReferenceValue, null, ref editor);
+
+                    // Check again because it may not be created by the Editor.CreateChachedEditor
+                    if (editor != null)
+                        rootVisualElement.Add(new IMGUIContainer(() => editor.DrawDefaultInspector()));
+                    else
+                        rootVisualElement.schedule.Execute(Add);
+                }
+            });
         }
     }
 }
