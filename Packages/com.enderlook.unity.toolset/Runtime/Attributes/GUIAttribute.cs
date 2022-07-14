@@ -46,14 +46,17 @@ namespace Enderlook.Unity.Toolset.Attributes
             this.nameMode = nameMode;
         }
 
-        public GUIAttribute(string name, string tooltip, Mode tooltipMode = Mode.Reference) : this(name)
+        public GUIAttribute(string name, string tooltip, Mode tooltipMode = Mode.Reference)
         {
+            this.name = name;
             this.tooltip = tooltip;
             this.tooltipMode = tooltipMode;
         }
 
-        public GUIAttribute(string name, Mode nameMode, string tooltip, Mode tooltipMode = Mode.Reference) : this(name, nameMode)
+        public GUIAttribute(string name, Mode nameMode, string tooltip, Mode tooltipMode = Mode.Reference)
         {
+            this.name = name;
+            this.nameMode = nameMode;
             this.tooltip = tooltip;
             this.tooltipMode = tooltipMode;
         }
