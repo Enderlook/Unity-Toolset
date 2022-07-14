@@ -31,7 +31,7 @@ namespace Enderlook.Unity.Toolset.Utils
         {
             if (source == null)
             {
-                if (throwIfError) ThrowSourceIsNull();
+                if (throwIfError) Helper.ThrowArgumentNullException_Source();
                 goto isFalse;
             }
 
@@ -224,9 +224,6 @@ namespace Enderlook.Unity.Toolset.Utils
             isFalse:
             nodes.Clear();
             return false;
-
-            void ThrowSourceIsNull()
-                => throw new ArgumentNullException(nameof(source));
 
             void ThrowNodesIsNull()
                 => throw new ArgumentNullException(nameof(nodes));

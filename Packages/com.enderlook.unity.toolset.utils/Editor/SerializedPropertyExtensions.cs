@@ -40,7 +40,7 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <returns>Last field name of <paramref name="source"/>.</returns>
         public static string GetFieldName(this SerializedProperty source)
         {
-            if (source is null) throw new ArgumentNullException(nameof(source));
+            if (source is null) Helper.ThrowArgumentNullException_Source();
 
             string path;
             if (source.IsArrayOrListSize())
@@ -66,7 +66,7 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> is <see langword="null"/>.</exception>
         public static bool IsArrayOrListSize(this SerializedProperty source)
         {
-            if (source is null) throw new ArgumentNullException(nameof(source));
+            if (source is null) Helper.ThrowArgumentNullException_Source();
 
             return source.propertyPath.EndsWith("Array.size");
         }
@@ -79,7 +79,7 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <exception cref="ArgumentException">Thrown when <paramref name="source"/> doesn't come from an array.</exception>
         public static int GetIndexFromArray(this SerializedProperty source)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (source == null) Helper.ThrowArgumentNullException_Source();
 
             string part = source.propertyPath.Split(Helper.DOT_SEPARATOR).Last().Split(openBracketSeparator).LastOrDefault();
             if (part == default)
@@ -96,9 +96,9 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <returns><see cref="SerializedProperty"/> of the backing field of <paramref name="name"/> property.</returns>
         public static SerializedProperty FindRelativeBackingFieldOfProperty(this SerializedProperty source, string name)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            if (name == null) throw new ArgumentNullException(nameof(name));
-            if (name.Length == 0) throw new ArgumentException("Can't be empty.", nameof(name));
+            if (source == null) Helper.ThrowArgumentNullException_Source();
+            if (name == null) Helper.ThrowArgumentNullException_Name();
+            if (name.Length == 0) Helper.ThrowArgumentException_NameCannotBeEmpty();
 
             return source.FindPropertyRelative(ReflectionExtensions.GetBackingFieldName(name));
         }
@@ -111,9 +111,9 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <returns><see cref="SerializedProperty"/> of the field or backing field of <paramref name="name"/> property.</returns>
         public static SerializedProperty FindRelativePropertyOrBackingField(this SerializedProperty source, string name)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            if (name == null) throw new ArgumentNullException(nameof(name));
-            if (name.Length == 0) throw new ArgumentException("Can't be empty.", nameof(name));
+            if (source == null) Helper.ThrowArgumentNullException_Source();
+            if (name == null) Helper.ThrowArgumentNullException_Name();
+            if (name.Length == 0) Helper.ThrowArgumentException_NameCannotBeEmpty();
 
             SerializedProperty serializedProperty = source.FindPropertyRelative(name);
             if (serializedProperty == null)
