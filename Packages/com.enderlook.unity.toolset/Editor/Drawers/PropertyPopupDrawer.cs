@@ -38,12 +38,11 @@ namespace Enderlook.Unity.Toolset.Drawers
                 }
                 else
                 {
-                    PropertyPopupOption[] modes =
-                        classType.GetInheritedFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                        .Select(e => (e, e.GetCustomAttribute<PropertyPopupOptionAttribute>(true)))
-                        .Where(e => e.Item2 != null)
-                        .Select(e => new PropertyPopupOption(e.e.Name, e.Item2))
-                        .ToArray();
+                    List<PropertyPopupOption> list = new List<PropertyPopupOption>();
+                    foreach (var element in classType.GetInheritedFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+                        if (element.GetCustomAttribute<PropertyPopupOptionAttribute>(true) is PropertyPopupOptionAttribute attribute)
+                            list.Add(new PropertyPopupOption(element.Name, attribute));
+                    PropertyPopupOption[] modes = list.ToArray();
 
                     propertyPopup = new PropertyPopup(propertyPopupAttribute.modeName, modes);
                     alloweds.Add(classType, propertyPopup);
