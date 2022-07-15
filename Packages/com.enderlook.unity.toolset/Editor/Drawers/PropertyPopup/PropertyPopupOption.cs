@@ -4,7 +4,7 @@ using UnityEditor;
 
 namespace Enderlook.Unity.Toolset.Drawers
 {
-    public struct PropertyPopupOption
+    internal readonly struct PropertyPopupOption
     {
         public readonly string propertyName;
         public readonly string displayName;

@@ -14,24 +14,24 @@ namespace Enderlook.Unity.Toolset.Attributes
         /// <summary>
         /// Whenever the texture will be drawn on the same line as the property or in a line bellow.
         /// </summary>
-        public readonly bool drawOnSameLine;
+        internal readonly bool drawOnSameLine;
 
         /// <summary>
         /// Whenever the texture will be centered.
         /// </summary>
-        public readonly bool centered;
+        internal readonly bool centered;
 
         /// <summary>
         /// Height of the <see cref="Rect"/> used to show the texture.<br/>
         /// On -1, the height of the property is used.
         /// </summary>
-        public readonly float height;
+        internal readonly float height;
 
         /// <summary>
         /// Width of the <see cref="Rect"/> used to show the texture.<br/>
         /// On -1, <see cref="height"/> is used.
         /// </summary>
-        public readonly float width;
+        internal readonly float width;
 
         /// <summary>
         /// Draw the texture next to the field in the inspector.

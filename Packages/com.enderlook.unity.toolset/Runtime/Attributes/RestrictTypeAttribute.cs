@@ -10,7 +10,9 @@ namespace Enderlook.Unity.Toolset.Attributes
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
     public sealed class RestrictTypeAttribute : PropertyAttribute
     {
-        public readonly Type[] restriction;
+#if UNITY_EDITOR
+        internal readonly Type[] restriction;
+#endif
 
         /// <summary>
         /// Restrict the values of this field by only types which implement, inherit or can be casted to all the types from <paramref name="restriction"/>.<br/>

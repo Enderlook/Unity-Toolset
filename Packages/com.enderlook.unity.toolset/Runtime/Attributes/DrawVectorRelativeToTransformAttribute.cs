@@ -14,17 +14,17 @@ namespace Enderlook.Unity.Toolset.Attributes
         /// <summary>
         /// Whenever it should use <see cref="UnityEditor.Handles.PositionHandle(Vector3, Quaternion)"/> or <see cref="UnityEditor.Handles.FreeMoveHandle(Vector3, Quaternion, float, Vector3, UnityEditor.Handles.CapFunction)"/> to draw the handler.
         /// </summary>
-        public readonly bool usePositionHandler;
+        internal readonly bool usePositionHandler;
 
         /// <summary>
         /// Icon displayed in scene. If empty no icon will be displayed.
         /// </summary>
-        public readonly string icon;
+        internal readonly string icon;
 
         /// <summary>
         /// Reference used to show handler. If empty, <see cref="Transform"/> of the <see cref="GameObject"/> will be used.
         /// </summary>
-        public readonly string reference;
+        internal readonly string reference;
 
         public DrawVectorRelativeToTransformAttribute(bool usePositionHandler = false, string reference = "")
         {

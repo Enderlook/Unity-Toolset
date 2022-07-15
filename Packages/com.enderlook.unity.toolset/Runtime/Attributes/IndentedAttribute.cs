@@ -16,7 +16,7 @@ namespace Enderlook.Unity.Toolset.Attributes
         /// <summary>
         /// Indentation to add.
         /// </summary>
-        public readonly int indentationOffset;
+        internal readonly int indentationOffset;
 
         /// <summary>
         /// Add or remove indentation to the drew serialized property.

@@ -10,7 +10,7 @@ namespace Enderlook.Unity.Toolset.Attributes
         /// <summary>
         /// Value that must match the mode field in other to show this field.
         /// </summary>
-        public readonly object target;
+        internal readonly object target;
 
         /// <summary>
         /// Allow to use the decoreated field as option for the property popup.

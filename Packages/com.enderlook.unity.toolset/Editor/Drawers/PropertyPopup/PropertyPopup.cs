@@ -14,7 +14,7 @@ namespace Enderlook.Unity.Toolset.Drawers
     /// <summary>
     /// A helper class to draw properties according to a popup selector.
     /// </summary>
-    public sealed class PropertyPopup
+    internal sealed class PropertyPopup
     {
         private const string NOT_FOUND_OPTION = "Not found an option which satisfy {0} ({1}).";
 

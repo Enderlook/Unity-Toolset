@@ -28,15 +28,15 @@ namespace Enderlook.Unity.Toolset.Attributes
             Reference,
         }
 
-        public readonly string name;
+        internal readonly string name;
 
-        public readonly string tooltip;
+        internal readonly string tooltip;
 
-        public readonly Mode nameMode;
+        internal readonly Mode nameMode;
 
-        public readonly Mode tooltipMode;
+        internal readonly Mode tooltipMode;
 
-        public readonly string guiContentOrReferenceName;
+        internal readonly string guiContentOrReferenceName;
 
         public GUIAttribute(string name) => guiContentOrReferenceName = name;
 

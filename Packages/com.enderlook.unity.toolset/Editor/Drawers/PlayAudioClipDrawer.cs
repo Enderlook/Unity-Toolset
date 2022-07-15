@@ -10,7 +10,7 @@ using UnityEngine;
 namespace Enderlook.Unity.Toolset.Drawers
 {
     [CustomPropertyDrawer(typeof(PlayAudioClipAttribute))]
-    public class PlayAudioClipDrawer : SmartPropertyDrawer
+    internal class PlayAudioClipDrawer : SmartPropertyDrawer
     {
         private const int SPACE_BETTWEN_FIELD_AND_ERROR = 2;
 
