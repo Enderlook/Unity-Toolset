@@ -36,18 +36,18 @@ namespace Enderlook.Unity.Toolset.Drawers
                 return;
             }
 
-            UnityObject old = property.objectReferenceValue;
+            EditorGUI.BeginChangeCheck();
             EditorGUI.PropertyField(position, property, label);
-            UnityObject result = property.objectReferenceValue;
-
-            if ((old != result || firstTime) && result != null // We check for differences to avoid wasting perfomance
-                && !((RestrictTypeAttribute)attribute).CheckIfTypeIsAllowed(result.GetType(), out errorMessage))
+            if (EditorGUI.EndChangeCheck())
             {
-                Debug.LogError($"Field {property.name} error. {errorMessage}");
-                property.objectReferenceValue = null;
+                firstTime = false;
+                UnityObject result = property.objectReferenceValue;
+                if (result != null && !((RestrictTypeAttribute)attribute).CheckIfTypeIsAllowed(result.GetType(), out errorMessage))
+                {
+                    Debug.LogError($"Field {property.name} error. {errorMessage}");
+                    property.objectReferenceValue = null;
+                }
             }
-
-            firstTime = false;
         }
 
         protected override float GetPropertyHeightSmart(SerializedProperty property, GUIContent label) => height ?? EditorGUI.GetPropertyHeight(property, label, true);
