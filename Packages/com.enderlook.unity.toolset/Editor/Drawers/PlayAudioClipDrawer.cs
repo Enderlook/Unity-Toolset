@@ -9,22 +9,25 @@ using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Drawers
 {
-    [CustomPropertyDrawer(typeof(PlayAudioClipAttribute))]
-    internal class PlayAudioClipDrawer : SmartPropertyDrawer
+    [CustomStackablePropertyDrawer(typeof(PlayAudioClipAttribute))]
+    internal class PlayAudioClipDrawer : StackablePropertyDrawer
     {
         private const int SPACE_BETTWEN_FIELD_AND_ERROR = 2;
 
         private GUIContent errorContent;
 
-        protected override void OnGUISmart(Rect position, SerializedProperty property, GUIContent label)
-        {
-            PlayAudioClipAttribute playAudioClipAttribute = (PlayAudioClipAttribute)attribute;
+        protected internal override bool HasOnGUI => true;
 
-            if (!IsFine(property))
+        protected internal override void OnGUI(Rect position, SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren)
+        {
+            PlayAudioClipAttribute attribute = (PlayAudioClipAttribute)Attribute;
+
+            SerializedProperty property = propertyInfo.SerializedProperty;
+            if (!IsFine(propertyInfo))
             {
                 EditorGUI.PropertyField(position, property, label);
 
-                (float height, string message) = CalculateError(position.width);
+                (float height, string message) = CalculateError(propertyInfo, position.width);
 
                 EditorGUI.HelpBox(new Rect(position.x, position.y + position.height + SPACE_BETTWEN_FIELD_AND_ERROR, position.width, height), message, MessageType.Error);
                 Debug.LogError(message);
@@ -47,7 +50,7 @@ namespace Enderlook.Unity.Toolset.Drawers
 
                 EditorGUI.PropertyField(new Rect(position.x, position.y, position.width - width, position.height), property, label, true);
 
-                bool showProgressBar = isPlaying && playAudioClipAttribute.ShowProgressBar;
+                bool showProgressBar = isPlaying && attribute.ShowProgressBar;
 
                 if (GUI.Button(new Rect(position.x + position.width - width, position.y, width, position.height / (showProgressBar ? 2 : 1)), playGUIContent))
                     if (isPlaying)
@@ -64,20 +67,20 @@ namespace Enderlook.Unity.Toolset.Drawers
             }
         }
 
-        protected override float GetPropertyHeightSmart(SerializedProperty property, GUIContent label)
+        protected internal override float GetPropertyHeight(SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren, float height)
         {
-            float height = base.GetPropertyHeightSmart(property, label);
-            if (!IsFine(property))
+            height = EditorGUI.GetPropertyHeight(propertyInfo.SerializedProperty, label, includeChildren);
+            if (!IsFine(propertyInfo))
             {
-                height += CalculateError(EditorGUIUtility.currentViewWidth).height;
+                height += CalculateError(propertyInfo, EditorGUIUtility.currentViewWidth).height;
                 height += SPACE_BETTWEN_FIELD_AND_ERROR;
             }
             return height;
         }
 
-        private (float height, string message) CalculateError(float width)
+        private (float height, string message) CalculateError(SerializedPropertyInfo propertyInfo, float width)
         {
-            string message = $"Attribute {nameof(PlayAudioClipAttribute)} can only be used in field of type {typeof(AudioClip)} or {typeof(string)}. Was {fieldInfo.FieldType}.";
+            string message = $"Attribute {nameof(PlayAudioClipAttribute)} can only be used in field of type {typeof(AudioClip)} or {typeof(string)}. Was {propertyInfo.MemberType}.";
             if (errorContent is null)
                 errorContent = new GUIContent();
             errorContent.text = message;
@@ -85,14 +88,15 @@ namespace Enderlook.Unity.Toolset.Drawers
             return (height, message);
         }
 
-        private bool IsFine(SerializedProperty property)
+        private bool IsFine(SerializedPropertyInfo propertyInfo)
         {
+            SerializedProperty property = propertyInfo.SerializedProperty;
             switch (property.propertyType)
             {
                 case SerializedPropertyType.String:
                     return true;
                 case SerializedPropertyType.ObjectReference:
-                    return !(property.objectReferenceValue is AudioClip) || fieldInfo.FieldType == typeof(AudioClip);
+                    return !(property.objectReferenceValue is AudioClip) || propertyInfo.MemberType == typeof(AudioClip);
             }
             return false;
         }

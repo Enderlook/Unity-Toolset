@@ -10,7 +10,7 @@ namespace Enderlook.Unity.Toolset.Attributes
     [AttributeUsageAccessibility(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)]
     [AttributeUsageFieldMustBeSerializableByUnity]
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = true, Inherited = true)]
-    public sealed class ShowIfAttribute : PropertyAttribute
+    public sealed class EnableIfAttribute : PropertyAttribute
 #if UNITY_EDITOR
         , IConditionalAttribute
 #endif
@@ -40,13 +40,13 @@ namespace Enderlook.Unity.Toolset.Attributes
 #endif
 
         /// <summary>
-        /// Show or hide a property depending on a condition.
+        /// Enable or disable a property depending on a condition.
         /// </summary>
         /// <param name="property">Value compared to <paramref name="compareTo"/>.</param>
         /// <param name="compareTo">The conditional will be compated to this value.</param>
         /// <param name="comparison">Comparison mode between <paramref name="property"/> and <paramref name="compareTo"/>.</param>
         /// <param name="chain">If <see cref="true"/> and <paramref name="property"/> has attribute <see cref="ShowIfAttribute"/> or <see cref="EnableIfAttribute"/>, this will execute only if <paramref name="property"/> was success.</param>
-        public ShowIfAttribute(string property, object compareTo, ComparisonMode comparison = ComparisonMode.Equal, bool chain = true)
+        public EnableIfAttribute(string property, object compareTo, ComparisonMode comparison = ComparisonMode.Equal, bool chain = true)
         {
 #if UNITY_EDITOR
             mode = IConditionalAttribute.ConditionalMode.WithObject;
@@ -58,13 +58,13 @@ namespace Enderlook.Unity.Toolset.Attributes
         }
 
         /// <summary>
-        /// Show or hide a property depending on a condition.
+        /// Enable or disable a property depending on a condition.
         /// </summary>
         /// <param name="comparison">Comparison mode between <paramref name="firstProperty"/> and <paramref name="secondProperty"/>.</param>
         /// <param name="firstProperty">Value compared to <paramref name="secondProperty"/>.</param>
         /// <param name="secondProperty">Value compared to <paramref name="firstProperty"/>.</param>
         /// <param name="chain">If <see cref="true"/> and <paramref name="property"/> has attribute <see cref="ShowIfAttribute"/> or <see cref="EnableIfAttribute"/>, this will execute only if <paramref name="property"/> was success.</param>
-        public ShowIfAttribute(ComparisonMode comparison, string firstProperty, string secondProperty, bool chain = true)
+        public EnableIfAttribute(ComparisonMode comparison, string firstProperty, string secondProperty, bool chain = true)
         {
 #if UNITY_EDITOR
             mode = IConditionalAttribute.ConditionalMode.WithProperty;
@@ -76,10 +76,10 @@ namespace Enderlook.Unity.Toolset.Attributes
         }
 
         /// <summary>
-        /// Show or hide a property depending if <paramref name="property"/> is <see cref="true"/>.
+        /// Enable or disable a property depending if <paramref name="property"/> is <see cref="true"/>.
         /// </summary>
         /// <param name="chain">If <see cref="true"/> and <paramref name="property"/> has attribute <see cref="ShowIfAttribute"/> or <see cref="EnableIfAttribute"/>, this will execute only if <paramref name="property"/> was success.</param>
-        public ShowIfAttribute(string property, bool chain = true)
+        public EnableIfAttribute(string property, bool chain = true)
         {
 #if UNITY_EDITOR
             mode = IConditionalAttribute.ConditionalMode.Single;

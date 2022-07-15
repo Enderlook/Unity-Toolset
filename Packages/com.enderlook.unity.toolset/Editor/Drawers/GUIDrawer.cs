@@ -4,13 +4,13 @@ using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Drawers
 {
-    [CustomStackablePropertyDrawer(typeof(IsPropertyAttribute))]
-    internal sealed class IsPropertyDrawer : StackablePropertyDrawer
+    [CustomStackablePropertyDrawer(typeof(GUIAttribute))]
+    internal sealed class GUIDrawer : StackablePropertyDrawer
     {
         protected internal override void BeforeGetPropertyHeight(ref SerializedPropertyInfo propertyInfo, ref GUIContent label, ref bool includeChildren, ref bool visible)
-            => label.text = label.text.Replace("<", "").Replace(">k__Backing Field", "");
+            => GUIContentHelper.UseGUIContent((GUIAttribute)Attribute, propertyInfo.SerializedProperty, ref label);
 
         protected internal override void BeforeOnGUI(ref Rect position, ref SerializedPropertyInfo propertyInfo, ref GUIContent label, ref bool includeChildren, ref bool visible)
-            => label.text = label.text.Replace("<", "").Replace(">k__Backing Field", "");
+            => GUIContentHelper.UseGUIContent((GUIAttribute)Attribute, propertyInfo.SerializedProperty, ref label);
     }
 }

@@ -1,7 +1,5 @@
 ﻿using Enderlook.Reflection;
 using Enderlook.Unity.Toolset.Attributes;
-using Enderlook.Unity.Toolset.Utils;
-using Enderlook.Utils;
 
 using System;
 using System.Collections.Generic;
@@ -15,10 +13,11 @@ using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Drawers
 {
-    [CustomPropertyDrawer(typeof(ShowIfAttribute))]
-    internal sealed class ShowIfDrawer : SmartPropertyDrawer
+    [CustomStackablePropertyDrawer(typeof(ShowIfAttribute))]
+    [CustomStackablePropertyDrawer(typeof(EnableIfAttribute))]
+    internal sealed class ConditionalHelper : StackablePropertyDrawer
     {
-        private static readonly Dictionary<(Type type, FieldInfo fieldInfo), Func<object, bool>> members = new Dictionary<(Type type, FieldInfo fieldInfo), Func<object, bool>>();
+        private static readonly Dictionary<(Type type, MemberInfo memberInfo), Func<object, bool>> members = new Dictionary<(Type type, MemberInfo fieldInfo), Func<object, bool>>();
         private static readonly MethodInfo emptyArrayMethodInfo = typeof(Array).GetMethod(nameof(Array.Empty));
         private static readonly MethodInfo debugLogErrorMethodInfo = typeof(Debug).GetMethod(nameof(Debug.LogError), new Type[] { typeof(object) });
         private static readonly MethodInfo isNullOrEmptyMethodInfo = typeof(string).GetMethod(nameof(string.IsNullOrEmpty), new Type[] { typeof(string) });
@@ -63,67 +62,63 @@ namespace Enderlook.Unity.Toolset.Drawers
         [DidReloadScripts]
         private static void Reset() => members.Clear();
 
-        protected override void OnGUISmart(Rect position, SerializedProperty property, GUIContent label)
-        {
-            ShowIfAttribute showIfAttribute = (ShowIfAttribute)attribute;
-            object parent = serializedProperty.GetParentTargetObject();
-            DisplayMode mode = showIfAttribute.displayMode;
+        private bool off;
 
-            if (mode == DisplayMode.ShowHide)
+        protected internal override void BeforeOnGUI(ref Rect position, ref SerializedPropertyInfo propertyInfo, ref GUIContent label, ref bool includeChildren, ref bool visible)
+        {
+            if (visible && (off = !IsActive(propertyInfo)))
             {
-                if (IsActive(showIfAttribute, parent))
-                    DrawField();
+                if (Attribute is EnableIfAttribute)
+                    EditorGUI.BeginDisabledGroup(true);
+                else
+                    visible = false;
             }
-            else if (mode == DisplayMode.EnableDisable)
-            {
-                EditorGUI.BeginDisabledGroup(IsActive(showIfAttribute, parent));
-                DrawField();
+        }
+
+        protected internal override void AfterOnGUI(Rect position, SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren, bool visible)
+        {
+            if (off && Attribute is EnableIfAttribute)
                 EditorGUI.EndDisabledGroup();
-            }
-
-            void DrawField()
-            {
-                GUIContentHelper.GetGUIContent(property, ref label);
-                EditorGUI.PropertyField(position, property, label, true);
-            }
         }
 
-        protected override float GetPropertyHeightSmart(SerializedProperty property, GUIContent label)
+        protected internal override void BeforeGetPropertyHeight(ref SerializedPropertyInfo propertyInfo, ref GUIContent label, ref bool includeChildren, ref bool visible)
         {
-            ShowIfAttribute showIfAttribute = (ShowIfAttribute)attribute;
-            object parent = serializedProperty.GetParentTargetObject();
-            if (IsActive(showIfAttribute, parent) || showIfAttribute.displayMode == DisplayMode.EnableDisable)
-                return EditorGUI.GetPropertyHeight(property, label, true);
-            return 0;
+            if (visible && (off = !IsActive(propertyInfo)) && Attribute is ShowIfAttribute)
+                visible = false;
         }
 
-        private bool IsActive(ShowIfAttribute attribute, object parent)
+        protected internal override float GetPropertyHeight(SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren, float height)
+            => off && Attribute is ShowIfAttribute ? 0 : height;
+
+        private bool IsActive(SerializedPropertyInfo propertyInfo)
         {
+            MemberInfo memberInfo = propertyInfo.MemberInfo;
+            object parent = propertyInfo.ParentTargetObject;
             Type originalType = parent.GetType();
 
-            if (members.TryGetValue((originalType, fieldInfo), out Func<object, bool> func))
+            if (members.TryGetValue((originalType, memberInfo), out Func<object, bool> func))
                 goto end;
 
             Expression convertedExpression = Expression.Convert(parameter, originalType);
-            Expression body = GetExpression(fieldInfo, attribute);
+            Expression body = GetExpression(memberInfo, (IConditionalAttribute)Attribute);
             func = Expression.Lambda<Func<object, bool>>(body, parameter).Compile();
-            members.Add((originalType, fieldInfo), func);
+            members.Add((originalType, memberInfo), func);
 
             end:
             return func(parent);
 
-            Expression GetExpression(FieldInfo field, ShowIfAttribute showIfAttribute)
+            Expression GetExpression(MemberInfo member, IConditionalAttribute conditionalAttribute)
             {
-                if (string.IsNullOrEmpty(showIfAttribute.firstProperty))
-                    return DebugLogError($"Value of property {nameof(showIfAttribute.firstProperty)} is null or empty in attribute {nameof(ShowIfAttribute)} in field {field.Name} of type {field.ReflectedType.Name}.");
+                if (string.IsNullOrEmpty(conditionalAttribute.FirstProperty))
+                    return DebugLogError($"Value of property {nameof(conditionalAttribute.FirstProperty)} is null or empty in attribute {conditionalAttribute.GetType()} in field {member.Name} of type {member.ReflectedType.Name}.");
 
-                (Expression expression, Type type, FieldInfo field) first = GetValue(originalType, convertedExpression, showIfAttribute.firstProperty);
+                (Expression expression, Type type, FieldInfo field) first = GetValue(originalType, convertedExpression, conditionalAttribute.FirstProperty);
                 if (first == default)
-                    return DebugLogError($"No field, property (with Get method), or method with no mandatory parameters of name '{showIfAttribute.firstProperty}' in attribute {nameof(ShowIfAttribute)} in field {field.Name} of type {field.ReflectedType.Name} was found in object of type {parent.GetType()}.");
+                    return DebugLogError($"No field, property (with Get method), or method with no mandatory parameters of name '{conditionalAttribute.FirstProperty}' in attribute {conditionalAttribute.GetType()} in field {member.Name} of type {member.ReflectedType.Name} was found in object of type {parent.GetType()}.");
 
-                switch (showIfAttribute.mode)
+                switch (conditionalAttribute.Mode)
                 {
-                    case ShowIfAttribute.Mode.Single:
+                    case IConditionalAttribute.ConditionalMode.Single:
                     {
                         if (first.type == typeof(bool))
                             return first.expression;
@@ -177,22 +172,22 @@ namespace Enderlook.Unity.Toolset.Drawers
                         }
 
                         if (result is null)
-                            return DebugLogError($"Value of property {nameof(showIfAttribute.firstProperty)} in attribute {nameof(ShowIfAttribute)} in field {field.Name} of type {field.ReflectedType.Name} and no other property nor compared object was specified.\n" +
+                            return DebugLogError($"Value of property {nameof(conditionalAttribute.FirstProperty)} in attribute {conditionalAttribute.GetType()} in field {member.Name} of type {member.ReflectedType.Name} and no other property nor compared object was specified.\n" +
                                 $"Valid types are {nameof(Boolean)}, reference types, types that can be casted to {nameof(Boolean)}, or any type with field, property (with Get method) or method with no mandatory parameters of name 'Length', 'Count', 'GetLength' or 'GetCount' that returns a numeric type or 'HasAny', 'IsEmpty', 'IsDefault' or 'IsDefaultOrEmpty' that returns {nameof(Boolean)}.");
                         return result;
                     }
-                    case ShowIfAttribute.Mode.WithObject:
+                    case IConditionalAttribute.ConditionalMode.WithObject:
                     {
-                        object compareTo = showIfAttribute.compareTo;
+                        object compareTo = conditionalAttribute.CompareTo;
                         (Expression expression, Type type, FieldInfo field) second = (Expression.Constant(compareTo), compareTo?.GetType() ?? first.type, null);
-                        return Compare(first, second, showIfAttribute.comparison);
+                        return Compare(first, second, conditionalAttribute.Comparison);
                     }
-                    case ShowIfAttribute.Mode.WithProperty:
+                    case IConditionalAttribute.ConditionalMode.WithProperty:
                     {
-                        (Expression expression, Type type, FieldInfo field) second = GetValue(originalType, convertedExpression, showIfAttribute.secondProperty);
+                        (Expression expression, Type type, FieldInfo field) second = GetValue(originalType, convertedExpression, conditionalAttribute.SecondProperty);
                         if (second == default)
-                            return DebugLogError($"No field, property (with Get method), or method with no mandatory parameters of name '{showIfAttribute.secondProperty}' in attribute {nameof(ShowIfAttribute)} in field {field.Name} of type {field.ReflectedType.Name} was found in object of type {parent.GetType()}.");
-                        return Compare(first, second, showIfAttribute.comparison);
+                            return DebugLogError($"No field, property (with Get method), or method with no mandatory parameters of name '{conditionalAttribute.SecondProperty}' in attribute {conditionalAttribute.GetType()} in field {member.Name} of type {member.ReflectedType.Name} was found in object of type {parent.GetType()}.");
+                        return Compare(first, second, conditionalAttribute.Comparison);
                     }
                     default:
                     {
@@ -205,18 +200,18 @@ namespace Enderlook.Unity.Toolset.Drawers
                 {
                     Type type = inputType;
                     start:
-                    foreach (MemberInfo memberInfo in type.GetMembers(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
+                    foreach (MemberInfo element in type.GetMembers(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
                     {
-                        if (memberInfo.Name != name)
+                        if (element.Name != name)
                             continue;
 
-                        if (memberInfo is FieldInfo fieldInfo)
-                            return (Expression.Field(fieldInfo.IsStatic ? null : expression, fieldInfo), fieldInfo.FieldType, showIfAttribute.chain ? fieldInfo : null);
+                        if (element is FieldInfo fieldInfo)
+                            return (Expression.Field(fieldInfo.IsStatic ? null : expression, fieldInfo), fieldInfo.FieldType, conditionalAttribute.Chain ? fieldInfo : null);
 
-                        if (memberInfo is PropertyInfo propertyInfo && propertyInfo.CanRead)
+                        if (element is PropertyInfo propertyInfo && propertyInfo.CanRead)
                             return (Expression.Property(propertyInfo.GetMethod.IsStatic ? null : expression, propertyInfo), propertyInfo.PropertyType, null);
 
-                        if (memberInfo is MethodInfo methodInfo && methodInfo.ReturnType != typeof(void) && methodInfo.HasNoMandatoryParameters())
+                        if (element is MethodInfo methodInfo && methodInfo.ReturnType != typeof(void) && methodInfo.HasNoMandatoryParameters())
                         {
                             ParameterInfo[] parameterInfos = methodInfo.GetParameters();
                             Expression[] expressions = new Expression[parameterInfos.Length];

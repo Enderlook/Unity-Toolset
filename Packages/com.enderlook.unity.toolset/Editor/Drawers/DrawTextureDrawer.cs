@@ -6,8 +6,8 @@ using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Drawers
 {
-    [CustomPropertyDrawer(typeof(DrawTextureAttribute))]
-    internal sealed class DrawTextureDrawer : SmartPropertyDrawer
+    [CustomStackablePropertyDrawer(typeof(DrawTextureAttribute))]
+    internal sealed class DrawTextureDrawer : StackablePropertyDrawer
     {
         private const int INDENT_WIDTH = 8; // TODO: This is wrong.
 
@@ -16,67 +16,66 @@ namespace Enderlook.Unity.Toolset.Drawers
         private GUIContent textureContent;
         private GUIContent errorContent;
 
-        protected override void OnGUISmart(Rect position, SerializedProperty property, GUIContent label)
+        protected internal override bool HasOnGUI => true;
+
+        protected internal override void OnGUI(Rect position, SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren)
         {
-            if (attribute is DrawTextureAttribute drawTextureAttribute)
+            SerializedProperty property = propertyInfo.SerializedProperty;
+            if (TryProduceTextureGUIContent(property, label))
             {
-                if (TryProduceTextureGUIContent(property, label))
+                DrawTextureAttribute drawTextureAttribute = (DrawTextureAttribute)Attribute;
+                float height = CalculateTextureHeight(position.height, drawTextureAttribute);
+
+                float width = drawTextureAttribute.width;
+                if (width == -1)
+                    width = height;
+
+                if (drawTextureAttribute.drawOnSameLine)
                 {
-                    float height = CalculateTextureHeight(position.height, drawTextureAttribute);
+                    // Set texture position in same line
+                    float width_ = height;
+                    if (textureContent != null && textureContent.image != null)
+                        width_ = width_ / textureContent.image.height * textureContent.image.width;
+                    Rect texturePosition = new Rect(position.x + EditorGUIUtility.labelWidth, position.y, Mathf.Min(width, width_), height);
+                    EditorGUI.LabelField(texturePosition, textureContent);
 
-                    float width = drawTextureAttribute.width;
-                    if (width == -1)
-                        width = height;
+                    Rect labelRect = new Rect(position.x, position.y, EditorGUIUtility.labelWidth, position.height);
+                    EditorGUI.LabelField(labelRect, label);
 
-                    if (drawTextureAttribute.drawOnSameLine)
-                    {
-                        // Set texture position in same line
-                        float width_ = height;
-                        if (textureContent != null && textureContent.image != null)
-                            width_ = width_ / textureContent.image.height * textureContent.image.width;
-                        Rect texturePosition = new Rect(position.x + EditorGUIUtility.labelWidth, position.y, Mathf.Min(width, width_), height);
-                        EditorGUI.LabelField(texturePosition, textureContent);
-
-                        Rect labelRect = new Rect(position.x, position.y, EditorGUIUtility.labelWidth, position.height);
-                        EditorGUI.LabelField(labelRect, label);
-
-                        float widthToRemove = EditorGUIUtility.labelWidth + texturePosition.width + SAME_LINE_TEXTURE_SPACE;
-                        position.x += widthToRemove;
-                        position.width -= widthToRemove;
-                        EditorGUI.PropertyField(position, property, GUIContent.none, true);
-                    }
-                    else
-                    {
-                        // Set texture position in new line
-                        float x = position.x;
-                        if (drawTextureAttribute.centered)
-                            x += position.width / 2;
-
-                        float width_ = width - INDENT_WIDTH;
-                        float height_ = width_;
-                        if (textureContent != null && textureContent.image != null)
-                            height_ = height_ / textureContent.image.width * textureContent.image.height;
-                        Rect texturePosition = new Rect(x + INDENT_WIDTH, position.y + EditorGUIUtility.singleLineHeight, width_, Mathf.Min(height, height_));
-                        EditorGUI.LabelField(texturePosition, textureContent);
-
-                        EditorGUI.PropertyField(position, property, label, true);
-                    }
+                    float widthToRemove = EditorGUIUtility.labelWidth + texturePosition.width + SAME_LINE_TEXTURE_SPACE;
+                    position.x += widthToRemove;
+                    position.width -= widthToRemove;
+                    EditorGUI.PropertyField(position, property, GUIContent.none, true);
                 }
                 else
                 {
-                    (string message, float height) = GetPropertyTypeErrorMessage(property, position.width);
-                    if (!(message is null))
-                    {
-                        EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, position.height - height), property, label, true);
-                        Debug.LogError($"Property {property.displayName} from {property.propertyPath} doesn't have an object of type {typeof(Sprite)}, {typeof(Texture2D)} nor {typeof(string)}.");
-                        EditorGUI.HelpBox(new Rect(position.x, position.y + position.height - height, position.width, height), message, MessageType.Error);
-                    }
-                    else
-                        EditorGUI.PropertyField(position, property, label, true);
+                    // Set texture position in new line
+                    float x = position.x;
+                    if (drawTextureAttribute.centered)
+                        x += position.width / 2;
+
+                    float width_ = width - INDENT_WIDTH;
+                    float height_ = width_;
+                    if (textureContent != null && textureContent.image != null)
+                        height_ = height_ / textureContent.image.width * textureContent.image.height;
+                    Rect texturePosition = new Rect(x + INDENT_WIDTH, position.y + EditorGUIUtility.singleLineHeight, width_, Mathf.Min(height, height_));
+                    EditorGUI.LabelField(texturePosition, textureContent);
+
+                    EditorGUI.PropertyField(position, property, label, true);
                 }
             }
             else
-                EditorGUI.PropertyField(position, property, label, true);
+            {
+                (string message, float height) = GetPropertyTypeErrorMessage(propertyInfo, position.width);
+                if (!(message is null))
+                {
+                    EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, position.height - height), property, label, true);
+                    Debug.LogError($"Property {property.displayName} from {property.propertyPath} doesn't have an object of type {typeof(Sprite)}, {typeof(Texture2D)} nor {typeof(string)}.");
+                    EditorGUI.HelpBox(new Rect(position.x, position.y + position.height - height, position.width, height), message, MessageType.Error);
+                }
+                else
+                    EditorGUI.PropertyField(position, property, label, true);
+            }
         }
 
         private bool TryProduceTextureGUIContent(SerializedProperty property, GUIContent label)
@@ -137,12 +136,12 @@ namespace Enderlook.Unity.Toolset.Drawers
             return false;
         }
 
-        private (string message, float height) GetPropertyTypeErrorMessage(SerializedProperty property, float width)
+        private (string message, float height) GetPropertyTypeErrorMessage(SerializedPropertyInfo propertyInfo, float width)
         {
-            switch (property.propertyType)
+            switch (propertyInfo.SerializedProperty.propertyType)
             {
                 case SerializedPropertyType.ObjectReference:
-                    if (fieldInfo.FieldType != typeof(Sprite) && fieldInfo.FieldType != typeof(Texture2D))
+                    if (propertyInfo.MemberType != typeof(Sprite) && propertyInfo.MemberType != typeof(Texture2D))
                         goto default;
                     break;
                 case SerializedPropertyType.String:
@@ -167,26 +166,24 @@ namespace Enderlook.Unity.Toolset.Drawers
             return height;
         }
 
-        protected override float GetPropertyHeightSmart(SerializedProperty property, GUIContent label)
+        protected internal override float GetPropertyHeight(SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren, float height)
         {
-            float height = EditorGUI.GetPropertyHeight(property, label);
-            return CalculateWithAditionalPropertyHeight(property, height, EditorGUIUtility.currentViewWidth);
+            height = EditorGUI.GetPropertyHeight(propertyInfo.SerializedProperty, label);
+            return CalculateWithAditionalPropertyHeight(propertyInfo, height, EditorGUIUtility.currentViewWidth);
         }
 
-        private float CalculateWithAditionalPropertyHeight(SerializedProperty property, float height, float width)
+        private float CalculateWithAditionalPropertyHeight(SerializedPropertyInfo propertyInfo, float height, float width)
         {
-            if (attribute is DrawTextureAttribute drawTextureAttribute)
+            if (TryGetTexture(propertyInfo.SerializedProperty, out _))
             {
-                if (TryGetTexture(property, out _))
-                {
-                    if (!drawTextureAttribute.drawOnSameLine)
-                        height += EditorGUIUtility.singleLineHeight + CalculateTextureHeight(height, drawTextureAttribute);
-                }
-                else
-                {
-                    (string _, float height_) = GetPropertyTypeErrorMessage(property, width);
-                    height += height_;
-                }
+                DrawTextureAttribute drawTextureAttribute = (DrawTextureAttribute)Attribute;
+                if (!drawTextureAttribute.drawOnSameLine)
+                    height += EditorGUIUtility.singleLineHeight + CalculateTextureHeight(height, drawTextureAttribute);
+            }
+            else
+            {
+                (string _, float height_) = GetPropertyTypeErrorMessage(propertyInfo, width);
+                height += height_;
             }
             return height;
         }

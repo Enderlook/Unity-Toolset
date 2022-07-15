@@ -6,13 +6,14 @@ using System.Collections.Generic;
 using System.Reflection;
 
 using UnityEditor;
+using UnityEditor.Callbacks;
 
 using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Drawers
 {
-    [CustomPropertyDrawer(typeof(object), true)]
-    internal sealed class PropertyPopupDrawer2 : SmartPropertyDrawer
+    [CustomStackablePropertyDrawer(typeof(object), true)]
+    internal sealed class PropertyPopupDrawer2 : StackablePropertyDrawer
     {
         private static readonly Dictionary<Type, PropertyPopup> alloweds = new Dictionary<Type, PropertyPopup>();
 
@@ -20,9 +21,19 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         private float height = -1;
 
-        protected override void OnGUISmart(Rect position, SerializedProperty property, GUIContent label)
+        protected internal override bool HasOnGUI => true;
+
+        [DidReloadScripts]
+        private static void Reset()
         {
-            Type classType = fieldInfo.FieldType;
+            alloweds.Clear();
+            disalloweds.Clear();
+        }
+
+        protected internal override void OnGUI(Rect position, SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren)
+        {
+            Type classType = propertyInfo.MemberType;
+            SerializedProperty property = propertyInfo.SerializedProperty;
             if (alloweds.TryGetValue(classType, out PropertyPopup propertyPopup))
                 height = propertyPopup.DrawField(position, property, label);
             else if (disalloweds.Contains(classType))
@@ -30,7 +41,7 @@ namespace Enderlook.Unity.Toolset.Drawers
             else
             {
                 PropertyPopupAttribute propertyPopupAttribute = classType.GetCustomAttribute<PropertyPopupAttribute>(true);
-                if (propertyPopupAttribute == null)
+                if (propertyPopupAttribute is null)
                 {
                     disalloweds.Add(classType);
                     EditorGUI.PropertyField(position, property, label, true);
@@ -50,7 +61,7 @@ namespace Enderlook.Unity.Toolset.Drawers
             }
         }
 
-        protected override float GetPropertyHeightSmart(SerializedProperty property, GUIContent label)
-            => height == -1 ? EditorGUI.GetPropertyHeight(property, label, true) : height;
+        protected internal override float GetPropertyHeight(SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren, float height)
+            => this.height == -1 ? EditorGUI.GetPropertyHeight(propertyInfo.SerializedProperty, label, true) : this.height;
     }
 }

@@ -15,32 +15,32 @@ namespace Enderlook.Unity.Toolset
     /// </summary>
     public static class GUIContentHelper
     {
-        private static void UseNameAttribute(NameAttribute attribute, GUIContent label) => label.text = attribute.name;
+        internal static void UseNameAttribute(NameAttribute attribute, GUIContent label) => label.text = attribute.name;
 
-        private static void UseGUIContent(GUIAttribute attribute, SerializedProperty property, ref GUIContent label)
+        internal static void UseGUIContent(GUIAttribute attribute, SerializedProperty property, ref GUIContent label)
         {
-            string text = null, tooltip = null;
-
-            if (attribute.guiContentOrReferenceName == null)
+            string text;
+            if (attribute.guiContentOrReferenceName is null)
             {
-                bool reference = false;
-                if (attribute.nameMode == GUIAttribute.Mode.Value)
+                string tooltip;
+                if (attribute.nameMode == GUIMode.Value)
+                {
                     text = attribute.name;
-                else
-                    reference = true;
 
-                if (attribute.tooltipMode == GUIAttribute.Mode.Value)
-                    tooltip = attribute.tooltip;
+                    if (attribute.tooltipMode == GUIMode.Value)
+                        tooltip = attribute.tooltip;
+                    else
+                        tooltip = property.GetParentTargetObject().GetValueFromFirstMember<string>(attribute.tooltip, true);
+                }
                 else
-                    reference = true;
-
-                if (reference)
                 {
                     object parent = property.GetParentTargetObject();
-                    if (attribute.nameMode == GUIAttribute.Mode.Reference)
-                        text = parent.GetValueFromFirstMember<string>(attribute.name);
-                    if (attribute.tooltipMode == GUIAttribute.Mode.Reference)
-                        tooltip = parent.GetValueFromFirstMember<string>(attribute.tooltip);
+                    text = parent.GetValueFromFirstMember<string>(attribute.name, true);
+
+                    if (attribute.tooltipMode == GUIMode.Value)
+                        tooltip = attribute.tooltip;
+                    else
+                        tooltip = parent.GetValueFromFirstMember<string>(attribute.tooltip, true);
                 }
 
                 if (!(text is null))

@@ -1,5 +1,4 @@
 ﻿using Enderlook.Unity.Toolset.Attributes;
-using Enderlook.Unity.Toolset.Utils;
 using Enderlook.Unity.Toolset.Windows;
 
 using System;
@@ -10,10 +9,8 @@ using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Drawers
 {
-    //[CustomPropertyDrawer(typeof(UnityEngine.Object), true)] // Will affect all objects
-    //[CustomPropertyDrawer(typeof(ScriptableObject), true)] // Will only affect scriptable objects
-    [CustomPropertyDrawer(typeof(ExpandableAttribute), true)]
-    internal sealed class ExpandableDrawer : SmartPropertyDrawer
+    [CustomStackablePropertyDrawer(typeof(ExpandableAttribute), true)]
+    internal sealed class ExpandableDrawer : StackablePropertyDrawer
     {
         /// <summary>
         /// How button to open in window must be shown.
@@ -131,13 +128,16 @@ namespace Enderlook.Unity.Toolset.Drawers
             imagePosition = ImagePosition.ImageOnly
         };
 
+        protected internal override bool HasOnGUI => true;
+
 #pragma warning disable CS0162
-        protected override void OnGUISmart(Rect position, SerializedProperty property, GUIContent label)
+        protected internal override void OnGUI(Rect position, SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren)
         {
+            SerializedProperty property = propertyInfo.SerializedProperty;
             Type type = property.serializedObject.targetObject.GetType();
             if (!type.IsSubclassOf(typeof(UnityEngine.Object)))
             {
-                Debug.LogError($"{nameof(ExpandableAttribute)} can only be used on types subclasses of {nameof(UnityEngine.Object)}. {property.name} from {property.GetParentTargetObject()} (path {property.propertyPath}) is type {type}.");
+                Debug.LogError($"{nameof(ExpandableAttribute)} can only be used on types subclasses of {nameof(UnityEngine.Object)}. {property.name} from {propertyInfo.ParentTargetObject} (path {property.propertyPath}) is type {type}.");
                 EditorGUI.PropertyField(position, property, GUIContent.none, true);
                 return;
             }
@@ -280,10 +280,11 @@ namespace Enderlook.Unity.Toolset.Drawers
                 targetObject.ApplyModifiedProperties();
         }
 
-        protected override float GetPropertyHeightSmart(SerializedProperty property, GUIContent label)
+        protected internal override float GetPropertyHeight(SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren, float height)
         {
             float totalHeight = EditorGUIUtility.singleLineHeight;
 
+            SerializedProperty property = propertyInfo.SerializedProperty;
             if (property.objectReferenceValue == null)
                 return totalHeight;
 

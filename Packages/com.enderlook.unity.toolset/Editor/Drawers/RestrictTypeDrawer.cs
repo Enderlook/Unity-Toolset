@@ -8,11 +8,13 @@ using UnityObject = UnityEngine.Object;
 
 namespace Enderlook.Unity.Toolset.Drawers
 {
-    [CustomPropertyDrawer(typeof(RestrictTypeAttribute))]
-    internal sealed class RestrictTypeDrawer : SmartPropertyDrawer
+    [CustomStackablePropertyDrawer(typeof(RestrictTypeAttribute))]
+    internal sealed class RestrictTypeDrawer : StackablePropertyDrawer
     {
         private float? height;
         private bool firstTime = true;
+
+        protected internal override bool HasOnGUI => true;
 
         private Rect GetBoxPosition(string message, Rect position)
         {
@@ -20,7 +22,7 @@ namespace Enderlook.Unity.Toolset.Drawers
             return new Rect(position.x, position.y, position.width, height.Value);
         }
 
-        protected override void OnGUISmart(Rect position, SerializedProperty property, GUIContent label)
+        protected internal override void OnGUI(Rect position, SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren)
         {
             void DrawErrorBox(string message)
             {
@@ -30,26 +32,30 @@ namespace Enderlook.Unity.Toolset.Drawers
 
             height = null;
 
-            if (!((RestrictTypeAttribute)attribute).CheckRestrictionFeasibility(fieldInfo.FieldType, out string errorMessage))
+            SerializedProperty serializedProperty = propertyInfo.SerializedProperty;
+
+            RestrictTypeAttribute attribute = (RestrictTypeAttribute)Attribute;
+            if (!attribute.CheckRestrictionFeasibility(propertyInfo.MemberType, out string errorMessage))
             {
-                DrawErrorBox($"Field {property.name} error. {errorMessage}");
+                DrawErrorBox($"Field {serializedProperty.name} error. {errorMessage}");
                 return;
             }
 
             EditorGUI.BeginChangeCheck();
-            EditorGUI.PropertyField(position, property, label);
-            if (EditorGUI.EndChangeCheck())
+            EditorGUI.PropertyField(position, serializedProperty, label);
+            if (EditorGUI.EndChangeCheck() || firstTime)
             {
                 firstTime = false;
-                UnityObject result = property.objectReferenceValue;
-                if (result != null && !((RestrictTypeAttribute)attribute).CheckIfTypeIsAllowed(result.GetType(), out errorMessage))
+                UnityObject result = serializedProperty.objectReferenceValue;
+                if (result != null && !attribute.CheckIfTypeIsAllowed(result.GetType(), out errorMessage))
                 {
-                    Debug.LogError($"Field {property.name} error. {errorMessage}");
-                    property.objectReferenceValue = null;
+                    Debug.LogError($"Field {serializedProperty.name} error. {errorMessage}");
+                    serializedProperty.objectReferenceValue = null;
                 }
             }
         }
 
-        protected override float GetPropertyHeightSmart(SerializedProperty property, GUIContent label) => height ?? EditorGUI.GetPropertyHeight(property, label, true);
+        protected internal override float GetPropertyHeight(SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren, float height)
+            => this.height ?? EditorGUI.GetPropertyHeight(propertyInfo.SerializedProperty, label, includeChildren);
     }
 }

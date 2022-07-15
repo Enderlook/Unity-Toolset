@@ -12,8 +12,8 @@ using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Drawers
 {
-    [CustomPropertyDrawer(typeof(DrawVectorRelativeToTransformAttribute)), InitializeOnLoad]
-    internal sealed class DrawVectorRelativeToTransformEditor : SmartPropertyDrawer
+    [CustomStackablePropertyDrawer(typeof(DrawVectorRelativeToTransformAttribute)), InitializeOnLoad]
+    internal sealed class DrawVectorRelativeToTransformEditor : StackablePropertyDrawer
     {
         private const string MENU_NAME = "Enderlook/Toolset/Enable Draw Vector Relative To Tranform";
 
@@ -41,13 +41,6 @@ namespace Enderlook.Unity.Toolset.Drawers
         private static bool showButton;
 
         private static bool enableFeature;
-
-        protected override void OnGUISmart(Rect position, SerializedProperty property, GUIContent label)
-        {
-            EditorGUI.BeginProperty(position, label, property);
-            EditorGUI.PropertyField(position, property, label, true);
-            EditorGUI.EndProperty();
-        }
 
         static DrawVectorRelativeToTransformEditor()
         {

@@ -12,48 +12,32 @@ namespace Enderlook.Unity.Toolset.Attributes
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
     public sealed class GUIAttribute : PropertyAttribute
     {
-        /// <summary>
-        /// How the name will behave
-        /// </summary>
-        public enum Mode
-        {
-            /// <summary>
-            /// Use the string as value.
-            /// </summary>
-            Value,
-
-            /// <summary>
-            /// Use the string to get the real value by reflection.
-            /// </summary>
-            Reference,
-        }
-
         internal readonly string name;
 
         internal readonly string tooltip;
 
-        internal readonly Mode nameMode;
+        internal readonly GUIMode nameMode;
 
-        internal readonly Mode tooltipMode;
+        internal readonly GUIMode tooltipMode;
 
         internal readonly string guiContentOrReferenceName;
 
         public GUIAttribute(string name) => guiContentOrReferenceName = name;
 
-        public GUIAttribute(string name, Mode nameMode)
+        public GUIAttribute(string name, GUIMode nameMode = GUIMode.Value)
         {
             this.name = name;
             this.nameMode = nameMode;
         }
 
-        public GUIAttribute(string name, string tooltip, Mode tooltipMode = Mode.Reference)
+        public GUIAttribute(string name, string tooltip, GUIMode tooltipMode = GUIMode.Reference)
         {
             this.name = name;
             this.tooltip = tooltip;
             this.tooltipMode = tooltipMode;
         }
 
-        public GUIAttribute(string name, Mode nameMode, string tooltip, Mode tooltipMode = Mode.Reference)
+        public GUIAttribute(string name, GUIMode nameMode, string tooltip, GUIMode tooltipMode = GUIMode.Reference)
         {
             this.name = name;
             this.nameMode = nameMode;
