@@ -1,7 +1,5 @@
 ﻿using Enderlook.Unity.Toolset.Attributes;
 
-using UnityEditor;
-
 using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Drawers
