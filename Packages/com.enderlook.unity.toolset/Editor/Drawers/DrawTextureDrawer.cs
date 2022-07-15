@@ -142,7 +142,7 @@ namespace Enderlook.Unity.Toolset.Drawers
             switch (property.propertyType)
             {
                 case SerializedPropertyType.ObjectReference:
-                    if (fieldInfo.FieldType != typeof(Sprite) || fieldInfo.FieldType != typeof(Texture2D))
+                    if (fieldInfo.FieldType != typeof(Sprite) && fieldInfo.FieldType != typeof(Texture2D))
                         goto default;
                     break;
                 case SerializedPropertyType.String:
