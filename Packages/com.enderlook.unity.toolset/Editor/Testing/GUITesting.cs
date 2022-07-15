@@ -23,7 +23,7 @@ namespace Enderlook.Unity.Toolset.Testing
             {
                 Type type = fieldInfo.DeclaringType;
                 if (!typesAndAttributes.TryGetValue(type, out List<(FieldInfo field, GUIAttribute attribute)> list))
-                    typesAndAttributes.Add(type, (list = new List<(FieldInfo field, GUIAttribute attribute)>()));
+                    typesAndAttributes.Add(type, list = new List<(FieldInfo field, GUIAttribute attribute)>());
                 list.Add((fieldInfo, attribute));
             }
         }
