@@ -884,8 +884,8 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <summary>
         /// Get the <see cref="MemberInfo"/> of <see cref="SerializedProperty"/>.
         /// </summary>
-        /// <param name="source"><see cref="SerializedProperty"/> whose <see cref="FieldInfo"/> will be get.</param>
-        /// <returns><see cref="FieldInfo"/> of <paramref name="source"/>.</returns>
+        /// <param name="source"><see cref="SerializedProperty"/> whose <see cref="MemberInfo"/> will be get.</param>
+        /// <returns><see cref="MemberInfo"/> of <paramref name="source"/>.</returns>
         public static MemberInfo GetMemberInfo(this SerializedProperty source)
         {
             source.GetPropertyNodes(nodes, 0, true);
