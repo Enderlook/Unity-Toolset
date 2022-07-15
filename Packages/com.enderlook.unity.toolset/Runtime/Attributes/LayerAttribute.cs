@@ -9,8 +9,5 @@ namespace Enderlook.Unity.Toolset.Attributes
     [AttributeUsageRequireDataType(typeof(int), typeof(float), typeof(LayerMask), typeof(string), includeEnumerableTypes = true)]
     [AttributeUsageFieldMustBeSerializableByUnity]
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
-    public sealed class LayerAttribute : PropertyAttribute
-    {
-        public static int InvertLayer(int layer) => 1 << layer;
-    }
+    public sealed class LayerAttribute : PropertyAttribute { }
 }
