@@ -13,7 +13,6 @@ namespace Enderlook.Unity.Toolset.Testing
 {
     internal static class ShowfIfTesting
     {
-        private static readonly Type[] type2 = new Type[2];
         private static readonly Dictionary<Type, List<(FieldInfo field, ShowIfAttribute attribute)>> typesAndAttributes = new Dictionary<Type, List<(FieldInfo field, ShowIfAttribute attribute)>>();
 
         [ExecuteOnEachFieldOfEachTypeWhenScriptsReloads(FieldSerialization.SerializableByUnity, 0)]
