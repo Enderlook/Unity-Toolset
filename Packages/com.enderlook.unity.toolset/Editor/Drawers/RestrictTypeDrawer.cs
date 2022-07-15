@@ -46,6 +46,8 @@ namespace Enderlook.Unity.Toolset.Drawers
                 Debug.LogError($"Field {property.name} error. {errorMessage}");
                 property.objectReferenceValue = null;
             }
+
+            firstTime = false;
         }
 
         protected override float GetPropertyHeightSmart(SerializedProperty property, GUIContent label) => height ?? EditorGUI.GetPropertyHeight(property, label, true);
