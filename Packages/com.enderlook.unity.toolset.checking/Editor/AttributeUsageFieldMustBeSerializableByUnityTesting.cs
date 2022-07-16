@@ -1,5 +1,5 @@
-﻿using Enderlook.Unity.Toolset.Checking.PostCompiling;
-using Enderlook.Unity.Toolset.Checking.PostCompiling.Attributes;
+﻿using Enderlook.Unity.Toolset.Checking.PostCompiling.Attributes;
+using Enderlook.Unity.Toolset.Utils;
 
 using System;
 using System.Collections.Generic;
