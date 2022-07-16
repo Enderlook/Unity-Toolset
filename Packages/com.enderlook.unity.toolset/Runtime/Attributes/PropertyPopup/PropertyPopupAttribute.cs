@@ -1,9 +1,11 @@
 ﻿using System;
 
+using UnityEngine;
+
 namespace Enderlook.Unity.Toolset.Attributes
 {
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = true)]
-    public sealed class PropertyPopupAttribute : Attribute
+    public sealed class PropertyPopupAttribute : PropertyAttribute
     {
         /// <summary>
         /// Name of field used to determine which property must be used.

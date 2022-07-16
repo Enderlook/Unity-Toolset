@@ -8,9 +8,21 @@ namespace Enderlook.Unity.Toolset.Drawers
     internal sealed class GUIDrawer : StackablePropertyDrawer
     {
         protected internal override void BeforeGetPropertyHeight(ref SerializedPropertyInfo propertyInfo, ref GUIContent label, ref bool includeChildren, ref bool visible)
-            => GUIContentHelper.UseGUIContent((GUIAttribute)Attribute, propertyInfo.SerializedProperty, ref label);
+        {
+            // TODO: Remove this hack.
+            if (PropertyPopupDrawer.IsFieldOption(FieldInfo))
+                return;
+
+            GUIContentHelper.UseGUIContent((GUIAttribute)Attribute, propertyInfo.SerializedProperty, ref label);
+        }
 
         protected internal override void BeforeOnGUI(ref Rect position, ref SerializedPropertyInfo propertyInfo, ref GUIContent label, ref bool includeChildren, ref bool visible)
-            => GUIContentHelper.UseGUIContent((GUIAttribute)Attribute, propertyInfo.SerializedProperty, ref label);
+        {
+            // TODO: Remove this hack.
+            if (PropertyPopupDrawer.IsFieldOption(FieldInfo))
+                return;
+
+            GUIContentHelper.UseGUIContent((GUIAttribute)Attribute, propertyInfo.SerializedProperty, ref label);
+        }
     }
 }

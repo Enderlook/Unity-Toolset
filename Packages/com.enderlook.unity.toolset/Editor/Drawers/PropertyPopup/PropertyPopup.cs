@@ -2,7 +2,6 @@
 using Enderlook.Utils;
 
 using System;
-using System.Linq;
 using System.Reflection;
 
 using UnityEditor;
@@ -36,21 +35,9 @@ namespace Enderlook.Unity.Toolset.Drawers
         {
             this.modeProperty = modeProperty;
             this.modes = modes;
-            popupOptions = modes.Select(e => e.displayName).ToArray();
-        }
-
-        /// <summary>
-        /// Draw the field in the given place.
-        /// </summary>
-        /// <param name="position">Position to draw the field.</param>
-        /// <param name="property">Property used to draw the field.</param>
-        /// <param name="label">Label to show in inspector.</param>
-        /// <returns>Property height.</returns>
-        public float DrawField(Rect position, SerializedProperty property, GUIContent label)
-        {
-            (SerializedProperty mode, int index) = GetModeAndIndex(property);
-            OnGUI(position, property, label, mode, index);
-            return GetPropertyHeight(property, label, index);
+            popupOptions = new string[modes.Length];
+            for (int i = 0; i < modes.Length; i++)
+                popupOptions[i] = modes[i].displayName;
         }
 
         /// <summary>
@@ -61,17 +48,13 @@ namespace Enderlook.Unity.Toolset.Drawers
         /// <param name="label">Label to show in inspector.</param>
         public void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            (SerializedProperty mode, int index) = GetModeAndIndex(property);
-            OnGUI(position, property, label, mode, index);
-        }
+            (SerializedProperty mode, int popupIndex) = GetModeAndIndex(property);
 
-        private void OnGUI(Rect position, SerializedProperty property, GUIContent label, SerializedProperty mode, int popupIndex)
-        {
             // Show field label
             Rect newPosition = EditorGUI.PrefixLabel(position, label);
 
             // Calculate rect for configuration button
-            float labelWidth = GUI.skin.label.CalcSize(label).x;
+            //float labelWidth = GUI.skin.label.CalcSize(label).x;
             Rect buttonRect = new Rect(
                 newPosition.x,
                 newPosition.y + popupStyle.margin.top,
@@ -128,17 +111,18 @@ namespace Enderlook.Unity.Toolset.Drawers
             // Get current mode
             SerializedProperty mode = property.FindPropertyRelative(modeProperty);
             if (mode is null)
-                throw new ArgumentNullException(nameof(mode), $"Can't find propety {mode.name} at path {mode.propertyPath} in {property.name}.");
+                Throw();
             int popupIndex = GetPopupIndex(mode);
             return (mode, popupIndex);
+
+            void Throw() => throw new ArgumentNullException(nameof(mode), $"Can't find propety {mode.name} at path {mode.propertyPath} in {property.name}.");
         }
 
         private int GetPopupIndex(SerializedProperty mode)
         {
-            int modeIndex = 0;
             object value = GetValue(mode);
 
-            for (; modeIndex < modes.Length; modeIndex++)
+            for (int modeIndex = 0; modeIndex < modes.Length; modeIndex++)
                 if (modes[modeIndex].target.Equals(value))
                     return modeIndex;
 
