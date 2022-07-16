@@ -74,7 +74,7 @@ namespace Enderlook.Unity.Toolset.Drawers
 
                 PropertyPopupOption[] modes = list.ToArray();
 
-                propertyPopup = new PropertyPopup(propertyPopupAttribute.modeName, modes);
+                propertyPopup = new PropertyPopup(propertyPopupAttribute.ModeName, modes);
                 allowedTypes.Add(classType, propertyPopup);
             }
             return !(propertyPopup is null);

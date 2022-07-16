@@ -23,27 +23,27 @@ namespace Enderlook.Unity.Toolset
         internal static void UseGUIContent(GUIAttribute attribute, SerializedProperty property, ref GUIContent label)
         {
             string text;
-            if (attribute.guiContentOrReferenceName is null)
+            if (attribute.GuiContentOrReferenceName is null)
             {
                 string tooltip;
-                if (attribute.nameMode == GUIMode.Value)
+                if (attribute.NameMode == GUIMode.Value)
                 {
-                    text = attribute.name;
+                    text = attribute.Name;
 
-                    if (attribute.tooltipMode == GUIMode.Value)
-                        tooltip = attribute.tooltip;
+                    if (attribute.TooltipMode == GUIMode.Value)
+                        tooltip = attribute.Tooltip;
                     else
-                        tooltip = property.GetParentTargetObject().GetValueFromFirstMember<string>(attribute.tooltip, true);
+                        tooltip = property.GetParentTargetObject().GetValueFromFirstMember<string>(attribute.Tooltip, true);
                 }
                 else
                 {
                     object parent = property.GetParentTargetObject();
-                    text = parent.GetValueFromFirstMember<string>(attribute.name, true);
+                    text = parent.GetValueFromFirstMember<string>(attribute.Name, true);
 
-                    if (attribute.tooltipMode == GUIMode.Value)
-                        tooltip = attribute.tooltip;
+                    if (attribute.TooltipMode == GUIMode.Value)
+                        tooltip = attribute.Tooltip;
                     else
-                        tooltip = parent.GetValueFromFirstMember<string>(attribute.tooltip, true);
+                        tooltip = parent.GetValueFromFirstMember<string>(attribute.Tooltip, true);
                 }
 
                 if (!(text is null))
@@ -57,11 +57,11 @@ namespace Enderlook.Unity.Toolset
                 object parent = property.GetParentTargetObject();
                 try
                 {
-                    label = parent.GetValueFromFirstMember<GUIContent>(attribute.guiContentOrReferenceName);
+                    label = parent.GetValueFromFirstMember<GUIContent>(attribute.GuiContentOrReferenceName);
                 }
                 catch (MatchingMemberNotFoundException)
                 {
-                    text = parent.GetValueFromFirstMember<string>(attribute.guiContentOrReferenceName);
+                    text = parent.GetValueFromFirstMember<string>(attribute.GuiContentOrReferenceName);
                     label.text = text;
                 }
             }

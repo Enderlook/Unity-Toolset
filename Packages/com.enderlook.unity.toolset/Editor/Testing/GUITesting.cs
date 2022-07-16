@@ -41,8 +41,8 @@ namespace Enderlook.Unity.Toolset.Testing
                 {
                     (FieldInfo field, GUIAttribute attribute) = classToCheck.Value[i];
 
-                    string name = attribute.name;
-                    if (attribute.nameMode == GUIMode.Reference && name != null)
+                    string name = attribute.Name;
+                    if (attribute.NameMode == GUIMode.Reference && name != null)
                     {
                         if (!strings.TryGetValue(name, out HashSet<string> hashSet))
                         {
@@ -53,8 +53,8 @@ namespace Enderlook.Unity.Toolset.Testing
                         hashSet.Add(field.Name);
                     }
 
-                    string tooltip = attribute.tooltip;
-                    if (attribute.tooltipMode == GUIMode.Reference && tooltip != null)
+                    string tooltip = attribute.Tooltip;
+                    if (attribute.TooltipMode == GUIMode.Reference && tooltip != null)
                     {
                         if (!strings.TryGetValue(tooltip, out HashSet<string> hashSet))
                         {
@@ -84,7 +84,7 @@ namespace Enderlook.Unity.Toolset.Testing
                 {
                     (FieldInfo field, GUIAttribute attribute) = classToCheck.Value[i];
 
-                    string name = attribute.guiContentOrReferenceName;
+                    string name = attribute.GuiContentOrReferenceName;
                     if (name != null)
                     {
                         if (!strings.TryGetValue(name, out HashSet<string> hashSet))

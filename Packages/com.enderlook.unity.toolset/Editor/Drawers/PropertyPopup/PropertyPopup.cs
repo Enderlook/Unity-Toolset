@@ -37,7 +37,7 @@ namespace Enderlook.Unity.Toolset.Drawers
             this.modes = modes;
             popupOptions = new string[modes.Length];
             for (int i = 0; i < modes.Length; i++)
-                popupOptions[i] = modes[i].displayName;
+                popupOptions[i] = modes[i].DisplayName;
         }
 
         /// <summary>
@@ -67,7 +67,7 @@ namespace Enderlook.Unity.Toolset.Drawers
             if (newUsagePopupIndex != popupIndex)
             {
                 object parent = mode.GetParentTargetObject();
-                object value = modes[newUsagePopupIndex].target;
+                object value = modes[newUsagePopupIndex].Target;
                 // TODO: The cast should be removed.
                 FieldInfo fieldInfo = (FieldInfo)mode.GetMemberInfo();
                 Type fieldType = fieldInfo.FieldType;
@@ -82,7 +82,7 @@ namespace Enderlook.Unity.Toolset.Drawers
             {
                 PropertyPopupOption propertyPopupOption = modes[newUsagePopupIndex];
 
-                SerializedProperty optionProperty = property.FindPropertyRelative(propertyPopupOption.propertyName);
+                SerializedProperty optionProperty = property.FindPropertyRelative(propertyPopupOption.PropertyName);
                 if (IsLargerThanOneLine(optionProperty))
                     EditorGUI.PropertyField(position, optionProperty, GUIContent.none, true);
                 else
@@ -123,7 +123,7 @@ namespace Enderlook.Unity.Toolset.Drawers
             object value = GetValue(mode);
 
             for (int modeIndex = 0; modeIndex < modes.Length; modeIndex++)
-                if (modes[modeIndex].target.Equals(value))
+                if (modes[modeIndex].Target.Equals(value))
                     return modeIndex;
 
             Debug.LogError(string.Format(NOT_FOUND_OPTION, mode.propertyPath, value));
@@ -158,7 +158,7 @@ namespace Enderlook.Unity.Toolset.Drawers
         private float GetPropertyHeight(SerializedProperty property, GUIContent label, int popupIndex)
         {
             PropertyPopupOption propertyPopupOption = modes[popupIndex];
-            SerializedProperty choosenProperty = property.FindPropertyRelative(propertyPopupOption.propertyName);
+            SerializedProperty choosenProperty = property.FindPropertyRelative(propertyPopupOption.PropertyName);
             float height = EditorGUI.GetPropertyHeight(property, label, false);
             if (IsLargerThanOneLine(choosenProperty) && choosenProperty.isExpanded)
                 height += EditorGUI.GetPropertyHeight(choosenProperty, choosenProperty.GetGUIContent(), true);

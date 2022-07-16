@@ -6,24 +6,24 @@ namespace Enderlook.Unity.Toolset.Drawers
 {
     internal readonly struct PropertyPopupOption
     {
-        public readonly string propertyName;
-        public readonly string displayName;
-        public readonly object target;
+        public readonly string PropertyName;
+        public readonly string DisplayName;
+        public readonly object Target;
 
         public PropertyPopupOption(string propertyName, string displayName, object target)
         {
-            this.propertyName = propertyName;
-            this.displayName = displayName;
-            this.target = target;
+            PropertyName = propertyName;
+            DisplayName = displayName;
+            Target = target;
         }
 
         public PropertyPopupOption(string propertyName, object target)
             : this(propertyName, ObjectNames.NicifyVariableName(propertyName), target) { }
 
         public PropertyPopupOption(string propertyName, PropertyPopupOptionAttribute propertyPopupOptionAttribute)
-            : this(propertyName, propertyPopupOptionAttribute.target) { }
+            : this(propertyName, propertyPopupOptionAttribute.Target) { }
 
         public PropertyPopupOption(string propertyName, string displayName, PropertyPopupOptionAttribute propertyPopupOptionAttribute)
-            : this(propertyName, displayName, propertyPopupOptionAttribute.target) { }
+            : this(propertyName, displayName, propertyPopupOptionAttribute.Target) { }
     }
 }
