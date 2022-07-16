@@ -71,7 +71,7 @@ namespace Enderlook.Unity.Toolset.Testing
 
                 foreach (KeyValuePair<string, HashSet<string>> kvp in strings)
                     foreach (string name in kvp.Value)
-                        Debug.LogError($"Type {classToCheck.Key} does not have a field, property (with Get method) or method (with only optional or params pameters and with a return type other than void) of type {typeof(string)} named '{kvp.Key}' necessary for attribute {nameof(GUIAttribute)} on field named {name}.");
+                        Debug.LogError($"Type {classToCheck.Key} does not have a field, property (with Get method) or method (with only optional or params parameters and with a return type other than void) of type {typeof(string)} named '{kvp.Key}' necessary for attribute {nameof(GUIAttribute)} on field named {name}.");
 
                 foreach (HashSet<string> hashset in strings.Values)
                 {
@@ -102,7 +102,7 @@ namespace Enderlook.Unity.Toolset.Testing
 
                 foreach (KeyValuePair<string, HashSet<string>> kvp in strings)
                     foreach (string name in kvp.Value)
-                        Debug.LogError($"Type {classToCheck.Key} does not have a field, property (with Get method) or method (with only optional or params pameters and with a return type other than void) of type {typeof(GUIContent)} named '{kvp.Key}' necessary for attribute {nameof(GUIAttribute)} on field named {name}.");
+                        Debug.LogError($"Type {classToCheck.Key} does not have a field, property (with Get method) or method (with only optional or params parameters and with a return type other than void) of type {typeof(GUIContent)} named '{kvp.Key}' necessary for attribute {nameof(GUIAttribute)} on field named {name}.");
 
                 foreach (HashSet<string> hashset in strings.Values)
                 {
