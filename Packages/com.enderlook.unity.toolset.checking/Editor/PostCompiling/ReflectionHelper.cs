@@ -1,6 +1,5 @@
 ﻿using Enderlook.Reflection;
 using Enderlook.Utils;
-using Enderlook.Unity.Toolset.Utils;
 
 using System;
 using System.Collections.Generic;
@@ -62,7 +61,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
         {
             foreach (FieldInfo field in @class.GetFields(bindingFlags))
             {
-                if (field.FieldType.IsCastableTo(@return) && field.CanBeSerializedByUnity())
+                if (field.FieldType.IsCastableTo(@return))
                     yield return field.Name;
             }
 
