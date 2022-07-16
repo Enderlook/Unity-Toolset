@@ -187,8 +187,9 @@ namespace Enderlook.Unity.Toolset.Drawers
                 return;
 
             SerializedProperty field = targetObject.GetIterator();
+            EditorGUI.BeginChangeCheck();
             field.NextVisible(true);
-            
+
             fieldRect.x += INDENT_WIDTH;
             fieldRect.width -= INDENT_WIDTH;
             fieldRect.y += INNER_SPACING + OUTER_SPACING;
@@ -276,7 +277,7 @@ namespace Enderlook.Unity.Toolset.Drawers
 
             GUI.backgroundColor = backgroundColorOld;
 
-            if (GUI.changed)
+            if (EditorGUI.EndChangeCheck())
                 targetObject.ApplyModifiedProperties();
         }
 
