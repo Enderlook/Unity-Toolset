@@ -22,7 +22,7 @@ namespace Enderlook.Unity.Toolset.Attributes
 
         internal readonly string guiContentOrReferenceName;
 
-        public GUIAttribute(string name) => guiContentOrReferenceName = name;
+        public GUIAttribute(string name) => this.name = name;
 
         public GUIAttribute(string name, GUIMode nameMode = GUIMode.Value)
         {
