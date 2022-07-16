@@ -1,4 +1,4 @@
-﻿using Enderlook.Unity.Toolset.Utils;
+﻿using Enderlook.Reflection;
 
 using System;
 using System.Collections.Generic;
@@ -56,30 +56,24 @@ namespace Enderlook.Unity.Toolset.Drawers
             drawersMap = dictionary;
         }
 
-        private IReadOnlyList<StackablePropertyDrawer> GetDrawers(SerializedProperty property)
+        private IReadOnlyList<StackablePropertyDrawer> GetDrawers()
         {
             if (drawersMap is null)
                 Reset();
 
             List<StackablePropertyDrawer> list = new List<StackablePropertyDrawer>();
 
-            MemberInfo memberInfo = property.GetMemberInfo();
-            Type memberType;
-            if (memberInfo is FieldInfo fieldInfo)
-                memberType = fieldInfo.FieldType;
-            else if (memberInfo is PropertyInfo propertyInfo)
-                memberType = propertyInfo.PropertyType;
-            else
-            {
-                Debug.Assert(false, "Invalid member type.");
-                memberType = null;
-            }
+            FieldInfo fieldInfo = this.fieldInfo;
+            Type fieldType = fieldInfo.FieldType;
+            Type propertyType = fieldType;
+            if (!propertyType.TryGetElementTypeOfArrayOrList(out propertyType))
+                propertyType = fieldType;
 
-            if (drawersMap.TryGetValue(memberType, out (Type Drawer, bool UseForChildren) tuple) && !(tuple.Drawer is null))
+            if (drawersMap.TryGetValue(propertyType, out (Type Drawer, bool UseForChildren) tuple) && !(tuple.Drawer is null))
                 WithoutAttribute(tuple);
             else
             {
-                Type type = memberType;
+                Type type = propertyType;
             start:
                 type = type.BaseType;
                 if (!(type is null))
@@ -88,19 +82,45 @@ namespace Enderlook.Unity.Toolset.Drawers
                     {
                         if (!(tuple.Drawer is null) && tuple.UseForChildren)
                         {
-                            drawersMap.Add(memberType, (tuple.Drawer, true));
+                            drawersMap.Add(propertyType, (tuple.Drawer, true));
                             WithoutAttribute(tuple);
                         }
                         else
-                            drawersMap.Add(memberType, default);
+                            drawersMap.Add(propertyType, default);
                     }
                     else
                         goto start;
                 }
             }
 
-            IEnumerable<PropertyAttribute> attributes = memberInfo.GetCustomAttributes<PropertyAttribute>(true);
-            foreach (PropertyAttribute attribute in attributes)
+            foreach (PropertyAttribute attribute in fieldInfo.GetCustomAttributes<PropertyAttribute>(true))
+            {
+                Type attributeType = attribute.GetType();
+                if (drawersMap.TryGetValue(attributeType, out tuple) && !(tuple.Drawer is null))
+                    WithAttribute(attribute, tuple);
+                else
+                {
+                    Type type = attributeType;
+                start:
+                    type = type.BaseType;
+                    if (type is null)
+                        continue;
+                    if (drawersMap.TryGetValue(type, out tuple))
+                    {
+                        if (!(tuple.Drawer is null) && tuple.UseForChildren)
+                        {
+                            drawersMap.Add(attributeType, (tuple.Drawer, true));
+                            WithAttribute(attribute, tuple);
+                        }
+                        else
+                            drawersMap.Add(attributeType, default);
+                    }
+                    else
+                        goto start;
+                }
+            }
+
+            foreach (PropertyAttribute attribute in propertyType.GetCustomAttributes<PropertyAttribute>(true))
             {
                 Type attributeType = attribute.GetType();
                 if (drawersMap.TryGetValue(attributeType, out tuple) && !(tuple.Drawer is null))
@@ -133,7 +153,8 @@ namespace Enderlook.Unity.Toolset.Drawers
             void WithAttribute(PropertyAttribute attribute, (Type Drawer, bool UseForChildren) tuple)
             {
                 StackablePropertyDrawer drawer = (StackablePropertyDrawer)Activator.CreateInstance(tuple.Drawer);
-                drawer.SetAttribute(attribute);
+                drawer.Attribute = attribute;
+                drawer.FieldInfo = fieldInfo;
                 hasOnGUI |= drawer.HasOnGUI;
                 list.Add(drawer);
             }
@@ -141,6 +162,7 @@ namespace Enderlook.Unity.Toolset.Drawers
             void WithoutAttribute((Type Drawer, bool UseForChildren) tuple)
             {
                 StackablePropertyDrawer drawer = (StackablePropertyDrawer)Activator.CreateInstance(tuple.Drawer);
+                drawer.FieldInfo = fieldInfo;
                 hasOnGUI |= drawer.HasOnGUI;
                 list.Add(drawer);
             }
@@ -149,7 +171,7 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            IReadOnlyList<StackablePropertyDrawer> drawers = Drawers ??= GetDrawers(property);
+            IReadOnlyList<StackablePropertyDrawer> drawers = Drawers ??= GetDrawers();
 
             SerializedPropertyInfo propertyInfo = new SerializedPropertyInfo(property, fieldInfo);
 
@@ -180,7 +202,7 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            IReadOnlyList<StackablePropertyDrawer> drawers = Drawers ??= GetDrawers(property);
+            IReadOnlyList<StackablePropertyDrawer> drawers = Drawers ??= GetDrawers();
 
             SerializedPropertyInfo propertyInfo = new SerializedPropertyInfo(property, fieldInfo);
 

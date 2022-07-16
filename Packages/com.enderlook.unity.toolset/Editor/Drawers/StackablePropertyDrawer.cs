@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System.Reflection;
+
+using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Drawers
 {
@@ -16,11 +18,14 @@ namespace Enderlook.Unity.Toolset.Drawers
         protected internal virtual bool HasOnGUI => false;
 
         /// <summary>
-        /// The <see cref="PropertyAttribute"/> for the property.
+        /// The <see cref="PropertyAttribute"/> for the property or run-time <see cref="System.SerializableAttribute"/> class (if it was decorated with such attribute).
         /// </summary>
-        protected internal PropertyAttribute Attribute { get; private set; }
+        protected internal PropertyAttribute Attribute { get; internal set; }
 
-        internal void SetAttribute(PropertyAttribute attribute) => Attribute = attribute;
+        /// <summary>
+        /// The <see cref="System.Reflection.FieldInfo"/> for the member this property represents.
+        /// </summary>
+        protected internal FieldInfo FieldInfo { get; internal set; }
 
         protected internal virtual void BeforeOnGUI(ref Rect position, ref SerializedPropertyInfo propertyInfo, ref GUIContent label, ref bool includeChildren, ref bool visible) { }
 

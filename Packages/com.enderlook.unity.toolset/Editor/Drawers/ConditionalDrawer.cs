@@ -17,7 +17,7 @@ namespace Enderlook.Unity.Toolset.Drawers
     [CustomStackablePropertyDrawer(typeof(EnableIfAttribute))]
     internal sealed class ConditionalHelper : StackablePropertyDrawer
     {
-        private static readonly Dictionary<(Type type, MemberInfo memberInfo), Func<object, bool>> members = new Dictionary<(Type type, MemberInfo fieldInfo), Func<object, bool>>();
+        private static readonly Dictionary<(Type type, FieldInfo fieldInfo), Func<object, bool>> members = new Dictionary<(Type type, FieldInfo fieldInfo), Func<object, bool>>();
         private static readonly MethodInfo emptyArrayMethodInfo = typeof(Array).GetMethod(nameof(Array.Empty));
         private static readonly MethodInfo debugLogErrorMethodInfo = typeof(Debug).GetMethod(nameof(Debug.LogError), new Type[] { typeof(object) });
         private static readonly MethodInfo isNullOrEmptyMethodInfo = typeof(string).GetMethod(nameof(string.IsNullOrEmpty), new Type[] { typeof(string) });
@@ -92,17 +92,17 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         private bool IsActive(SerializedPropertyInfo propertyInfo)
         {
-            MemberInfo memberInfo = propertyInfo.MemberInfo;
+            FieldInfo fieldInfo = FieldInfo;
             object parent = propertyInfo.ParentTargetObject;
             Type originalType = parent.GetType();
 
-            if (members.TryGetValue((originalType, memberInfo), out Func<object, bool> func))
+            if (members.TryGetValue((originalType, fieldInfo), out Func<object, bool> func))
                 goto end;
 
             Expression convertedExpression = Expression.Convert(parameter, originalType);
-            Expression body = GetExpression(memberInfo, (IConditionalAttribute)Attribute);
+            Expression body = GetExpression(fieldInfo, (IConditionalAttribute)Attribute);
             func = Expression.Lambda<Func<object, bool>>(body, parameter).Compile();
-            members.Add((originalType, memberInfo), func);
+            members.Add((originalType, fieldInfo), func);
 
             end:
             return func(parent);
