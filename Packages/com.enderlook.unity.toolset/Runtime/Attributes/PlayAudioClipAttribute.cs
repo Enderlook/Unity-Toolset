@@ -11,7 +11,7 @@ namespace Enderlook.Unity.Toolset.Attributes
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
     public sealed class PlayAudioClipAttribute : PropertyAttribute
     {
-        internal bool ShowProgressBar { get; }
+        internal readonly bool ShowProgressBar;
 
         public PlayAudioClipAttribute(bool showProgressBar) => ShowProgressBar = showProgressBar;
 
