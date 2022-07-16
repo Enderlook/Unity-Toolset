@@ -18,51 +18,39 @@ namespace Enderlook.Unity.Toolset
     {
         private static GUIContent staticContent;
 
-        internal static void UseNameAttribute(NameAttribute attribute, GUIContent label) => label.text = attribute.name;
-
-        internal static void UseGUIContent(GUIAttribute attribute, SerializedProperty property, ref GUIContent label)
+        internal static void UseGUIContent(LabelAttribute attribute, SerializedProperty property, ref GUIContent label)
         {
-            string text;
-            if (attribute.GuiContentOrReferenceName is null)
+            if (attribute.DisplayNameMode == LabelMode.ByValue)
             {
-                string tooltip;
-                if (attribute.NameMode == GUIMode.Value)
-                {
-                    text = attribute.Name;
+                label.text = attribute.DisplayNameOrGuiContent;
 
-                    if (attribute.TooltipMode == GUIMode.Value)
-                        tooltip = attribute.Tooltip;
-                    else
-                        tooltip = property.GetParentTargetObject().GetValueFromFirstMember<string>(attribute.Tooltip, true);
-                }
+                if (attribute.TooltipMode == LabelMode.ByValue)
+                    label.tooltip = attribute.Tooltip;
                 else
-                {
-                    object parent = property.GetParentTargetObject();
-                    text = parent.GetValueFromFirstMember<string>(attribute.Name, true);
-
-                    if (attribute.TooltipMode == GUIMode.Value)
-                        tooltip = attribute.Tooltip;
-                    else
-                        tooltip = parent.GetValueFromFirstMember<string>(attribute.Tooltip, true);
-                }
-
-                if (!(text is null))
-                    label.text = text;
-
-                if (!(tooltip is null))
-                    label.tooltip = tooltip;
+                    label.tooltip = property.GetParentTargetObject().GetValueFromFirstMember<string>(attribute.Tooltip, true);
             }
             else
             {
                 object parent = property.GetParentTargetObject();
-                try
+                if (attribute.Tooltip is null)
                 {
-                    label = parent.GetValueFromFirstMember<GUIContent>(attribute.GuiContentOrReferenceName);
+                    try
+                    {
+                        label.text = parent.GetValueFromFirstMember<string>(attribute.DisplayNameOrGuiContent, true);
+                    }
+                    catch (MatchingMemberNotFoundException)
+                    {
+                        label = parent.GetValueFromFirstMember<GUIContent>(attribute.DisplayNameOrGuiContent, true);
+                    }
                 }
-                catch (MatchingMemberNotFoundException)
+                else
                 {
-                    text = parent.GetValueFromFirstMember<string>(attribute.GuiContentOrReferenceName);
-                    label.text = text;
+                    label.text = parent.GetValueFromFirstMember<string>(attribute.DisplayNameOrGuiContent, true);
+
+                    if (attribute.TooltipMode == LabelMode.ByValue)
+                        label.tooltip = attribute.Tooltip;
+                    else
+                        label.tooltip = parent.GetValueFromFirstMember<string>(attribute.Tooltip, true);
                 }
             }
         }
@@ -72,29 +60,9 @@ namespace Enderlook.Unity.Toolset
             content.text = property.displayName;
             content.tooltip = property.tooltip;
 
-            MemberInfo memberInfo = property.GetMemberInfo();
-            NameAttribute nameAttribute = memberInfo.GetCustomAttribute<NameAttribute>(true);
-            GUIAttribute guiAttribute = memberInfo.GetCustomAttribute<GUIAttribute>(true);
+            LabelAttribute guiAttribute = property.GetMemberInfo().GetCustomAttribute<LabelAttribute>(true);
 
-            if (!(nameAttribute is null))
-            {
-                if (!(guiAttribute is null))
-                {
-                    if (nameAttribute.order >= guiAttribute.order)
-                    {
-                        UseNameAttribute(nameAttribute, content);
-                        UseGUIContent(guiAttribute, property, ref content);
-                    }
-                    else
-                    {
-                        UseGUIContent(guiAttribute, property, ref content);
-                        UseNameAttribute(nameAttribute, content);
-                    }
-                }
-                else
-                    UseNameAttribute(nameAttribute, content);
-            }
-            else if (!(guiAttribute is null))
+            if (!(guiAttribute is null))
                 UseGUIContent(guiAttribute, property, ref content);
         }
 
@@ -133,7 +101,7 @@ namespace Enderlook.Unity.Toolset
         /// <returns>Tooltip of <see cref="serializedProperty"/>.</returns>
         public static string GetTooltip(this SerializedProperty property)
         {
-            if (property.GetMemberInfo().GetCustomAttribute<GUIAttribute>() is GUIAttribute attribute)
+            if (property.GetMemberInfo().GetCustomAttribute<LabelAttribute>() is LabelAttribute attribute)
             {
                 GUIContent content = Interlocked.Exchange(ref staticContent, null) ?? new GUIContent();
                 UseGUIContent(attribute, property, ref content);
