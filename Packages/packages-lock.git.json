@@ -1,11 +1,6 @@
 {
     "dependencies": [
         {
-            "name": "com.enderlook.reflection",
-            "hash": "aaf9dec47eba17607bcebd13d7c18383d68f682d",
-            "url": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.reflection#com.enderlook.reflection/v0.1.0"
-        },
-        {
             "name": "com.enderlook.utils",
             "hash": "33fc5ce35bceea30f10f754ae7752995b8dec10b",
             "url": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.utils#com.enderlook.utils/v0.1.0"

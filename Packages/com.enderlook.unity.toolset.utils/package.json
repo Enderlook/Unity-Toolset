@@ -9,8 +9,7 @@
     "editor"
   ],
   "dependencies": {
-    "com.enderlook.unity.utils": "https://github.com/Enderlook/Unity-Extras.git?path=Packages/com.enderlook.unity.utils#com.enderlook.unity.utils/v0.1.0",
-    "com.enderlook.reflection": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.reflection#com.enderlook.reflection/v0.1.0"
+    "com.enderlook.unity.utils": "https://github.com/Enderlook/Unity-Extras.git?path=Packages/com.enderlook.unity.utils#com.enderlook.unity.utils/v0.1.0"
   },
   "author": {
     "name": "Enderlook",

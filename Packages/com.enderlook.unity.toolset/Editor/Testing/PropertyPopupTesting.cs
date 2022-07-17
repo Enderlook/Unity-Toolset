@@ -1,5 +1,4 @@
-﻿using Enderlook.Reflection;
-using Enderlook.Unity.Toolset.Attributes;
+﻿using Enderlook.Unity.Toolset.Attributes;
 using Enderlook.Unity.Toolset.Checking;
 using Enderlook.Unity.Toolset.Checking.PostCompiling.Attributes;
 using Enderlook.Unity.Toolset.Utils;
@@ -25,7 +24,7 @@ namespace Enderlook.Unity.Toolset.Testing
             if (type.GetCustomAttribute<PropertyPopupAttribute>() is PropertyPopupAttribute attribute && !type.CheckIfShouldBeIgnored(typeof(PropertyPopupAttribute)))
             {
                 typesAndAttributes.Add(type, attribute);
-                FieldInfo fieldInfo = type.GetInheritedField(attribute.ModeName, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+                FieldInfo fieldInfo = type.GetFieldExhaustive(attribute.ModeName, ExhaustiveBindingFlags.Instance);
                 if (fieldInfo == null)
                     Debug.LogError($"Type {type} has attribute {nameof(PropertyPopupAttribute)}, but doesn't have a field named {attribute.ModeName} as {nameof(PropertyPopupAttribute.ModeName)} requires nor its bases classes have it.");
                 else if (!fieldInfo.CanBeSerializedByUnity() && !fieldInfo.CheckIfShouldBeIgnored(typeof(PropertyPopupAttribute)))

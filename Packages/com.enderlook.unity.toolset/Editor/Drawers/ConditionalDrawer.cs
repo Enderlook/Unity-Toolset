@@ -1,5 +1,5 @@
-﻿using Enderlook.Reflection;
-using Enderlook.Unity.Toolset.Attributes;
+﻿using Enderlook.Unity.Toolset.Attributes;
+using Enderlook.Unity.Toolset.Utils;
 
 using System;
 using System.Collections.Generic;
@@ -18,7 +18,6 @@ namespace Enderlook.Unity.Toolset.Drawers
     internal sealed class ConditionalHelper : StackablePropertyDrawer
     {
         private static readonly Dictionary<(Type type, FieldInfo fieldInfo), Func<object, bool>> members = new Dictionary<(Type type, FieldInfo fieldInfo), Func<object, bool>>();
-        private static readonly MethodInfo emptyArrayMethodInfo = typeof(Array).GetMethod(nameof(Array.Empty));
         private static readonly MethodInfo debugLogErrorMethodInfo = typeof(Debug).GetMethod(nameof(Debug.LogError), new Type[] { typeof(object) });
         private static readonly MethodInfo isNullOrEmptyMethodInfo = typeof(string).GetMethod(nameof(string.IsNullOrEmpty), new Type[] { typeof(string) });
         private static readonly MethodInfo equalsMethodInfo = typeof(object).GetMethod("Equals", new Type[] { typeof(UnityEngine.Object) });
@@ -220,10 +219,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                                 ParameterInfo parameterInfo = parameterInfos[i];
                                 object constant;
                                 if (parameterInfo.IsDefined(typeof(ParamArrayAttribute)))
-                                {
-                                    type1[0] = parameterInfo.ParameterType;
-                                    constant = emptyArrayMethodInfo.MakeGenericMethod(type1).Invoke(null);
-                                }
+                                    constant = ReflectionHelper.EmptyArray(parameterInfo.ParameterType.GetElementType());
                                 else
                                     constant = parameterInfos[i].DefaultValue;
                                 expressions[i] = Expression.Constant(constant);

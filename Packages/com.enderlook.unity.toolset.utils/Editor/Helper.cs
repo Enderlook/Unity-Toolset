@@ -9,6 +9,9 @@ namespace Enderlook.Unity.Toolset.Utils
         public static void ThrowArgumentNullException_Asset()
             => throw new ArgumentNullException("asset");
         
+        public static void ThrowArgumentNullException_ElementType()
+            => throw new ArgumentNullException("elementType");
+
         public static void ThrowArgumentNullException_Extension()
             => throw new ArgumentNullException("extension");
 
@@ -20,6 +23,9 @@ namespace Enderlook.Unity.Toolset.Utils
 
         public static void ThrowArgumentNullException_Path()
             => throw new ArgumentNullException("path");
+
+        public static void ThrowArgumentNullException_ResultType()
+            => throw new ArgumentNullException("resultType");
 
         public static void ThrowArgumentNullException_Source()
             => throw new ArgumentNullException("source");

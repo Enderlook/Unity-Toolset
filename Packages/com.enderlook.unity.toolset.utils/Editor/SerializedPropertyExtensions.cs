@@ -1,6 +1,4 @@
-﻿using Enderlook.Reflection;
-
-using System;
+﻿using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -15,7 +13,7 @@ namespace Enderlook.Unity.Toolset.Utils
     {
         // https://github.com/lordofduct/spacepuppy-unity-framework/blob/master/SpacepuppyBaseEditor/EditorHelper.cs
 
-        private static readonly Regex isArrayRegex = new Regex(@"Array.data\[\d+\]$");
+        private static readonly Regex isArrayRegex = new Regex(@"Array.data\[\d+\]$", RegexOptions.Compiled);
         private static readonly string[] arrayDataSeparator = new string[] { ".Array.data[" };
         private static readonly char[] openBracketSeparator = new char[] { '[' }; // TODO: On .NET standard 2.1 use string.Split(char, StringSplitOptions) instead
 
@@ -27,7 +25,7 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> is <see langword="null"/>.</exception>
         public static bool IsArrayOrListElement(this SerializedProperty source)
         {
-            if (source is null) throw new ArgumentNullException(nameof(source));
+            if (source is null) Helper.ThrowArgumentNullException_Source();
 
             return isArrayRegex.IsMatch(source.propertyPath);
         }
@@ -100,7 +98,7 @@ namespace Enderlook.Unity.Toolset.Utils
             if (name == null) Helper.ThrowArgumentNullException_Name();
             if (name.Length == 0) Helper.ThrowArgumentException_NameCannotBeEmpty();
 
-            return source.FindPropertyRelative(ReflectionExtensions.GetBackingFieldName(name));
+            return source.FindPropertyRelative(ReflectionHelper.GetBackingFieldName(name));
         }
 
         /// <summary>
@@ -117,7 +115,7 @@ namespace Enderlook.Unity.Toolset.Utils
 
             SerializedProperty serializedProperty = source.FindPropertyRelative(name);
             if (serializedProperty == null)
-                serializedProperty = source.FindPropertyRelative(ReflectionExtensions.GetBackingFieldName(name));
+                serializedProperty = source.FindPropertyRelative(ReflectionHelper.GetBackingFieldName(name));
             return serializedProperty;
         }
     }

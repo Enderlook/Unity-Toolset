@@ -1,6 +1,4 @@
-﻿using Enderlook.Reflection;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
 
@@ -31,7 +29,7 @@ namespace Enderlook.Unity.Toolset.Utils
                     if (targetObject == null)
                         continue;
                     Type targetObjectClassType = targetObject.GetType();
-                    FieldInfo field = targetObjectClassType.GetInheritedField(serializedProperty.propertyPath, bindingFlags);
+                    FieldInfo field = targetObjectClassType.GetFieldExhaustive(serializedProperty.propertyPath, ExhaustiveBindingFlags.Instance);
                     if (!(field is null) && typeof(T).IsAssignableFrom(field.FieldType))
                         yield return (serializedProperty, (T)field.GetValue(targetObject), editor);
                 }

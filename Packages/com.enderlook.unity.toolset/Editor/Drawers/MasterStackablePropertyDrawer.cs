@@ -1,4 +1,4 @@
-﻿using Enderlook.Reflection;
+﻿using Enderlook.Unity.Toolset.Utils;
 
 using System;
 using System.Collections.Generic;
@@ -66,7 +66,7 @@ namespace Enderlook.Unity.Toolset.Drawers
             FieldInfo fieldInfo = this.fieldInfo;
             Type fieldType = fieldInfo.FieldType;
             Type propertyType = fieldType;
-            if (!propertyType.TryGetElementTypeOfArrayOrList(out propertyType))
+            if (!propertyType.IsArrayOrList(out propertyType))
                 propertyType = fieldType;
 
             if (drawersMap.TryGetValue(propertyType, out (Type Drawer, bool UseForChildren) tuple) && !(tuple.Drawer is null))

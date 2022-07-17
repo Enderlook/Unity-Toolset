@@ -1,6 +1,4 @@
-﻿using Enderlook.Reflection;
-
-using UnityEditor;
+﻿using UnityEditor;
 
 namespace Enderlook.Unity.Toolset.Utils
 {
@@ -21,7 +19,7 @@ namespace Enderlook.Unity.Toolset.Utils
             if (name is null) Helper.ThrowArgumentNullException_Name();
             if (name.Length == 0) Helper.ThrowArgumentException_NameCannotBeEmpty();
 
-            return source.FindProperty(ReflectionExtensions.GetBackingFieldName(name));
+            return source.FindProperty(ReflectionHelper.GetPropertyNameOfPropertyWithBackingField(name));
         }
 
         /// <summary>
@@ -38,7 +36,7 @@ namespace Enderlook.Unity.Toolset.Utils
 
             SerializedProperty serializedProperty = source.FindProperty(name);
             if (serializedProperty is null)
-                serializedProperty = source.FindProperty(ReflectionExtensions.GetBackingFieldName(name));
+                serializedProperty = source.FindProperty(ReflectionHelper.GetBackingFieldName(name));
             return serializedProperty;
         }
     }

@@ -1,5 +1,5 @@
-﻿using Enderlook.Reflection;
-using Enderlook.Unity.Toolset.Attributes;
+﻿using Enderlook.Unity.Toolset.Attributes;
+using Enderlook.Unity.Toolset.Utils;
 
 using System;
 
@@ -20,7 +20,7 @@ namespace Enderlook.Unity.Toolset
         {
             Type oldFieldType = fieldType;
             // Get the element type from arrays or lists
-            if (!fieldType.TryGetElementTypeOfArrayOrList(out fieldType))
+            if (!fieldType.IsArrayOrList(out fieldType))
                 fieldType = oldFieldType;
 
             // Check if that element type inherit from Unity object

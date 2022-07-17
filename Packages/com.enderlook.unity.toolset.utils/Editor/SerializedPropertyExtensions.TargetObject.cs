@@ -1,6 +1,4 @@
-﻿using Enderlook.Reflection;
-
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -1123,11 +1121,8 @@ namespace Enderlook.Unity.Toolset.Utils
                         break;
                     case null:
                         Type type__ = node.Object.GetType();
-                        if (type__.IsArrayOrList())
-                            type_ = type__.GetElementTypeOfArrayOrList();
-                        else
+                        if (!type__.IsArrayOrList(out type_))
                         {
-                            type_ = null;
                             bool found = false;
                             foreach (Type @interface in type__.GetInterfaces())
                             {

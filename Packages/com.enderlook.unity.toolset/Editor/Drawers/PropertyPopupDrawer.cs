@@ -1,5 +1,5 @@
-﻿using Enderlook.Reflection;
-using Enderlook.Unity.Toolset.Attributes;
+﻿using Enderlook.Unity.Toolset.Attributes;
+using Enderlook.Unity.Toolset.Utils;
 
 using System;
 using System.Collections.Generic;
@@ -68,7 +68,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                 }
 
                 List<PropertyPopupOption> list = new List<PropertyPopupOption>();
-                foreach (FieldInfo fieldInfo in classType.GetInheritedFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+                foreach (FieldInfo fieldInfo in classType.GetFieldsExhaustive(ExhaustiveBindingFlags.Instance))
                     if (fieldInfo.GetCustomAttribute<PropertyPopupOptionAttribute>(true) is PropertyPopupOptionAttribute attribute)
                         list.Add(new PropertyPopupOption(fieldInfo.Name, propertyInfo.SerializedProperty.FindPropertyRelative(fieldInfo.Name).GetDisplayName(), attribute));
 

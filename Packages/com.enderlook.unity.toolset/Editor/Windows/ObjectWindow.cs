@@ -1,5 +1,4 @@
 ﻿using Enderlook.Enumerables;
-using Enderlook.Reflection;
 using Enderlook.Unity.Toolset.Attributes;
 using Enderlook.Unity.Toolset.Utils;
 
@@ -83,10 +82,17 @@ namespace Enderlook.Unity.Toolset.Windows
             Parallel.For(0, assemblies.Length, (int i) =>
             {
                 Assembly assembly = assemblies[i];
-                if (!assembly.TryGetTypes(out IEnumerable<Type> loadedTypes, out Exception[] exceptions_))
-                    exceptions[i] = exceptions_;
-                else
+                IEnumerable<Type> loadedTypes;
+                try
+                {
+                    loadedTypes = assembly.GetTypes();
                     exceptions[i] = Array.Empty<Exception>();
+                }
+                catch (ReflectionTypeLoadException exception)
+                {
+                    loadedTypes = exception.Types.Where(e => e != null);
+                    exceptions[i] = exception.LoaderExceptions;
+                }
 
                 Stack<Type> stack = new Stack<Type>();
                 foreach (Type type in loadedTypes)

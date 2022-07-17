@@ -1,5 +1,4 @@
-﻿using Enderlook.Reflection;
-using Enderlook.Unity.Toolset.Attributes;
+﻿using Enderlook.Unity.Toolset.Attributes;
 using Enderlook.Unity.Toolset.Utils;
 
 using System.Reflection;
@@ -16,6 +15,7 @@ namespace Enderlook.Unity.Toolset
     /// </summary>
     public static class GUIContentHelper
     {
+        private const ExhaustiveBindingFlags BindingFlags = ExhaustiveBindingFlags.Instance | ExhaustiveBindingFlags.Static;
         private static GUIContent staticContent;
 
         internal static void UseGUIContent(LabelAttribute attribute, SerializedProperty property, ref GUIContent label)
@@ -27,7 +27,7 @@ namespace Enderlook.Unity.Toolset
                 if (attribute.TooltipMode == LabelMode.ByValue)
                     label.tooltip = attribute.Tooltip;
                 else
-                    label.tooltip = property.GetParentTargetObject().GetValueFromFirstMember<string>(attribute.Tooltip, true);
+                    label.tooltip = property.GetParentTargetObject().GetValueFromFirstMemberInfoThatMatchesResultTypeExhaustive<string>(attribute.Tooltip, BindingFlags);
             }
             else
             {
@@ -36,21 +36,21 @@ namespace Enderlook.Unity.Toolset
                 {
                     try
                     {
-                        label.text = parent.GetValueFromFirstMember<string>(attribute.DisplayNameOrGuiContent, true);
+                        label.text = parent.GetValueFromFirstMemberInfoThatMatchesResultTypeExhaustive<string>(attribute.DisplayNameOrGuiContent, BindingFlags);
                     }
                     catch (MatchingMemberNotFoundException)
                     {
-                        label = parent.GetValueFromFirstMember<GUIContent>(attribute.DisplayNameOrGuiContent, true);
+                        label = parent.GetValueFromFirstMemberInfoThatMatchesResultTypeExhaustive<GUIContent>(attribute.DisplayNameOrGuiContent, BindingFlags);
                     }
                 }
                 else
                 {
-                    label.text = parent.GetValueFromFirstMember<string>(attribute.DisplayNameOrGuiContent, true);
+                    label.text = parent.GetValueFromFirstMemberInfoThatMatchesResultTypeExhaustive<string>(attribute.DisplayNameOrGuiContent, BindingFlags);
 
                     if (attribute.TooltipMode == LabelMode.ByValue)
                         label.tooltip = attribute.Tooltip;
                     else
-                        label.tooltip = parent.GetValueFromFirstMember<string>(attribute.Tooltip, true);
+                        label.tooltip = parent.GetValueFromFirstMemberInfoThatMatchesResultTypeExhaustive<string>(attribute.Tooltip, BindingFlags);
                 }
             }
         }
