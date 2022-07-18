@@ -18,27 +18,45 @@ namespace Enderlook.Unity.Toolset.Drawers
         protected internal override void OnGUI(Rect position, SerializedProperty property, GUIContent label, bool includeChildren)
         {
             EditorGUI.BeginChangeCheck();
-            int layer = EditorGUI.LayerField(position, label, property.intValue);
+            int value;
+            switch (property.propertyType)
+            {
+                case SerializedPropertyType.Integer:
+                case SerializedPropertyType.LayerMask:
+                    value = property.intValue;
+                    break;
+                case SerializedPropertyType.Float:
+                    value = (int)property.floatValue;
+                    break;
+                case SerializedPropertyType.String:
+                    value = LayerMask.NameToLayer(property.stringValue);
+                    break;
+                default:
+                    Throw();
+                    return;
+            }
+            int layer = EditorGUI.LayerField(position, label, value);
             if (EditorGUI.EndChangeCheck())
             {
                 switch (property.propertyType)
                 {
                     case SerializedPropertyType.Integer:
+                    case SerializedPropertyType.LayerMask:
                         property.intValue = layer;
                         break;
                     case SerializedPropertyType.Float:
                         property.floatValue = layer;
                         break;
-                    case SerializedPropertyType.LayerMask:
-                        property.intValue = layer;
-                        break;
                     case SerializedPropertyType.String:
                         property.stringValue = LayerMask.LayerToName(layer);
                         break;
                     default:
-                        throw new ArgumentException(ERROR_SERIALIZED_PROPERTY_TYPE);
+                        Throw();
+                        return;
                 }
             }
+
+            void Throw() => throw new ArgumentException(ERROR_SERIALIZED_PROPERTY_TYPE);
         }
     }
 }
