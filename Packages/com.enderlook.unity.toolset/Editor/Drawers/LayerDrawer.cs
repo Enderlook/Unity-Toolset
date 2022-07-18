@@ -13,7 +13,7 @@ namespace Enderlook.Unity.Toolset.Drawers
     {
         private static readonly string ERROR_SERIALIZED_PROPERTY_TYPE = $"{typeof(LayerAttribute)} only support serialized properties of type {nameof(SerializedPropertyType.Integer)} ({typeof(int)}), {nameof(SerializedPropertyType.Float)} ({typeof(float)}), {nameof(SerializedPropertyType.String)} ({typeof(string)}) or {nameof(SerializedPropertyType.LayerMask)} ({typeof(LayerMask)})";
 
-        protected internal override bool HasOnGUI => true;
+        protected internal override bool RequestMain => true;
 
         protected internal override void OnGUI(Rect position, SerializedProperty property, GUIContent label, bool includeChildren)
         {
@@ -40,8 +40,5 @@ namespace Enderlook.Unity.Toolset.Drawers
                 }
             }
         }
-
-        protected internal override float GetPropertyHeight(SerializedProperty property, GUIContent label, bool includeChildren, float height)
-            => EditorGUI.GetPropertyHeight(property, label, includeChildren);
     }
 }

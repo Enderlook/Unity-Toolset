@@ -15,7 +15,7 @@ namespace Enderlook.Unity.Toolset.Drawers
         private float? height;
         private bool firstTime = true;
 
-        protected internal override bool HasOnGUI => true;
+        protected internal override bool RequestMain => true;
 
         private Rect GetBoxPosition(string message, Rect position)
         {
@@ -54,7 +54,7 @@ namespace Enderlook.Unity.Toolset.Drawers
             }
         }
 
-        protected internal override float GetPropertyHeight(SerializedProperty property, GUIContent label, bool includeChildren, float height)
-            => this.height ?? EditorGUI.GetPropertyHeight(property, label, includeChildren);
+        protected internal override float GetPropertyHeight(SerializedProperty property, GUIContent label, bool includeChildren)
+            => height ?? base.GetPropertyHeight(property, label, includeChildren);
     }
 }

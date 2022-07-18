@@ -27,7 +27,7 @@ namespace Enderlook.Unity.Toolset.Drawers
         private static Dictionary<Type, (Type Drawer, bool UseForChildren)> drawersMap;
 
         private IReadOnlyList<StackablePropertyDrawer> Drawers;
-        private bool hasOnGUI;
+        private StackablePropertyDrawer main;
 
         [DidReloadScripts]
         private static void Reset()
@@ -155,7 +155,16 @@ namespace Enderlook.Unity.Toolset.Drawers
                 StackablePropertyDrawer drawer = (StackablePropertyDrawer)Activator.CreateInstance(tuple.Drawer);
                 drawer.Attribute = attribute;
                 drawer.FieldInfo = fieldInfo;
-                hasOnGUI |= drawer.HasOnGUI;
+                if (drawer.RequestMain)
+                {
+                    if (main is null)
+                    {
+                        drawer.IsMain(true);
+                        main = drawer;
+                    }
+                    else
+                        drawer.IsMain(false);
+                }
                 list.Add(drawer);
             }
 
@@ -163,11 +172,19 @@ namespace Enderlook.Unity.Toolset.Drawers
             {
                 StackablePropertyDrawer drawer = (StackablePropertyDrawer)Activator.CreateInstance(tuple.Drawer);
                 drawer.FieldInfo = fieldInfo;
-                hasOnGUI |= drawer.HasOnGUI;
+                if (drawer.RequestMain)
+                {
+                    if (main is null)
+                    {
+                        drawer.IsMain(true);
+                        main = drawer;
+                    }
+                    else
+                        drawer.IsMain(false);
+                }
                 list.Add(drawer);
             }
         }
-
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
@@ -181,17 +198,10 @@ namespace Enderlook.Unity.Toolset.Drawers
 
             if (visible)
             {
-                if (hasOnGUI)
-                {
-                    for (int i = 0; i < count; i++)
-                    {
-                        StackablePropertyDrawer stackableDrawer = drawers[i];
-                        if (stackableDrawer.HasOnGUI)
-                            stackableDrawer.OnGUI(position, property, label, includeChildren);
-                    }
-                }
-                else
+                if (main is null)
                     EditorGUI.PropertyField(position, property, label, includeChildren);
+                else
+                    main.OnGUI(position, property, label, includeChildren);
             }
 
             for (int i = count - 1; i >= 0; i--)
@@ -211,8 +221,10 @@ namespace Enderlook.Unity.Toolset.Drawers
             float height = 0;
             if (visible)
             {
-                if (!hasOnGUI)
+                if (main is null)
                     height = EditorGUI.GetPropertyHeight(property, label, includeChildren);
+                else
+                    height = main.GetPropertyHeight(property, label, includeChildren);
 
                 for (int i = count - 1; i >= 0; i--)
                     height = drawers[i].GetPropertyHeight(property, label, includeChildren, height);

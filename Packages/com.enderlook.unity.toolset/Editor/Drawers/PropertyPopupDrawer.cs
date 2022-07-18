@@ -17,7 +17,7 @@ namespace Enderlook.Unity.Toolset.Drawers
     {
         private static readonly Dictionary<Type, PropertyPopup> allowedTypes = new Dictionary<Type, PropertyPopup>();
 
-        protected internal override bool HasOnGUI => true;
+        protected internal override bool RequestMain => true;
 
         [DidReloadScripts]
         private static void Reset() => allowedTypes.Clear();
@@ -47,10 +47,10 @@ namespace Enderlook.Unity.Toolset.Drawers
                 propertyPopup.OnGUI(position, property, label);
         }
 
-        protected internal override float GetPropertyHeight(SerializedProperty property, GUIContent label, bool includeChildren, float height)
+        protected internal override float GetPropertyHeight(SerializedProperty property, GUIContent label, bool includeChildren)
         {
             if (!TryGetPropertyPopup(property, out PropertyPopup propertyPopup))
-                return height;
+                return base.GetPropertyHeight(property, label, includeChildren);
             return propertyPopup.GetPropertyHeight(property, label);
         }
 

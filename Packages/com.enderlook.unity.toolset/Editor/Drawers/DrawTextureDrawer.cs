@@ -19,7 +19,7 @@ namespace Enderlook.Unity.Toolset.Drawers
         private GUIContent textureContent;
         private GUIContent errorContent;
 
-        protected internal override bool HasOnGUI => true;
+        protected internal override bool RequestMain => true;
 
         protected internal override void OnGUI(Rect position, SerializedProperty property, GUIContent label, bool includeChildren)
         {
@@ -169,9 +169,9 @@ namespace Enderlook.Unity.Toolset.Drawers
             return height;
         }
 
-        protected internal override float GetPropertyHeight(SerializedProperty property, GUIContent label, bool includeChildren, float height)
+        protected internal override float GetPropertyHeight(SerializedProperty property, GUIContent label, bool includeChildren)
         {
-            height = EditorGUI.GetPropertyHeight(property, label);
+            float height = EditorGUI.GetPropertyHeight(property, label);
             return CalculateWithAditionalPropertyHeight(property, height, EditorGUIUtility.currentViewWidth);
         }
 
