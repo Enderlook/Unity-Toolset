@@ -235,5 +235,14 @@ namespace Enderlook.Unity.Toolset.Drawers
 
             return height;
         }
+
+        public override bool CanCacheInspectorGUI(SerializedProperty property)
+        {
+            List<StackablePropertyDrawer> drawers = Drawers ??= GetDrawers();
+            foreach (StackablePropertyDrawer drawer in drawers)
+                if (!drawer.CanCacheInspectorGUI(property))
+                    return false;
+            return true;
+        }
     }
 }

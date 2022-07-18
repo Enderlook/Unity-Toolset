@@ -48,5 +48,7 @@ namespace Enderlook.Unity.Toolset.Drawers
         protected internal virtual float GetPropertyHeight(SerializedProperty property, GUIContent label, bool includeChildren) => EditorGUI.GetPropertyHeight(property, label, includeChildren);
 
         protected internal virtual float AfterGetPropertyHeight(SerializedProperty property, GUIContent label, bool includeChildren, float height) => height;
+
+        protected internal virtual bool CanCacheInspectorGUI(SerializedProperty property) => true;
     }
 }
