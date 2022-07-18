@@ -17,7 +17,7 @@ namespace Enderlook.Unity.Toolset.Utils
     /// </summary>
     public static class ReflectionHelper
     {
-        private static readonly Regex backingFieldRegex = new Regex("^<(.*)>K__BackingField", RegexOptions.Compiled);
+        private static readonly Regex backingFieldRegex = new Regex("^<(.*)>k__BackingField", RegexOptions.Compiled);
         private static readonly Dictionary<Type, Array> zeroArray = new Dictionary<Type, Array>();
 
         private static readonly Type[] unityDefaultNonPrimitiveSerializables = new Type[]
