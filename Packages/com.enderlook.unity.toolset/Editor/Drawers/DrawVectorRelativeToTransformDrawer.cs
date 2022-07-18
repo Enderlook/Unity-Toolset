@@ -11,8 +11,8 @@ using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Drawers
 {
-    [CustomStackablePropertyDrawer(typeof(DrawVectorRelativeToTransformAttribute)), InitializeOnLoad]
-    internal sealed class DrawVectorRelativeToTransformEditor : StackablePropertyDrawer
+    [InitializeOnLoad]
+    internal sealed class DrawVectorRelativeToTransformEditor 
     {
         private const string MENU_NAME = "Enderlook/Toolset/Enable Draw Vector Relative To Tranform";
 
