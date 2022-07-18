@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 
 using UnityEditor;
 
@@ -14,7 +15,7 @@ namespace Enderlook.Unity.Toolset.Utils
     {
         private const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
-        private static readonly List<SerializedPropertyPathNode> nodes = new List<SerializedPropertyPathNode>();
+        private static List<SerializedPropertyPathNode> nodes = new List<SerializedPropertyPathNode>();
         private static readonly Dictionary<string, Type> types = new Dictionary<string, Type>();
 
         /// <summary>
@@ -241,9 +242,11 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <returns>Value of the <paramref name="source"/> as <see cref="object"/>.</returns>
         public static object GetTargetObject(this SerializedProperty source, int last = 0)
         {
-            source.GetPropertyNodes(nodes, last, false);
-            object @object = nodes[nodes.Count - 1].Object;
-            nodes.Clear();
+            List<SerializedPropertyPathNode> nodes_ = Interlocked.Exchange(ref nodes, null) ?? new List<SerializedPropertyPathNode>();
+            source.GetPropertyNodes(nodes_, last, false);
+            object @object = nodes_[nodes_.Count - 1].Object;
+            nodes_.Clear();
+            nodes = nodes_;
             return @object;
         }
 
@@ -256,13 +259,17 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <returns>If <see langword="true"/>, <paramref name="target"/> was got successfully.</returns>
         public static bool TryGetTargetObject(this SerializedProperty source, out object target, int last = 0)
         {
-            if (source.GetPropertyNodes(nodes, last, true))
+            List<SerializedPropertyPathNode> nodes_ = Interlocked.Exchange(ref nodes, null) ?? new List<SerializedPropertyPathNode>();
+            if (source.GetPropertyNodes(nodes_, last, true))
             {
-                target = nodes[nodes.Count - 1].Object;
-                nodes.Clear();
+                target = nodes_[nodes_.Count - 1].Object;
+                nodes_.Clear();
+                nodes = nodes_;
                 return true;
             }
             target = default;
+            nodes_.Clear();
+            nodes = nodes_;
             return false;
         }
 
@@ -504,17 +511,18 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <returns>If <see langword="true"/> the value was set successfully. On <see langword="false"/>, undefined behaviour, the value may or may not have been defined.</returns>
         private static bool SetTargetObject<T>(this SerializedProperty source, T newTarget, bool notThrow)
         {
-            if (source.GetPropertyNodes(nodes, 0, true))
+            List<SerializedPropertyPathNode> nodes_ = Interlocked.Exchange(ref nodes, null) ?? new List<SerializedPropertyPathNode>();
+            if (source.GetPropertyNodes(nodes_, 0, true))
             {
-                int i = nodes.Count - 2;
-                SerializedPropertyPathNode node = nodes[i];
+                int i = nodes_.Count - 2;
+                SerializedPropertyPathNode node = nodes_[i];
                 if (!Set(node, newTarget))
                     goto error;
 
                 while (i > 0 && node.Object.GetType().IsValueType)
                 {
-                    node = nodes[i];
-                    SerializedPropertyPathNode previousNode = nodes[--i];
+                    node = nodes_[i];
+                    SerializedPropertyPathNode previousNode = nodes_[--i];
                     if (!Set(previousNode, node.Object))
                         goto error;
                     node = previousNode;
@@ -568,14 +576,14 @@ namespace Enderlook.Unity.Toolset.Utils
                             if (notThrow) goto error_;
                             ThrowTypeNotSupported();
 
-                            void ThrowTypeNotSupported() => throw new NotSupportedException($"Error while assigning value to '{string.Join(".", nodes.Take(i + 1).Select(e => e.path ?? $"Array.data[{e.Index}]"))}' from path '{string.Join(".", nodes.Select(e => e.path ?? $"Array.data[{e.Index}]"))}'. Can only mutate fields, properties or types that implement {nameof(IList)}.");
+                            void ThrowTypeNotSupported() => throw new NotSupportedException($"Error while assigning value to '{string.Join(".", nodes_.Take(i + 1).Select(e => e.path ?? $"Array.data[{e.Index}]"))}' from path '{string.Join(".", nodes_.Select(e => e.path ?? $"Array.data[{e.Index}]"))}'. Can only mutate fields, properties or types that implement {nameof(IList)}.");
 
                             indexError:
                             if (notThrow) goto error_;
                             ThrowIndexMustBeLowerThanArraySize();
 
                             void ThrowIndexMustBeLowerThanArraySize()
-                                => throw new NotSupportedException($"Error while assigning value to '{string.Join(".", nodes.Take(i + 1).Select(e => e.path ?? $"Array.data[{e.Index}]"))}' from path '{string.Join(".", nodes.Select(e => e.path ?? $"Array.data[{e.Index}]"))}'. Index {previousNode.Index} must be lwoer than '{string.Join(".", nodes.Take(i).Select(e => e.path ?? $"Array.data[{e.Index}]"))}.Array.arraySize' ({((IList)previousNode.Object).Count}).");
+                                => throw new NotSupportedException($"Error while assigning value to '{string.Join(".", nodes_.Take(i + 1).Select(e => e.path ?? $"Array.data[{e.Index}]"))}' from path '{string.Join(".", nodes_.Select(e => e.path ?? $"Array.data[{e.Index}]"))}'. Index {previousNode.Index} must be lwoer than '{string.Join(".", nodes_.Take(i).Select(e => e.path ?? $"Array.data[{e.Index}]"))}.Array.arraySize' ({((IList)previousNode.Object).Count}).");
 
                             break;
                         }
@@ -583,13 +591,17 @@ namespace Enderlook.Unity.Toolset.Utils
                             Debug.Assert(false, "Impossible state.");
                             break;
                     }
+                    nodes_.Clear();
+                    nodes = nodes_;
                     return true;
                     error_:
+                    nodes_.Clear();
+                    nodes = nodes_;
                     return false;
                 }
             }
             error:
-            nodes.Clear();
+            nodes_.Clear();
             return false;
         }
 
@@ -886,13 +898,15 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <returns><see cref="MemberInfo"/> of <paramref name="source"/>.</returns>
         public static MemberInfo GetMemberInfo(this SerializedProperty source)
         {
-            source.GetPropertyNodes(nodes, 0, true);
+            List<SerializedPropertyPathNode> nodes_ = Interlocked.Exchange(ref nodes, null) ?? new List<SerializedPropertyPathNode>();
+            source.GetPropertyNodes(nodes_, 0, true);
 
-            int i = nodes.Count - 2;
-            SerializedPropertyPathNode node = nodes[i];
+            int i = nodes_.Count - 2;
+            SerializedPropertyPathNode node = nodes_[i];
             while (node.MemberInfo is null)
-                node = nodes[--i];
-            nodes.Clear();
+                node = nodes_[--i];
+            nodes_.Clear();
+            nodes = nodes_;
 
             return node.MemberInfo;
         }
@@ -905,17 +919,21 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <returns>If <see langword="true"/>, <paramref name="target"/> was got successfully.</returns>
         public static bool TryGetMemberInfo(this SerializedProperty source, out MemberInfo memberInfo)
         {
-            if (!source.GetPropertyNodes(nodes, 0, false))
+            List<SerializedPropertyPathNode> nodes_ = Interlocked.Exchange(ref nodes, null) ?? new List<SerializedPropertyPathNode>();
+            if (!source.GetPropertyNodes(nodes_, 0, false))
             {
+                nodes_.Clear();
+                nodes = nodes_;
                 memberInfo = null;
                 return false;
             }
 
-            int i = nodes.Count - 2;
-            SerializedPropertyPathNode node = nodes[i];
+            int i = nodes_.Count - 2;
+            SerializedPropertyPathNode node = nodes_[i];
             while (node.MemberInfo is null)
-                node = nodes[--i];
-            nodes.Clear();
+                node = nodes_[--i];
+            nodes_.Clear();
+            nodes = nodes_;
 
             memberInfo = node.MemberInfo;
             return true;
@@ -1106,10 +1124,15 @@ namespace Enderlook.Unity.Toolset.Utils
 
             Type Fallback()
             {
-                if (!source.GetPropertyNodes(nodes, 0, !(defaultType is null)))
+                List<SerializedPropertyPathNode> nodes_ = Interlocked.Exchange(ref nodes, null) ?? new List<SerializedPropertyPathNode>();
+                if (!source.GetPropertyNodes(nodes_, 0, !(defaultType is null)))
+                {
+                    nodes_.Clear();
+                    nodes = nodes_;
                     return defaultType;
+                }
 
-                SerializedPropertyPathNode node = nodes[nodes.Count - 2];
+                SerializedPropertyPathNode node = nodes_[nodes_.Count - 2];
                 Type type_ = null;
                 switch (node.MemberInfo)
                 {
@@ -1148,7 +1171,8 @@ namespace Enderlook.Unity.Toolset.Utils
                         break;
                 }
 
-                nodes.Clear();
+                nodes_.Clear();
+                nodes = nodes_;
                 return type_;
             }
         }
