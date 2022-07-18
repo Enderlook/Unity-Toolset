@@ -67,22 +67,22 @@ namespace Enderlook.Unity.Toolset
         }
 
         /// <summary>
-        /// Produce a <see cref="GUIContent"/> with label of <paramref name="serializedProperty"/>.
+        /// Produce a <see cref="GUIContent"/> with label of <paramref name="property"/>.
         /// </summary>
-        /// <param name="serializedProperty">Property to get its <see cref="GUIContent"/>.</param>
+        /// <param name="property">Property to get its <see cref="GUIContent"/>.</param>
         /// <returns><see cref="GUIContent"/> of <see cref="property"/>.</returns>
-        public static GUIContent GetGUIContent(this SerializedProperty serializedProperty)
+        public static GUIContent GetGUIContent(this SerializedProperty property)
         {
-            GUIContent content = new GUIContent(serializedProperty.name, serializedProperty.tooltip);
-            SetGUIContent(serializedProperty, ref content);
+            GUIContent content = new GUIContent(property.name, property.tooltip);
+            SetGUIContent(property, ref content);
             return content;
         }
 
         /// <summary>
-        /// Get the display name of <paramref name="serializedProperty"/>.
+        /// Get the display name of <paramref name="property"/>.
         /// </summary>
         /// <param name="property">Property to get its <see cref="GUIContent"/>.</param>
-        /// <returns>Display name of <see cref="serializedProperty"/>.</returns>
+        /// <returns>Display name of <see cref="property"/>.</returns>
         public static string GetDisplayName(this SerializedProperty property)
         {
             GUIContent content = Interlocked.Exchange(ref staticContent, null) ?? new GUIContent();
@@ -95,10 +95,10 @@ namespace Enderlook.Unity.Toolset
         }
 
         /// <summary>
-        /// Get the tooltip of <paramref name="serializedProperty"/>.
+        /// Get the tooltip of <paramref name="property"/>.
         /// </summary>
         /// <param name="property">Property to get its <see cref="GUIContent"/>.</param>
-        /// <returns>Tooltip of <see cref="serializedProperty"/>.</returns>
+        /// <returns>Tooltip of <see cref="property"/>.</returns>
         public static string GetTooltip(this SerializedProperty property)
         {
             if (property.GetMemberInfo().GetCustomAttribute<LabelAttribute>() is LabelAttribute attribute)
