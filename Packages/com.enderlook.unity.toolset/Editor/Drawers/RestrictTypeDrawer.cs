@@ -17,22 +17,8 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         protected internal override bool RequestMain => true;
 
-        private Rect GetBoxPosition(string message, Rect position)
-        {
-            height = GUI.skin.box.CalcHeight(new GUIContent(message), position.width);
-            return new Rect(position.x, position.y, position.width, height.Value);
-        }
-
         protected internal override void OnGUI(Rect position, SerializedProperty property, GUIContent label, bool includeChildren)
         {
-            void DrawErrorBox(string message)
-            {
-                Debug.LogError(message);
-                EditorGUI.HelpBox(GetBoxPosition(message, position), message, MessageType.Error);
-            }
-
-            height = null;
-
             RestrictTypeAttribute attribute = (RestrictTypeAttribute)Attribute;
             if (!attribute.CheckRestrictionFeasibility(property.GetPropertyType(), out string errorMessage))
             {
@@ -48,9 +34,17 @@ namespace Enderlook.Unity.Toolset.Drawers
                 UnityObject result = property.objectReferenceValue;
                 if (result != null && !attribute.CheckIfTypeIsAllowed(result.GetType(), out errorMessage))
                 {
-                    Debug.LogError($"Field {property.name} error. {errorMessage}");
+                    DrawErrorBox($"Field {property.name} error. {errorMessage}");
                     property.objectReferenceValue = null;
                 }
+            }
+
+            void DrawErrorBox(string message)
+            {
+                Debug.LogError(message);
+                height = GUI.skin.box.CalcHeight(new GUIContent(message), position.width);
+                Rect box = new Rect(position.x, position.y, position.width, height.Value);
+                EditorGUI.HelpBox(box, message, MessageType.Error);
             }
         }
 
