@@ -81,9 +81,14 @@ namespace Enderlook.Unity.Toolset.Utils
 
             string part = source.propertyPath.Split(Helper.DOT_SEPARATOR).Last().Split(openBracketSeparator).LastOrDefault();
             if (part == default)
-                throw new ArgumentException("It doesn't come from an array", nameof(source));
+            {
+                Throw();
+                return 0;
+            }
             else
                 return int.Parse(part.Replace("]", ""));
+
+            void Throw() => throw new ArgumentException("It doesn't come from an array", nameof(source));
         }
 
         /// <summary>
