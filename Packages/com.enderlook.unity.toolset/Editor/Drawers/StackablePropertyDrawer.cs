@@ -1,5 +1,7 @@
 ﻿using System.Reflection;
 
+using UnityEditor;
+
 using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Drawers
@@ -11,7 +13,7 @@ namespace Enderlook.Unity.Toolset.Drawers
     public abstract class StackablePropertyDrawer
     {
         /// <summary>
-        /// If <see cref="OnGUI(Rect, SerializedPropertyInfo, GUIContent, bool)"/> should be executed.<br/>
+        /// If <see cref="OnGUI(Rect, SerializedProperty, GUIContent, bool)"/> should be executed.<br/>
         /// Only one attribute per script variable can return <see langword="true"/>.<br/>
         /// If multiple attributes returns <see langword="true"/>, only the method of the first attribute is executed.
         /// </summary>
@@ -27,16 +29,16 @@ namespace Enderlook.Unity.Toolset.Drawers
         /// </summary>
         protected internal FieldInfo FieldInfo { get; internal set; }
 
-        protected internal virtual void BeforeOnGUI(ref Rect position, ref SerializedPropertyInfo propertyInfo, ref GUIContent label, ref bool includeChildren, ref bool visible) { }
+        protected internal virtual void BeforeOnGUI(ref Rect position, ref SerializedProperty property, ref GUIContent label, ref bool includeChildren, ref bool visible) { }
 
-        protected internal virtual void OnGUI(Rect position, SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren) { }
+        protected internal virtual void OnGUI(Rect position, SerializedProperty property, GUIContent label, bool includeChildren) { }
 
-        protected internal virtual void AfterOnGUI(Rect position, SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren, bool visible) { }
+        protected internal virtual void AfterOnGUI(Rect position, SerializedProperty property, GUIContent label, bool includeChildren, bool visible) { }
 
-        protected internal virtual void BeforeGetPropertyHeight(ref SerializedPropertyInfo propertyInfo, ref GUIContent label, ref bool includeChildren, ref bool visible) { }
+        protected internal virtual void BeforeGetPropertyHeight(ref SerializedProperty property, ref GUIContent label, ref bool includeChildren, ref bool visible) { }
 
-        protected internal virtual float GetPropertyHeight(SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren, float height) => height;
+        protected internal virtual float GetPropertyHeight(SerializedProperty property, GUIContent label, bool includeChildren, float height) => height;
 
-        protected internal virtual void AfterGetPropertyHeight(SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren, bool visible, float height) { }
+        protected internal virtual void AfterGetPropertyHeight(SerializedProperty property, GUIContent label, bool includeChildren, bool visible, float height) { }
     }
 }

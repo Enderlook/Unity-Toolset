@@ -1,4 +1,5 @@
 ﻿using Enderlook.Unity.Toolset.Attributes;
+using Enderlook.Unity.Toolset.Utils;
 
 using UnityEditor;
 
@@ -22,7 +23,7 @@ namespace Enderlook.Unity.Toolset.Drawers
             return new Rect(position.x, position.y, position.width, height.Value);
         }
 
-        protected internal override void OnGUI(Rect position, SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren)
+        protected internal override void OnGUI(Rect position, SerializedProperty property, GUIContent label, bool includeChildren)
         {
             void DrawErrorBox(string message)
             {
@@ -32,30 +33,28 @@ namespace Enderlook.Unity.Toolset.Drawers
 
             height = null;
 
-            SerializedProperty serializedProperty = propertyInfo.SerializedProperty;
-
             RestrictTypeAttribute attribute = (RestrictTypeAttribute)Attribute;
-            if (!attribute.CheckRestrictionFeasibility(propertyInfo.MemberType, out string errorMessage))
+            if (!attribute.CheckRestrictionFeasibility(property.GetPropertyType(), out string errorMessage))
             {
-                DrawErrorBox($"Field {serializedProperty.name} error. {errorMessage}");
+                DrawErrorBox($"Field {property.name} error. {errorMessage}");
                 return;
             }
 
             EditorGUI.BeginChangeCheck();
-            EditorGUI.PropertyField(position, serializedProperty, label);
+            EditorGUI.PropertyField(position, property, label);
             if (EditorGUI.EndChangeCheck() || firstTime)
             {
                 firstTime = false;
-                UnityObject result = serializedProperty.objectReferenceValue;
+                UnityObject result = property.objectReferenceValue;
                 if (result != null && !attribute.CheckIfTypeIsAllowed(result.GetType(), out errorMessage))
                 {
-                    Debug.LogError($"Field {serializedProperty.name} error. {errorMessage}");
-                    serializedProperty.objectReferenceValue = null;
+                    Debug.LogError($"Field {property.name} error. {errorMessage}");
+                    property.objectReferenceValue = null;
                 }
             }
         }
 
-        protected internal override float GetPropertyHeight(SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren, float height)
-            => this.height ?? EditorGUI.GetPropertyHeight(propertyInfo.SerializedProperty, label, includeChildren);
+        protected internal override float GetPropertyHeight(SerializedProperty property, GUIContent label, bool includeChildren, float height)
+            => this.height ?? EditorGUI.GetPropertyHeight(property, label, includeChildren);
     }
 }

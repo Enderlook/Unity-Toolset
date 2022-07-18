@@ -173,13 +173,11 @@ namespace Enderlook.Unity.Toolset.Drawers
         {
             IReadOnlyList<StackablePropertyDrawer> drawers = Drawers ??= GetDrawers();
 
-            SerializedPropertyInfo propertyInfo = new SerializedPropertyInfo(property, fieldInfo);
-
             bool includeChildren = true;
             bool visible = true;
             int count = drawers.Count;
             for (int i = 0; i < count; i++)
-                drawers[i].BeforeOnGUI(ref position, ref propertyInfo, ref label, ref includeChildren, ref visible);
+                drawers[i].BeforeOnGUI(ref position, ref property, ref label, ref includeChildren, ref visible);
 
             if (visible)
             {
@@ -189,7 +187,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                     {
                         StackablePropertyDrawer stackableDrawer = drawers[i];
                         if (stackableDrawer.HasOnGUI)
-                            stackableDrawer.OnGUI(position, propertyInfo, label, includeChildren);
+                            stackableDrawer.OnGUI(position, property, label, includeChildren);
                     }
                 }
                 else
@@ -197,20 +195,18 @@ namespace Enderlook.Unity.Toolset.Drawers
             }
 
             for (int i = count - 1; i >= 0; i--)
-                drawers[i].AfterOnGUI(position, propertyInfo, label, includeChildren, visible);
+                drawers[i].AfterOnGUI(position, property, label, includeChildren, visible);
         }
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             IReadOnlyList<StackablePropertyDrawer> drawers = Drawers ??= GetDrawers();
 
-            SerializedPropertyInfo propertyInfo = new SerializedPropertyInfo(property, fieldInfo);
-
             bool includeChildren = true;
             bool visible = true;
             int count = drawers.Count;
             for (int i = 0; i < count; i++)
-                drawers[i].BeforeGetPropertyHeight(ref propertyInfo, ref label, ref includeChildren, ref visible);
+                drawers[i].BeforeGetPropertyHeight(ref property, ref label, ref includeChildren, ref visible);
 
             float height = 0;
             if (visible)
@@ -219,11 +215,11 @@ namespace Enderlook.Unity.Toolset.Drawers
                     height = EditorGUI.GetPropertyHeight(property, label, includeChildren);
 
                 for (int i = count - 1; i >= 0; i--)
-                    height = drawers[i].GetPropertyHeight(propertyInfo, label, includeChildren, height);
+                    height = drawers[i].GetPropertyHeight(property, label, includeChildren, height);
             }
 
             for (int i = count - 1; i >= 0; i--)
-                drawers[i].AfterGetPropertyHeight(propertyInfo, label, includeChildren, visible, height);
+                drawers[i].AfterGetPropertyHeight(property, label, includeChildren, visible, height);
 
             if (height == 0)
                 height = -EditorGUIUtility.standardVerticalSpacing;

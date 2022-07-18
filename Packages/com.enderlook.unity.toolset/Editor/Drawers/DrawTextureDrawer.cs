@@ -1,4 +1,7 @@
 ﻿using Enderlook.Unity.Toolset.Attributes;
+using Enderlook.Unity.Toolset.Utils;
+
+using System;
 
 using UnityEditor;
 
@@ -18,9 +21,8 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         protected internal override bool HasOnGUI => true;
 
-        protected internal override void OnGUI(Rect position, SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren)
+        protected internal override void OnGUI(Rect position, SerializedProperty property, GUIContent label, bool includeChildren)
         {
-            SerializedProperty property = propertyInfo.SerializedProperty;
             if (TryProduceTextureGUIContent(property, label))
             {
                 DrawTextureAttribute drawTextureAttribute = (DrawTextureAttribute)Attribute;
@@ -66,7 +68,7 @@ namespace Enderlook.Unity.Toolset.Drawers
             }
             else
             {
-                (string message, float height) = GetPropertyTypeErrorMessage(propertyInfo, position.width);
+                (string message, float height) = GetPropertyTypeErrorMessage(property, position.width);
                 if (!(message is null))
                 {
                     EditorGUI.PropertyField(new Rect(position.x, position.y, position.width, position.height - height), property, label, true);
@@ -136,12 +138,13 @@ namespace Enderlook.Unity.Toolset.Drawers
             return false;
         }
 
-        private (string message, float height) GetPropertyTypeErrorMessage(SerializedPropertyInfo propertyInfo, float width)
+        private (string message, float height) GetPropertyTypeErrorMessage(SerializedProperty property, float width)
         {
-            switch (propertyInfo.SerializedProperty.propertyType)
+            switch (property.propertyType)
             {
                 case SerializedPropertyType.ObjectReference:
-                    if (propertyInfo.MemberType != typeof(Sprite) && propertyInfo.MemberType != typeof(Texture2D))
+                    Type propertyType = property.GetPropertyType();
+                    if (propertyType != typeof(Sprite) && propertyType != typeof(Texture2D))
                         goto default;
                     break;
                 case SerializedPropertyType.String:
@@ -166,15 +169,15 @@ namespace Enderlook.Unity.Toolset.Drawers
             return height;
         }
 
-        protected internal override float GetPropertyHeight(SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren, float height)
+        protected internal override float GetPropertyHeight(SerializedProperty property, GUIContent label, bool includeChildren, float height)
         {
-            height = EditorGUI.GetPropertyHeight(propertyInfo.SerializedProperty, label);
-            return CalculateWithAditionalPropertyHeight(propertyInfo, height, EditorGUIUtility.currentViewWidth);
+            height = EditorGUI.GetPropertyHeight(property, label);
+            return CalculateWithAditionalPropertyHeight(property, height, EditorGUIUtility.currentViewWidth);
         }
 
-        private float CalculateWithAditionalPropertyHeight(SerializedPropertyInfo propertyInfo, float height, float width)
+        private float CalculateWithAditionalPropertyHeight(SerializedProperty property, float height, float width)
         {
-            if (TryGetTexture(propertyInfo.SerializedProperty, out _))
+            if (TryGetTexture(property, out _))
             {
                 DrawTextureAttribute drawTextureAttribute = (DrawTextureAttribute)Attribute;
                 if (!drawTextureAttribute.drawOnSameLine)
@@ -182,7 +185,7 @@ namespace Enderlook.Unity.Toolset.Drawers
             }
             else
             {
-                (string _, float height_) = GetPropertyTypeErrorMessage(propertyInfo, width);
+                (string _, float height_) = GetPropertyTypeErrorMessage(property, width);
                 height += height_;
             }
             return height;

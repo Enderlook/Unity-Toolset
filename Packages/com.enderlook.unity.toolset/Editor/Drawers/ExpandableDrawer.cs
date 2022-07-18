@@ -1,4 +1,5 @@
 ﻿using Enderlook.Unity.Toolset.Attributes;
+using Enderlook.Unity.Toolset.Utils;
 using Enderlook.Unity.Toolset.Windows;
 
 using System;
@@ -131,13 +132,12 @@ namespace Enderlook.Unity.Toolset.Drawers
         protected internal override bool HasOnGUI => true;
 
 #pragma warning disable CS0162
-        protected internal override void OnGUI(Rect position, SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren)
+        protected internal override void OnGUI(Rect position, SerializedProperty property, GUIContent label, bool includeChildren)
         {
-            SerializedProperty property = propertyInfo.SerializedProperty;
             Type type = property.serializedObject.targetObject.GetType();
             if (!type.IsSubclassOf(typeof(UnityEngine.Object)))
             {
-                Debug.LogError($"{nameof(ExpandableAttribute)} can only be used on types subclasses of {nameof(UnityEngine.Object)}. {property.name} from {propertyInfo.ParentTargetObject} (path {property.propertyPath}) is type {type}.");
+                Debug.LogError($"{nameof(ExpandableAttribute)} can only be used on types subclasses of {nameof(UnityEngine.Object)}. {property.name} from {property.GetParentTargetObject()} (path {property.propertyPath}) is type {type}.");
                 EditorGUI.PropertyField(position, property, GUIContent.none, true);
                 return;
             }
@@ -281,11 +281,10 @@ namespace Enderlook.Unity.Toolset.Drawers
                 targetObject.ApplyModifiedProperties();
         }
 
-        protected internal override float GetPropertyHeight(SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren, float height)
+        protected internal override float GetPropertyHeight(SerializedProperty property, GUIContent label, bool includeChildren, float height)
         {
             float totalHeight = EditorGUIUtility.singleLineHeight;
 
-            SerializedProperty property = propertyInfo.SerializedProperty;
             if (property.objectReferenceValue == null)
                 return totalHeight;
 

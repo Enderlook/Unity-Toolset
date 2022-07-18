@@ -15,26 +15,25 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         protected internal override bool HasOnGUI => true;
 
-        protected internal override void OnGUI(Rect position, SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren)
+        protected internal override void OnGUI(Rect position, SerializedProperty property, GUIContent label, bool includeChildren)
         {
             EditorGUI.BeginChangeCheck();
-            SerializedProperty serializedProperty = propertyInfo.SerializedProperty;
-            int layer = EditorGUI.LayerField(position, label, serializedProperty.intValue);
+            int layer = EditorGUI.LayerField(position, label, property.intValue);
             if (EditorGUI.EndChangeCheck())
             {
-                switch (serializedProperty.propertyType)
+                switch (property.propertyType)
                 {
                     case SerializedPropertyType.Integer:
-                        serializedProperty.intValue = layer;
+                        property.intValue = layer;
                         break;
                     case SerializedPropertyType.Float:
-                        serializedProperty.floatValue = layer;
+                        property.floatValue = layer;
                         break;
                     case SerializedPropertyType.LayerMask:
-                        serializedProperty.intValue = layer;
+                        property.intValue = layer;
                         break;
                     case SerializedPropertyType.String:
-                        serializedProperty.stringValue = LayerMask.LayerToName(layer);
+                        property.stringValue = LayerMask.LayerToName(layer);
                         break;
                     default:
                         throw new ArgumentException(ERROR_SERIALIZED_PROPERTY_TYPE);
@@ -42,7 +41,7 @@ namespace Enderlook.Unity.Toolset.Drawers
             }
         }
 
-        protected internal override float GetPropertyHeight(SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren, float height)
-            => EditorGUI.GetPropertyHeight(propertyInfo.SerializedProperty, label, includeChildren);
+        protected internal override float GetPropertyHeight(SerializedProperty property, GUIContent label, bool includeChildren, float height)
+            => EditorGUI.GetPropertyHeight(property, label, includeChildren);
     }
 }

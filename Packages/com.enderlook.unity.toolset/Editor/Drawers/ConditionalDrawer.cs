@@ -17,7 +17,7 @@ namespace Enderlook.Unity.Toolset.Drawers
     [CustomStackablePropertyDrawer(typeof(EnableIfAttribute))]
     internal sealed class ConditionalHelper : StackablePropertyDrawer
     {
-        private static readonly Dictionary<(Type type, FieldInfo fieldInfo), Func<object, bool>> members = new Dictionary<(Type type, FieldInfo fieldInfo), Func<object, bool>>();
+        private static readonly Dictionary<(Type type, MemberInfo memberInfo), Func<object, bool>> members = new Dictionary<(Type type, MemberInfo memberInfo), Func<object, bool>>();
         private static readonly MethodInfo debugLogErrorMethodInfo = typeof(Debug).GetMethod(nameof(Debug.LogError), new Type[] { typeof(object) });
         private static readonly MethodInfo isNullOrEmptyMethodInfo = typeof(string).GetMethod(nameof(string.IsNullOrEmpty), new Type[] { typeof(string) });
         private static readonly MethodInfo equalsMethodInfo = typeof(object).GetMethod("Equals", new Type[] { typeof(UnityEngine.Object) });
@@ -63,9 +63,9 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         private bool off;
 
-        protected internal override void BeforeOnGUI(ref Rect position, ref SerializedPropertyInfo propertyInfo, ref GUIContent label, ref bool includeChildren, ref bool visible)
+        protected internal override void BeforeOnGUI(ref Rect position, ref SerializedProperty property, ref GUIContent label, ref bool includeChildren, ref bool visible)
         {
-            if (visible && (off = !IsActive(propertyInfo)))
+            if (visible && (off = !IsActive(property)))
             {
                 if (Attribute is EnableIfAttribute)
                     EditorGUI.BeginDisabledGroup(true);
@@ -74,34 +74,34 @@ namespace Enderlook.Unity.Toolset.Drawers
             }
         }
 
-        protected internal override void AfterOnGUI(Rect position, SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren, bool visible)
+        protected internal override void AfterOnGUI(Rect position, SerializedProperty property, GUIContent label, bool includeChildren, bool visible)
         {
             if (off && Attribute is EnableIfAttribute)
                 EditorGUI.EndDisabledGroup();
         }
 
-        protected internal override void BeforeGetPropertyHeight(ref SerializedPropertyInfo propertyInfo, ref GUIContent label, ref bool includeChildren, ref bool visible)
+        protected internal override void BeforeGetPropertyHeight(ref SerializedProperty property, ref GUIContent label, ref bool includeChildren, ref bool visible)
         {
-            if (visible && (off = !IsActive(propertyInfo)) && Attribute is ShowIfAttribute)
+            if (visible && (off = !IsActive(property)) && Attribute is ShowIfAttribute)
                 visible = false;
         }
 
-        protected internal override float GetPropertyHeight(SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren, float height)
+        protected internal override float GetPropertyHeight(SerializedProperty property, GUIContent label, bool includeChildren, float height)
             => off && Attribute is ShowIfAttribute ? 0 : height;
 
-        private bool IsActive(SerializedPropertyInfo propertyInfo)
+        private bool IsActive(SerializedProperty property)
         {
-            FieldInfo fieldInfo = FieldInfo;
-            object parent = propertyInfo.ParentTargetObject;
+            MemberInfo memberInfo = property.GetMemberInfo();
+            object parent = property.GetParentTargetObject();
             Type originalType = parent.GetType();
 
-            if (members.TryGetValue((originalType, fieldInfo), out Func<object, bool> func))
+            if (members.TryGetValue((originalType, memberInfo), out Func<object, bool> func))
                 goto end;
 
             Expression convertedExpression = Expression.Convert(parameter, originalType);
-            Expression body = GetExpression(fieldInfo, (IConditionalAttribute)Attribute);
+            Expression body = GetExpression(memberInfo, (IConditionalAttribute)Attribute);
             func = Expression.Lambda<Func<object, bool>>(body, parameter).Compile();
-            members.Add((originalType, fieldInfo), func);
+            members.Add((originalType, memberInfo), func);
 
             end:
             return func(parent);

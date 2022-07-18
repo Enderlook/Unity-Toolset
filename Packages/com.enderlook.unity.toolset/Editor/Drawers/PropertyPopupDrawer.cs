@@ -39,25 +39,24 @@ namespace Enderlook.Unity.Toolset.Drawers
             return !(propertyPopup is null);
         }
 
-        protected internal override void OnGUI(Rect position, SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren)
+        protected internal override void OnGUI(Rect position, SerializedProperty property, GUIContent label, bool includeChildren)
         {
-            SerializedProperty property = propertyInfo.SerializedProperty;
-            if (!TryGetPropertyPopup(propertyInfo, out PropertyPopup propertyPopup))
+            if (!TryGetPropertyPopup(property, out PropertyPopup propertyPopup))
                 EditorGUI.PropertyField(position, property, label, true);
             else
                 propertyPopup.OnGUI(position, property, label);
         }
 
-        protected internal override float GetPropertyHeight(SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren, float height)
+        protected internal override float GetPropertyHeight(SerializedProperty property, GUIContent label, bool includeChildren, float height)
         {
-            if (!TryGetPropertyPopup(propertyInfo, out PropertyPopup propertyPopup))
+            if (!TryGetPropertyPopup(property, out PropertyPopup propertyPopup))
                 return height;
-            return propertyPopup.GetPropertyHeight(propertyInfo.SerializedProperty, label);
+            return propertyPopup.GetPropertyHeight(property, label);
         }
 
-        private static bool TryGetPropertyPopup(SerializedPropertyInfo propertyInfo, out PropertyPopup propertyPopup)
+        private static bool TryGetPropertyPopup(SerializedProperty property, out PropertyPopup propertyPopup)
         {
-            Type classType = propertyInfo.MemberType;
+            Type classType = property.GetPropertyType();
             if (!allowedTypes.TryGetValue(classType, out propertyPopup))
             {
                 PropertyPopupAttribute propertyPopupAttribute = classType.GetCustomAttribute<PropertyPopupAttribute>(true);
@@ -70,7 +69,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                 List<PropertyPopupOption> list = new List<PropertyPopupOption>();
                 foreach (FieldInfo fieldInfo in classType.GetFieldsExhaustive(ExhaustiveBindingFlags.Instance))
                     if (fieldInfo.GetCustomAttribute<PropertyPopupOptionAttribute>(true) is PropertyPopupOptionAttribute attribute)
-                        list.Add(new PropertyPopupOption(fieldInfo.Name, propertyInfo.SerializedProperty.FindPropertyRelative(fieldInfo.Name).GetDisplayName(), attribute));
+                        list.Add(new PropertyPopupOption(fieldInfo.Name, property.FindPropertyRelative(fieldInfo.Name).GetDisplayName(), attribute));
 
                 PropertyPopupOption[] modes = list.ToArray();
 

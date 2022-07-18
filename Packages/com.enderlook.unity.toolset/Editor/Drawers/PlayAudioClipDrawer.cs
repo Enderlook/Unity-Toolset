@@ -18,16 +18,15 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         protected internal override bool HasOnGUI => true;
 
-        protected internal override void OnGUI(Rect position, SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren)
+        protected internal override void OnGUI(Rect position, SerializedProperty property, GUIContent label, bool includeChildren)
         {
             PlayAudioClipAttribute attribute = (PlayAudioClipAttribute)Attribute;
 
-            SerializedProperty property = propertyInfo.SerializedProperty;
-            if (!IsFine(propertyInfo))
+            if (!IsFine(property))
             {
                 EditorGUI.PropertyField(position, property, label);
 
-                (float height, string message) = CalculateError(propertyInfo, position.width);
+                (float height, string message) = CalculateError(property, position.width);
 
                 EditorGUI.HelpBox(new Rect(position.x, position.y + position.height + SPACE_BETTWEN_FIELD_AND_ERROR, position.width, height), message, MessageType.Error);
                 Debug.LogError(message);
@@ -67,20 +66,20 @@ namespace Enderlook.Unity.Toolset.Drawers
             }
         }
 
-        protected internal override float GetPropertyHeight(SerializedPropertyInfo propertyInfo, GUIContent label, bool includeChildren, float height)
+        protected internal override float GetPropertyHeight(SerializedProperty property, GUIContent label, bool includeChildren, float height)
         {
-            height = EditorGUI.GetPropertyHeight(propertyInfo.SerializedProperty, label, includeChildren);
-            if (!IsFine(propertyInfo))
+            height = EditorGUI.GetPropertyHeight(property, label, includeChildren);
+            if (!IsFine(property))
             {
-                height += CalculateError(propertyInfo, EditorGUIUtility.currentViewWidth).height;
+                height += CalculateError(property, EditorGUIUtility.currentViewWidth).height;
                 height += SPACE_BETTWEN_FIELD_AND_ERROR;
             }
             return height;
         }
 
-        private (float height, string message) CalculateError(SerializedPropertyInfo propertyInfo, float width)
+        private (float height, string message) CalculateError(SerializedProperty property, float width)
         {
-            string message = $"Attribute {nameof(PlayAudioClipAttribute)} can only be used in field of type {typeof(AudioClip)} or {typeof(string)}. Was {propertyInfo.MemberType}.";
+            string message = $"Attribute {nameof(PlayAudioClipAttribute)} can only be used in properties of type {typeof(AudioClip)} or {typeof(string)}. Was {property.GetPropertyType()}.";
             if (errorContent is null)
                 errorContent = new GUIContent();
             errorContent.text = message;
@@ -88,15 +87,14 @@ namespace Enderlook.Unity.Toolset.Drawers
             return (height, message);
         }
 
-        private bool IsFine(SerializedPropertyInfo propertyInfo)
+        private bool IsFine(SerializedProperty property)
         {
-            SerializedProperty property = propertyInfo.SerializedProperty;
             switch (property.propertyType)
             {
                 case SerializedPropertyType.String:
                     return true;
                 case SerializedPropertyType.ObjectReference:
-                    return !(property.objectReferenceValue is AudioClip) || propertyInfo.MemberType == typeof(AudioClip);
+                    return !(property.objectReferenceValue is AudioClip) || property.GetPropertyType() == typeof(AudioClip);
             }
             return false;
         }
