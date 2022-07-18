@@ -225,13 +225,10 @@ namespace Enderlook.Unity.Toolset.Drawers
                     height = EditorGUI.GetPropertyHeight(property, label, includeChildren);
                 else
                     height = main.GetPropertyHeight(property, label, includeChildren);
-
-                for (int i = count - 1; i >= 0; i--)
-                    height = drawers[i].GetPropertyHeight(property, label, includeChildren, height);
             }
 
             for (int i = count - 1; i >= 0; i--)
-                drawers[i].AfterGetPropertyHeight(property, label, includeChildren, visible, height);
+                height = drawers[i].AfterGetPropertyHeight(property, label, includeChildren, height);
 
             if (height == 0)
                 height = -EditorGUIUtility.standardVerticalSpacing;

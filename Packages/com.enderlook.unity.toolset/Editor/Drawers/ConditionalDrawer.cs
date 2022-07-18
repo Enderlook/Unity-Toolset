@@ -86,7 +86,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                 visible = false;
         }
 
-        protected internal override float GetPropertyHeight(SerializedProperty property, GUIContent label, bool includeChildren, float height)
+        protected internal override float AfterGetPropertyHeight(SerializedProperty property, GUIContent label, bool includeChildren, float height)
             => off && Attribute is ShowIfAttribute ? 0 : height;
 
         private bool IsActive(SerializedProperty property)
