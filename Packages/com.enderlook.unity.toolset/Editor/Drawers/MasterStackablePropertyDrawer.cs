@@ -26,7 +26,7 @@ namespace Enderlook.Unity.Toolset.Drawers
         private static readonly Comparison<StackablePropertyDrawer> orderSelector = (a, b) => (a.Attribute?.order ?? 0).CompareTo(b.Attribute?.order ?? 0);
         private static Dictionary<Type, (Type Drawer, bool UseForChildren)> drawersMap;
 
-        private IReadOnlyList<StackablePropertyDrawer> Drawers;
+        private List<StackablePropertyDrawer> Drawers;
         private StackablePropertyDrawer main;
 
         [DidReloadScripts]
@@ -56,7 +56,7 @@ namespace Enderlook.Unity.Toolset.Drawers
             drawersMap = dictionary;
         }
 
-        private IReadOnlyList<StackablePropertyDrawer> GetDrawers()
+        private List<StackablePropertyDrawer> GetDrawers()
         {
             if (drawersMap is null)
                 Reset();
@@ -148,7 +148,7 @@ namespace Enderlook.Unity.Toolset.Drawers
             }
 
             list.Sort(orderSelector);
-            return list.ToArray();
+            return list;
 
             void WithAttribute(PropertyAttribute attribute, (Type Drawer, bool UseForChildren) tuple)
             {
@@ -188,7 +188,7 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            IReadOnlyList<StackablePropertyDrawer> drawers = Drawers ??= GetDrawers();
+            List<StackablePropertyDrawer> drawers = Drawers ??= GetDrawers();
 
             bool includeChildren = true;
             bool visible = true;
@@ -210,7 +210,7 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            IReadOnlyList<StackablePropertyDrawer> drawers = Drawers ??= GetDrawers();
+            List<StackablePropertyDrawer> drawers = Drawers??= GetDrawers();
 
             bool includeChildren = true;
             bool visible = true;
