@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 
 using UnityEditor;
@@ -28,11 +29,13 @@ namespace Enderlook.Unity.Toolset.Windows
         private static readonly List<string> POPUP_OPTIONS = new List<string>() { EDIT_POPUP, SELECT_POPUP, CREATE_POPUP };
         private static readonly List<HideFlags> HIDE_FLAGS = new List<HideFlags>((HideFlags[])Enum.GetValues(typeof(HideFlags)));
         private static readonly char[] SPLIT = new char[] { '/' };
+        private static readonly Comparison<Type> COMPARE_TYPES = (a, b) => a.FullName.CompareTo(b.FullName);
+        private static readonly ILookup<Type, Type> DERIVED_TYPES_EMPTY = Array.Empty<KeyValuePair<Type, Type>>().ToLookup();
+        private static readonly Func<VisualElement> CREATE_LABEL = () => new Label();
 
         // Pool values
-        private static readonly Stack<Type> tmpStack = new Stack<Type>();
-        private static readonly List<Type> tmpList = new List<Type>();
-        private static readonly Comparison<Type> compareTypes = (a, b) => a.FullName.CompareTo(b.FullName);
+        private static Stack<Type> tmpStack;
+        private static List<Type> tmpList;
 
         private static ILookup<Type, Type> derivedTypes;
 
@@ -40,7 +43,7 @@ namespace Enderlook.Unity.Toolset.Windows
         private RestrictTypeAttribute restrictTypeAttribute;
 
         private string propertyPath;
-        private List<Type> allowedTypesToInstantiate = new List<Type>();
+        private readonly List<Type> allowedTypesToInstantiate = new List<Type>();
 
         private List<UnityObject> elements = new List<UnityObject>();
         private UnityObject original;
@@ -70,6 +73,8 @@ namespace Enderlook.Unity.Toolset.Windows
 
         private static void InitializeDerivedTypes()
         {
+            derivedTypes = null;
+
             Type root = typeof(UnityObject);
 
             Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
@@ -135,7 +140,7 @@ namespace Enderlook.Unity.Toolset.Windows
             }
 
             if (sets.Length == 0)
-                derivedTypes = Array.Empty<KeyValuePair<Type, Type>>().ToLookup();
+                derivedTypes = DERIVED_TYPES_EMPTY;
             else
             {
                 HashSet<KeyValuePair<Type, Type>> keys = sets[0];
@@ -226,43 +231,49 @@ namespace Enderlook.Unity.Toolset.Windows
 
         private void SetAllowedTypesToInstantiate()
         {
-            Debug.Assert(tmpStack.Count == 0);
-            Debug.Assert(tmpList.Count == 0);
+            Stack<Type> stack = Interlocked.Exchange(ref tmpStack, null) ?? new Stack<Type>();
+            List<Type> list = Interlocked.Exchange(ref tmpList, null) ?? new List<Type>();
+            Debug.Assert(stack.Count == 0);
+            Debug.Assert(list.Count == 0);
             Debug.Assert(allowedTypesToInstantiate.Count == 0);
 
-            Type type = property.GetPropertyType();
+            Type propertyType = property.GetPropertyType();
 
-            foreach (Type t in derivedTypes[type])
-                    tmpStack.Push(t);
+            foreach (Type type in derivedTypes[propertyType])
+                stack.Push(type);
 
-            tmpList.Add(type);
-            tmpList.AddRange(tmpStack);
+            list.Add(propertyType);
+            list.AddRange(stack);
 
-            while (tmpStack.TryPop(out Type result))
+            while (stack.TryPop(out Type result))
             {
-                foreach (Type t in derivedTypes[result])
+                foreach (Type type in derivedTypes[result])
                 {
-                    tmpStack.Push(t);
-                    tmpList.Add(t);
+                    stack.Push(type);
+                    list.Add(type);
                 }
             }
 
             if (restrictTypeAttribute is null)
             {
-                foreach (Type t in tmpList)
-                    if (!t.IsAbstract)
-                        allowedTypesToInstantiate.Add(t);
+                foreach (Type type in list)
+                    if (!type.IsAbstract)
+                        allowedTypesToInstantiate.Add(type);
             }
             else
             {
-                foreach (Type t in tmpList)
-                    if (!t.IsAbstract && restrictTypeAttribute.CheckIfTypeIsAllowed(t))
-                        allowedTypesToInstantiate.Add(t);
+                foreach (Type type in list)
+                    if (!type.IsAbstract && restrictTypeAttribute.CheckIfTypeIsAllowed(type))
+                        allowedTypesToInstantiate.Add(type);
             }
 
-            tmpList.Clear();
+            Debug.Assert(stack.Count == 0);
+            list.Clear();
 
-            allowedTypesToInstantiate.Sort(compareTypes);
+            tmpStack = stack;
+            tmpList = list;
+
+            allowedTypesToInstantiate.Sort(COMPARE_TYPES);
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by Unity.")]
@@ -439,7 +450,7 @@ namespace Enderlook.Unity.Toolset.Windows
                     box.style.minHeight = 100;
                     box.style.flexGrow = 1;
 
-                    list = new ListView(allowedTypesToInstantiate, 20, () => new Label(), (e, i) => ((Label)e).text = allowedTypesToInstantiate[i].ToString());
+                    list = new ListView(allowedTypesToInstantiate, 20, CREATE_LABEL, (e, i) => ((Label)e).text = allowedTypesToInstantiate[i].ToString());
                     {
                         list.selectionType = SelectionType.Single;
                         list.style.flexGrow = 1;
@@ -530,7 +541,7 @@ namespace Enderlook.Unity.Toolset.Windows
                     box.style.minHeight = 100;
                     box.style.flexGrow = 1;
 
-                    list = new ListView(elements, 20, () => new Label(), (e, i) =>
+                    list = new ListView(elements, 20, CREATE_LABEL, (e, i) =>
                     {
                         UnityObject element = elements[i];
                         ((Label)e).text = element is null ? "<Null>" : element.ToString();

@@ -8,7 +8,7 @@ namespace Enderlook.Unity.Toolset.Windows
 {
     internal sealed partial class ObjectWindow
     {
-        private class Field : VisualElement
+        private sealed class Field : VisualElement
         {
             private readonly ObjectField objectField;
             private readonly TextField nameField;
