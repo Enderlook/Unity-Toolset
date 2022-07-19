@@ -270,6 +270,13 @@ namespace Enderlook.Unity.Toolset.Windows
         {
             rootVisualElement.schedule.Execute(() =>
             {
+                // Prevent error when inspector is closed but window is left open.
+                if (property is null)
+                {
+                    Close();
+                    return;
+                }
+
                 elements.Add(null);
                 UnityObject current = property.GetValue<UnityObject>();
                 if (current != null)
