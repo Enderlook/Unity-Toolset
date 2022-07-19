@@ -9,13 +9,43 @@ namespace Enderlook.Unity.Toolset.Utils
     /// <summary>
     /// A set of helper functions for <see cref="SerializedProperty"/>.
     /// </summary>
-    public static partial class SerializedPropertyExtensions
+    public static partial class SerializedPropertyHelper
     {
         // https://github.com/lordofduct/spacepuppy-unity-framework/blob/master/SpacepuppyBaseEditor/EditorHelper.cs
 
+        private static readonly Regex backingFieldRegex = new Regex("^<(.*)>k__BackingField", RegexOptions.Compiled);
         private static readonly Regex isArrayRegex = new Regex(@"Array.data\[\d+\]$", RegexOptions.Compiled);
         private static readonly string[] arrayDataSeparator = new string[] { ".Array.data[" };
         private static readonly char[] openBracketSeparator = new char[] { '[' }; // TODO: On .NET standard 2.1 use string.Split(char, StringSplitOptions) instead
+
+        /// <summary>
+        /// Get the name of the backing field of a property.
+        /// </summary>
+        /// <param name="source">Name of the property.</param>
+        /// <returns>Name of the backing field.</returns>
+        /// <exception cref="ArgumentNullException">Thrown if <paramref name="source"/> is <see langword="null"/>.</exception>
+        public static string GetBackingFieldName(string source)
+        {
+            if (source is null) Helper.ThrowArgumentNullException_Source();
+
+            return string.Concat("<", source, ">k__BackingField");
+        }
+
+        /// <summary>
+        /// Get the name of the property of a backing field.
+        /// </summary>
+        /// <param name="source">Name of the backing field.</param>
+        /// <returns>Name of the property field.</returns>
+        /// <exception cref="ArgumentNullException">Thrown if <paramref name="source"/> is <see langword="null"/>.</exception>
+        public static string GetPropertyNameOfPropertyWithBackingField(string source)
+        {
+            if (source is null) Helper.ThrowArgumentNullException_Source();
+
+            Match match = backingFieldRegex.Match(source);
+            if (match.Length == 0)
+                return source;
+            return match.Groups[1].Value;
+        }
 
         /// <summary>
         /// Check if <paramref name="source"/> is an element from an array or list.
@@ -103,7 +133,7 @@ namespace Enderlook.Unity.Toolset.Utils
             if (name == null) Helper.ThrowArgumentNullException_Name();
             if (name.Length == 0) Helper.ThrowArgumentException_NameCannotBeEmpty();
 
-            return source.FindPropertyRelative(ReflectionHelper.GetBackingFieldName(name));
+            return source.FindPropertyRelative(GetBackingFieldName(name));
         }
 
         /// <summary>
@@ -120,7 +150,7 @@ namespace Enderlook.Unity.Toolset.Utils
 
             SerializedProperty serializedProperty = source.FindPropertyRelative(name);
             if (serializedProperty == null)
-                serializedProperty = source.FindPropertyRelative(ReflectionHelper.GetBackingFieldName(name));
+                serializedProperty = source.FindPropertyRelative(GetBackingFieldName(name));
             return serializedProperty;
         }
     }

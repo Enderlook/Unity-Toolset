@@ -14,7 +14,7 @@ using UnityObject = UnityEngine.Object;
 
 namespace Enderlook.Unity.Toolset.Utils
 {
-    public static partial class SerializedPropertyExtensions
+    public static partial class SerializedPropertyHelper
     {
         private const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 

@@ -19,7 +19,7 @@ namespace Enderlook.Unity.Toolset.Utils
             if (name is null) Helper.ThrowArgumentNullException_Name();
             if (name.Length == 0) Helper.ThrowArgumentException_NameCannotBeEmpty();
 
-            return source.FindProperty(ReflectionHelper.GetPropertyNameOfPropertyWithBackingField(name));
+            return source.FindProperty(SerializedPropertyHelper.GetPropertyNameOfPropertyWithBackingField(name));
         }
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace Enderlook.Unity.Toolset.Utils
 
             SerializedProperty serializedProperty = source.FindProperty(name);
             if (serializedProperty is null)
-                serializedProperty = source.FindProperty(ReflectionHelper.GetBackingFieldName(name));
+                serializedProperty = source.FindProperty(SerializedPropertyHelper.GetBackingFieldName(name));
             return serializedProperty;
         }
     }

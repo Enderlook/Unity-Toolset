@@ -17,7 +17,6 @@ namespace Enderlook.Unity.Toolset.Utils
     /// </summary>
     public static class ReflectionHelper
     {
-        private static readonly Regex backingFieldRegex = new Regex("^<(.*)>k__BackingField", RegexOptions.Compiled);
         private static readonly Dictionary<Type, Array> zeroArray = new Dictionary<Type, Array>();
 
         private static readonly Type[] unityDefaultNonPrimitiveSerializables = new Type[]
@@ -115,35 +114,6 @@ namespace Enderlook.Unity.Toolset.Utils
                 }
                 return array;
             }
-        }
-
-        /// <summary>
-        /// Get the name of the backing field of a property.
-        /// </summary>
-        /// <param name="source">Name of the property.</param>
-        /// <returns>Name of the backing field.</returns>
-        /// <exception cref="ArgumentNullException">Thrown if <paramref name="source"/> is <see langword="null"/>.</exception>
-        public static string GetBackingFieldName(string source)
-        {
-            if (source is null) Helper.ThrowArgumentNullException_Source();
-
-            return string.Concat("<", source, ">k__BackingField");
-        }
-
-        /// <summary>
-        /// Get the name of the property of a backing field.
-        /// </summary>
-        /// <param name="source">Name of the backing field.</param>
-        /// <returns>Name of the property field.</returns>
-        /// <exception cref="ArgumentNullException">Thrown if <paramref name="source"/> is <see langword="null"/>.</exception>
-        public static string GetPropertyNameOfPropertyWithBackingField(string source)
-        {
-            if (source is null) Helper.ThrowArgumentNullException_Source();
-
-            Match match = backingFieldRegex.Match(source);
-            if (match.Length == 0)
-                return source;
-            return match.Groups[1].Value;
         }
 
         /// <summary>
