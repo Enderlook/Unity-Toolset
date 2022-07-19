@@ -135,7 +135,7 @@ namespace Enderlook.Unity.Toolset.Windows
                     }
 
                     foreach (Exception exception in exceptions_)
-                        Debug.LogWarning($"{assembly.FullName}: {exception.Message}.");
+                        Debug.LogError($"{assembly.FullName}: {exception.Message}.");
                 }
             }
 
