@@ -16,12 +16,12 @@ namespace Enderlook.Unity.Toolset.Drawers
     {
         private const string MENU_NAME = "Enderlook/Toolset/Enable Draw Vector Relative To Tranform";
 
-        private static readonly Handles.CapFunction handleCap = Handles.SphereHandleCap;
+        private static readonly Handles.CapFunction HANDLE_CAP = Handles.SphereHandleCap;
 
-        private static readonly string vectorTypes = $"{nameof(Vector3)}, {nameof(Vector3Int)}, {nameof(Vector2)}, {nameof(Vector2Int)}, {nameof(Vector4)}";
+        private static readonly string VECTOR_TYPES = $"{nameof(Vector3)}, {nameof(Vector3Int)}, {nameof(Vector2)}, {nameof(Vector2Int)}, {nameof(Vector4)}";
 
-        private static readonly char[] splitByBracket = new char[] { '[' };
-        private static readonly char[] splitByDot = new char[] { '.' };
+        private static readonly char[] SPLIT_BY_BRACKET = new char[] { '[' };
+        private static readonly char[] SPLIT_BY_DOT = new char[] { '.' };
 
         private static readonly GUIContent CLOSE_BUTTON = new GUIContent("Close", "Closes this panel.");
         private static readonly GUIContent OBJECT_CONTENT = new GUIContent("Object", "From which object this property cames.");
@@ -65,14 +65,14 @@ namespace Enderlook.Unity.Toolset.Drawers
 
             return usePositionHandle
                 ? Handles.PositionHandle(position, Quaternion.identity)
-                : Handles.FreeMoveHandle(position, Quaternion.identity, GetSize(position), Vector2.one, handleCap);
+                : Handles.FreeMoveHandle(position, Quaternion.identity, GetSize(position), Vector2.one, HANDLE_CAP);
         }
 
         private const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
 
         private static Vector3 GetPositionByTransform(SerializedObject serializedObject) => ((Component)serializedObject.targetObject).transform.position;
 
-        private static void DisplayErrorReference(string name) => throw new Exception($"The serialized property reference {name} isn't neither {vectorTypes} nor {nameof(Transform)}.");
+        private static void DisplayErrorReference(string name) => throw new Exception($"The serialized property reference {name} isn't neither {VECTOR_TYPES} nor {nameof(Transform)}.");
 
         private static Vector3 GetVector3ValueOf(SerializedProperty serializedProperty)
         {
@@ -233,7 +233,7 @@ namespace Enderlook.Unity.Toolset.Drawers
 
             float size = GetSize(position);
 
-            if (Handles.Button(position, Quaternion.identity, size, size, handleCap))
+            if (Handles.Button(position, Quaternion.identity, size, size, HANDLE_CAP))
                 selected = (serializedProperty.Copy(), position, drawVectorRelativeToTransform, memberInfo);
         }
 
@@ -293,10 +293,10 @@ namespace Enderlook.Unity.Toolset.Drawers
 
                     if (selected.serializedProperty.propertyPath.EndsWith("]"))
                     {
-                        string[] parts = selected.serializedProperty.propertyPath.Replace(".Array.data", "").Split(splitByBracket);
+                        string[] parts = selected.serializedProperty.propertyPath.Replace(".Array.data", "").Split(SPLIT_BY_BRACKET);
                         string rawNumber = parts[parts.Length - 1];
                         string number = rawNumber.Substring(0, rawNumber.Length - 1);
-                        string[] prefixes = parts[parts.Length - 2].Split(splitByDot);
+                        string[] prefixes = parts[parts.Length - 2].Split(SPLIT_BY_DOT);
                         string prefix = prefixes[prefixes.Length - 1];
                         PROPERTY_NAME_LABEL.text = $"{ObjectNames.NicifyVariableName(prefix)}[{number}]"; 
                     }

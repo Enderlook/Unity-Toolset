@@ -13,10 +13,10 @@ namespace Enderlook.Unity.Toolset.Utils
     {
         // https://github.com/lordofduct/spacepuppy-unity-framework/blob/master/SpacepuppyBaseEditor/EditorHelper.cs
 
-        private static readonly Regex backingFieldRegex = new Regex("^<(.*)>k__BackingField", RegexOptions.Compiled);
-        private static readonly Regex isArrayRegex = new Regex(@"Array.data\[\d+\]$", RegexOptions.Compiled);
-        private static readonly string[] arrayDataSeparator = new string[] { ".Array.data[" };
-        private static readonly char[] openBracketSeparator = new char[] { '[' }; // TODO: On .NET standard 2.1 use string.Split(char, StringSplitOptions) instead
+        private static readonly Regex BACKING_FIELD_REGEX = new Regex("^<(.*)>k__BackingField", RegexOptions.Compiled);
+        private static readonly Regex IS_ARRAY_REGEX = new Regex(@"Array.data\[\d+\]$", RegexOptions.Compiled);
+        private static readonly string[] ARRAY_DATA_SEPARATOR = new string[] { ".Array.data[" };
+        private static readonly char[] OPEN_BRACKET_SEPARATOR = new char[] { '[' }; // TODO: On .NET standard 2.1 use string.Split(char, StringSplitOptions) instead
 
         /// <summary>
         /// Get the name of the backing field of a property.
@@ -41,7 +41,7 @@ namespace Enderlook.Unity.Toolset.Utils
         {
             if (source is null) Helper.ThrowArgumentNullException_Source();
 
-            Match match = backingFieldRegex.Match(source);
+            Match match = BACKING_FIELD_REGEX.Match(source);
             if (match.Length == 0)
                 return source;
             return match.Groups[1].Value;
@@ -57,7 +57,7 @@ namespace Enderlook.Unity.Toolset.Utils
         {
             if (source is null) Helper.ThrowArgumentNullException_Source();
 
-            return isArrayRegex.IsMatch(source.propertyPath);
+            return IS_ARRAY_REGEX.IsMatch(source.propertyPath);
         }
 
         /// <summary>
@@ -75,7 +75,7 @@ namespace Enderlook.Unity.Toolset.Utils
                 path = source.propertyPath.Substring(0, source.propertyPath.Length - ".Array.size".Length);
             else if (source.IsArrayOrListElement())
             {
-                string[] tmp = source.propertyPath.Split(arrayDataSeparator, StringSplitOptions.None);
+                string[] tmp = source.propertyPath.Split(ARRAY_DATA_SEPARATOR, StringSplitOptions.None);
                 path = tmp[tmp.Length - 2];
             }
             else
@@ -109,7 +109,7 @@ namespace Enderlook.Unity.Toolset.Utils
         {
             if (source == null) Helper.ThrowArgumentNullException_Source();
 
-            string part = source.propertyPath.Split(Helper.DOT_SEPARATOR).Last().Split(openBracketSeparator).LastOrDefault();
+            string part = source.propertyPath.Split(Helper.DOT_SEPARATOR).Last().Split(OPEN_BRACKET_SEPARATOR).LastOrDefault();
             if (part == default)
             {
                 Throw();

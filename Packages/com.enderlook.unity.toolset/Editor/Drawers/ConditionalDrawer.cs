@@ -17,17 +17,15 @@ namespace Enderlook.Unity.Toolset.Drawers
     [CustomStackablePropertyDrawer(typeof(EnableIfAttribute))]
     internal sealed class ConditionalHelper : StackablePropertyDrawer
     {
-        private static readonly Dictionary<(Type type, MemberInfo memberInfo), Func<object, bool>> members = new Dictionary<(Type type, MemberInfo memberInfo), Func<object, bool>>();
-        private static readonly MethodInfo debugLogErrorMethodInfo = typeof(Debug).GetMethod(nameof(Debug.LogError), new Type[] { typeof(object) });
-        private static readonly MethodInfo isNullOrEmptyMethodInfo = typeof(string).GetMethod(nameof(string.IsNullOrEmpty), new Type[] { typeof(string) });
-        private static readonly MethodInfo equalsMethodInfo = typeof(object).GetMethod("Equals", new Type[] { typeof(UnityEngine.Object) });
-        private static readonly PropertyInfo arrayLength = typeof(Array).GetProperty(nameof(Array.Length));
-        private static readonly ParameterExpression parameter = Expression.Parameter(typeof(object));
-        private static readonly Expression trueConstant = Expression.Constant(true);
-        private static readonly Expression nullConstant = Expression.Constant(null);
-        private static readonly Type[] type1 = new Type[1];
-        private static readonly object zero = 0;
-        private static readonly Type[][] conversions = new Type[][]
+        private static readonly MethodInfo DEBUG_LOG_ERROR_METHOD_INFO = typeof(Debug).GetMethod(nameof(Debug.LogError), new Type[] { typeof(object) });
+        private static readonly MethodInfo STRING_IS_NULL_OR_EMPTY_METHOD_INFO = typeof(string).GetMethod(nameof(string.IsNullOrEmpty), new Type[] { typeof(string) });
+        private static readonly MethodInfo OBJECT_EQUALS_METHOD_INFO = typeof(object).GetMethod("Equals", new Type[] { typeof(UnityEngine.Object) });
+        private static readonly PropertyInfo ARRAY_LENGTH_PROPERTY_INFO = typeof(Array).GetProperty(nameof(Array.Length));
+        private static readonly ParameterExpression OBJECT_PARAMETER = Expression.Parameter(typeof(object));
+        private static readonly Expression TRUE_CONSTANT = Expression.Constant(true);
+        private static readonly Expression NULL_CONSTANT = Expression.Constant(null);
+        private static readonly object Zero = 0;
+        private static readonly Type[][] CONVERSIONS = new Type[][]
         { // The first element of each array is the key.
             new Type[] { typeof(sbyte),     typeof(short), typeof(int), typeof(long), typeof(float), typeof(double), typeof(decimal) },
             new Type[] { typeof(byte),      typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong), typeof(float), typeof(double), typeof(decimal)},
@@ -39,7 +37,7 @@ namespace Enderlook.Unity.Toolset.Drawers
             new Type[] { typeof(ulong),     typeof(float), typeof(double), typeof(decimal) },
             new Type[] { typeof(float),     typeof(double) },
         };
-        private static readonly (Type key, Expression value)[] numericTypes = new (Type key, Expression value)[]
+        private static readonly (Type key, Expression value)[] NUMERIC_TYPES = new (Type key, Expression value)[]
         {
             (typeof(sbyte), Expression.Constant((sbyte)0)),
             (typeof(byte), Expression.Constant((byte)0)),
@@ -53,10 +51,13 @@ namespace Enderlook.Unity.Toolset.Drawers
             (typeof(double), Expression.Constant((double)0)),
             (typeof(decimal), Expression.Constant((decimal)0)),
         };
-        private static readonly string[] tryNumericNames = new string[] { "Length", "Count", "GetCount", "GetLength" };
-        private static readonly (string key, bool value)[] tryBooleanNames = new (string key, bool value)[] {
+        private static readonly string[] TRY_NUMERIC_NAMES = new string[] { "Length", "Count", "GetCount", "GetLength" };
+        private static readonly (string key, bool value)[] TRY_BOOLEAN_NAMES = new (string key, bool value)[] {
             ("HasValue", true), ("HasAny", true), ("IsDefault", false), ("IsDefaultOrEmpty", false), ("IsEmpty", false)
         };
+
+        private static readonly Type[] type1 = new Type[1];
+        private static readonly Dictionary<(Type type, MemberInfo memberInfo), Func<object, bool>> members = new Dictionary<(Type type, MemberInfo memberInfo), Func<object, bool>>();
 
         [DidReloadScripts]
         private static void Reset() => members.Clear();
@@ -98,9 +99,9 @@ namespace Enderlook.Unity.Toolset.Drawers
             if (members.TryGetValue((originalType, memberInfo), out Func<object, bool> func))
                 goto end;
 
-            Expression convertedExpression = Expression.Convert(parameter, originalType);
+            Expression convertedExpression = Expression.Convert(OBJECT_PARAMETER, originalType);
             Expression body = GetExpression(memberInfo, (IConditionalAttribute)Attribute);
-            func = Expression.Lambda<Func<object, bool>>(body, parameter).Compile();
+            func = Expression.Lambda<Func<object, bool>>(body, OBJECT_PARAMETER).Compile();
             members.Add((originalType, memberInfo), func);
 
             end:
@@ -123,7 +124,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                             return first.expression;
 
                         Expression result = null;
-                        foreach ((string key, bool value) in tryBooleanNames)
+                        foreach ((string key, bool value) in TRY_BOOLEAN_NAMES)
                         {
                             (Expression subExpression, Type subType, _) = GetValue(first.type, first.expression, key);
                             if (subType == typeof(bool))
@@ -133,16 +134,16 @@ namespace Enderlook.Unity.Toolset.Drawers
                             }
                         }
 
-                        foreach (string name in tryNumericNames)
+                        foreach (string name in TRY_NUMERIC_NAMES)
                         {
                             (Expression subExpression, Type subType, _) = GetValue(first.type, first.expression, name);
                             if (subType is null)
                                 continue;
-                            for (int i = 0; i < numericTypes.Length; i++)
+                            for (int i = 0; i < NUMERIC_TYPES.Length; i++)
                             {
-                                if (numericTypes[i].key == subType)
+                                if (NUMERIC_TYPES[i].key == subType)
                                 {
-                                    result = Expression.GreaterThan(subExpression, numericTypes[i].value);
+                                    result = Expression.GreaterThan(subExpression, NUMERIC_TYPES[i].value);
                                     goto next;
                                 }
                             }
@@ -162,9 +163,9 @@ namespace Enderlook.Unity.Toolset.Drawers
                         next:
                         if (!first.type.IsValueType)
                         {
-                            Expression notNull = Expression.NotEqual(first.expression, nullConstant);
+                            Expression notNull = Expression.NotEqual(first.expression, NULL_CONSTANT);
                             if (typeof(UnityEngine.Object).IsAssignableFrom(first.type))
-                                notNull = Expression.AndAlso(notNull, Expression.Not(Expression.Call(first.expression, equalsMethodInfo, nullConstant)));
+                                notNull = Expression.AndAlso(notNull, Expression.Not(Expression.Call(first.expression, OBJECT_EQUALS_METHOD_INFO, NULL_CONSTANT)));
                             if (result is null)
                                 return notNull;
                             return Expression.And(notNull, result);
@@ -236,14 +237,14 @@ namespace Enderlook.Unity.Toolset.Drawers
             }
 
             Expression DebugLogError(string message) => Expression.Block(
-                Expression.Call(null, debugLogErrorMethodInfo, Expression.Constant(message)),
-                trueConstant);
+                Expression.Call(null, DEBUG_LOG_ERROR_METHOD_INFO, Expression.Constant(message)),
+                TRUE_CONSTANT);
 
             Expression Compare((Expression expression, Type type, FieldInfo field) first, (Expression expression, Type type, FieldInfo field) second, ComparisonMode mode)
             {
                 if (first.type != second.type && first.type.IsValueType && second.type.IsValueType)
                 {
-                    foreach (Type[] types in conversions)
+                    foreach (Type[] types in CONVERSIONS)
                     {
                         if (Check(ref first, second, types))
                             break;
@@ -292,7 +293,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                                             Expression.Convert(second.expression, enumType)),
                                         first.type),
                                     enumType),
-                                Expression.Constant(zero, enumType));
+                                Expression.Constant(Zero, enumType));
                             break;
                         }
                         case ComparisonMode.NotFlag:
@@ -306,7 +307,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                                             Expression.Convert(second.expression, enumType)),
                                         first.type),
                                     enumType),
-                                Expression.Constant(zero, enumType));
+                                Expression.Constant(Zero, enumType));
                             break;
                         }
                         default:

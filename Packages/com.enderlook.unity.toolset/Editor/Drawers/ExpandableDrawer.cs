@@ -124,7 +124,7 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         private static readonly GUIContent OPEN_IN_NEW_WINDOW_BUTTON = new GUIContent("Open in Window", "Open a window to edit this content.");
 
-        private static readonly GUIStyle inlineButtonStyle = new GUIStyle(GUI.skin.GetStyle("PaneOptions"))
+        private static readonly GUIStyle INLINE_BUTTON_STYLE = new GUIStyle(GUI.skin.GetStyle("PaneOptions"))
         {
             imagePosition = ImagePosition.ImageOnly
         };
@@ -153,14 +153,14 @@ namespace Enderlook.Unity.Toolset.Drawers
                 // Calculate rect for button
                 Rect buttonRect = new Rect(
                     newPosition.x,
-                    newPosition.y + inlineButtonStyle.margin.top,
-                    inlineButtonStyle.fixedWidth + inlineButtonStyle.margin.right - (EditorGUI.indentLevel * inlineButtonStyle.fixedWidth),
-                    newPosition.height - inlineButtonStyle.margin.top
+                    newPosition.y + INLINE_BUTTON_STYLE.margin.top,
+                    INLINE_BUTTON_STYLE.fixedWidth + INLINE_BUTTON_STYLE.margin.right - (EditorGUI.indentLevel * INLINE_BUTTON_STYLE.fixedWidth),
+                    newPosition.height - INLINE_BUTTON_STYLE.margin.top
                 );
 
                 // Add button
                 GUI.enabled = property.objectReferenceValue != null;
-                if (GUI.Button(buttonRect, GUIContent.none, inlineButtonStyle))
+                if (GUI.Button(buttonRect, GUIContent.none, INLINE_BUTTON_STYLE))
                     ExpandableWindow.CreateWindow(property);
                 GUI.enabled = true;
 

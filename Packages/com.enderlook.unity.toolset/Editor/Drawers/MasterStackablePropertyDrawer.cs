@@ -23,7 +23,7 @@ namespace Enderlook.Unity.Toolset.Drawers
     {
         // Inspired in https://github.com/j1930021/Stackable-Decorator.
 
-        private static readonly Comparison<StackablePropertyDrawer> orderSelector = (a, b) => (a.Attribute?.order ?? 0).CompareTo(b.Attribute?.order ?? 0);
+        private static readonly Comparison<StackablePropertyDrawer> ORDER_SELECTOR = (a, b) => (a.Attribute?.order ?? 0).CompareTo(b.Attribute?.order ?? 0);
         private static Dictionary<Type, (Type Drawer, bool UseForChildren)> drawersMap;
 
         private List<StackablePropertyDrawer> Drawers;
@@ -147,7 +147,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                 }
             }
 
-            list.Sort(orderSelector);
+            list.Sort(ORDER_SELECTOR);
             return list;
 
             void WithAttribute(PropertyAttribute attribute, (Type Drawer, bool UseForChildren) tuple)

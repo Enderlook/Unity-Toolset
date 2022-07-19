@@ -18,7 +18,7 @@ namespace Enderlook.Unity.Toolset.Utils
     {
         private static readonly Dictionary<Type, Array> zeroArray = new Dictionary<Type, Array>();
 
-        private static readonly Type[] unityDefaultNonPrimitiveSerializables = new Type[]
+        private static readonly Type[] UNITY_DEFAULT_NON_PRIMITIVE_TYPES = new Type[]
         {
             typeof(Vector2), typeof(Vector3), typeof(Vector4),
             typeof(Rect), typeof(Quaternion), typeof(Matrix4x4),
@@ -26,7 +26,7 @@ namespace Enderlook.Unity.Toolset.Utils
             typeof(AnimationCurve), typeof(Gradient), typeof(RectOffset), typeof(GUIStyle)
         };
 
-        private static readonly Type[] validEnumTypes = new Type[]
+        private static readonly Type[] VALID_ENUM_TYPES = new Type[]
         {
             // Can't be larger than 32-bits.
             typeof(byte), typeof(sbyte),
@@ -58,11 +58,11 @@ namespace Enderlook.Unity.Toolset.Utils
             if (type.IsSubclassOf(typeof(UnityObject)))
                 return true;
 
-            if (type.IsPrimitive || type.IsValueType || unityDefaultNonPrimitiveSerializables.Contains(type))
+            if (type.IsPrimitive || type.IsValueType || UNITY_DEFAULT_NON_PRIMITIVE_TYPES.Contains(type))
                 return true;
 
             if (type.IsEnum)
-                return validEnumTypes.Contains(Enum.GetUnderlyingType(type));
+                return VALID_ENUM_TYPES.Contains(Enum.GetUnderlyingType(type));
 
             if (type.IsDefined(typeof(SerializableAttribute)) || type.IsDefined(typeof(SerializeReference)))
                 return true;
