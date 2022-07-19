@@ -88,10 +88,12 @@ namespace Enderlook.Unity.Toolset.Utils
             else
             {
                 EditorGUI.EndDisabledGroup();
-                throw new InvalidCastException($"Only support {typeof(MonoBehaviour)} or {typeof(ScriptableObject)}");
+                Throw();
             }
             EditorGUILayout.ObjectField("Script", script, typeof(MonoScript), false);
             EditorGUI.EndDisabledGroup();
+
+            void Throw() => throw new InvalidCastException($"Only support {typeof(MonoBehaviour)} or {typeof(ScriptableObject)}");
         }
     }
 }
