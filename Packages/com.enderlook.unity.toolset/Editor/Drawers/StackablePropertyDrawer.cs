@@ -3,6 +3,7 @@
 using UnityEditor;
 
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Enderlook.Unity.Toolset.Drawers
 {
@@ -21,6 +22,11 @@ namespace Enderlook.Unity.Toolset.Drawers
         protected internal virtual bool RequestMain => false;
 
         /// <summary>
+        /// Determines if this drawer supports the usage of UI Toolkit.
+        /// </summary>
+        protected internal virtual bool SupportUIToolkit => false;
+
+        /// <summary>
         /// The <see cref="PropertyAttribute"/> for the property or run-time <see cref="System.SerializableAttribute"/> class (if it was decorated with such attribute).
         /// </summary>
         protected internal PropertyAttribute Attribute { get; internal set; }
@@ -36,6 +42,14 @@ namespace Enderlook.Unity.Toolset.Drawers
         /// </summary>
         /// <param name="isMain">If <see langword="true"/>, this drawer was choosen as the main one.</param>
         protected internal virtual void IsMain(bool isMain) { }
+
+        protected internal virtual void BeforeCreatePropertyGUI(ref SerializedProperty property, ref string label, ref string tooltip) { }
+
+        protected internal virtual VisualElement CreatePropertyGUI(SerializedProperty property, string label, string tooltip) => null;
+
+        protected internal virtual VisualElement CreatingPropertyGUI(SerializedProperty property, VisualElement element) => element;
+
+        protected internal virtual VisualElement AfterCreatePropertyGUI(SerializedProperty property, VisualElement element) => element;
 
         protected internal virtual void BeforeOnGUI(ref Rect position, ref SerializedProperty property, ref GUIContent label, ref bool includeChildren, ref bool visible) { }
 

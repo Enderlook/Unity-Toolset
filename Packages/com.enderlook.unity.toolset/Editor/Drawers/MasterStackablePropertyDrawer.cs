@@ -9,8 +9,10 @@ using System.Threading;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEditor.Compilation;
+using UnityEditor.UIElements;
 
 using UnityEngine;
+using UnityEngine.UIElements;
 
 using SystemAssembly = System.Reflection.Assembly;
 using UnityAssembly = UnityEditor.Compilation.Assembly;
@@ -28,6 +30,7 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         private List<StackablePropertyDrawer> Drawers;
         private StackablePropertyDrawer main;
+        private bool useUIElements = true;
 
         [DidReloadScripts]
         private static void Reset()
@@ -165,6 +168,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                     else
                         drawer.IsMain(false);
                 }
+                useUIElements &= drawer.SupportUIToolkit;
                 list.Add(drawer);
             }
 
@@ -182,8 +186,40 @@ namespace Enderlook.Unity.Toolset.Drawers
                     else
                         drawer.IsMain(false);
                 }
+                useUIElements &= drawer.SupportUIToolkit;
                 list.Add(drawer);
             }
+        }
+
+        public override VisualElement CreatePropertyGUI(SerializedProperty property)
+        {
+            if (!useUIElements)
+                return base.CreatePropertyGUI(property);
+
+            List<StackablePropertyDrawer> drawers = Drawers ??= GetDrawers();
+
+            string label = property.displayName;
+            string tooltip = property.tooltip;
+            int count = drawers.Count;
+            for (int i = 0; i < count; i++)
+                drawers[i].BeforeCreatePropertyGUI(ref property, ref label, ref tooltip);
+
+            VisualElement visualElement;
+            if (main is null)
+            {
+                visualElement = new PropertyField(property, label);
+                visualElement.tooltip = tooltip;
+            }
+            else
+                visualElement = main.CreatePropertyGUI(property, label, tooltip);
+
+            for (int i = 0; i < count; i++)
+                visualElement = drawers[i].CreatingPropertyGUI(property, visualElement);
+
+            for (int i = count - 1; i >= 0; i--)
+                visualElement = drawers[i].AfterCreatePropertyGUI(property, visualElement);
+
+            return visualElement;
         }
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
@@ -238,6 +274,10 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         public override bool CanCacheInspectorGUI(SerializedProperty property)
         {
+#if !UNITY_2021_1_OR_NEWER
+            // https://issuetracker.unity3d.com/issues/stackoverflowexception-when-using-uielements-default-inspector-and-nested-uitoolkit-propertyfield-in-propertydrawer
+            return false;
+#endif
             List<StackablePropertyDrawer> drawers = Drawers ??= GetDrawers();
             foreach (StackablePropertyDrawer drawer in drawers)
                 if (!drawer.CanCacheInspectorGUI(property))

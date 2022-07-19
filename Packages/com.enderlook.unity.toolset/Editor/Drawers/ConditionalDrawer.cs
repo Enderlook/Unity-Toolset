@@ -10,6 +10,7 @@ using UnityEditor;
 using UnityEditor.Callbacks;
 
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Enderlook.Unity.Toolset.Drawers
 {
@@ -62,6 +63,18 @@ namespace Enderlook.Unity.Toolset.Drawers
         private static void Reset() => members.Clear();
 
         private bool off;
+
+        protected internal override VisualElement CreatingPropertyGUI(SerializedProperty property, VisualElement element)
+        {
+            if (off = !IsActive(property))
+            {
+                if (Attribute is EnableIfAttribute)
+                    element.SetEnabled(false);
+                else
+                    element.visible = false;
+            }
+            return element;
+        }
 
         protected internal override void BeforeOnGUI(ref Rect position, ref SerializedProperty property, ref GUIContent label, ref bool includeChildren, ref bool visible)
         {

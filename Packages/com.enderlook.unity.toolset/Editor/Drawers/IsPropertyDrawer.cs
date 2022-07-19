@@ -13,6 +13,15 @@ namespace Enderlook.Unity.Toolset.Drawers
     {
         private static readonly Regex backingFieldRegex = new Regex("^<(.*)>K__Backing Field", RegexOptions.Compiled);
 
+        protected internal override bool SupportUIToolkit => true;
+
+        protected internal override void BeforeCreatePropertyGUI(ref SerializedProperty property, ref string label, ref string tooltip)
+        {
+            Match match = backingFieldRegex.Match(label);
+            if (match.Length > 1)
+                label = match.Groups[1].Value;
+        }
+
         protected internal override void BeforeGetPropertyHeight(ref SerializedProperty property, ref GUIContent label, ref bool includeChildren, ref bool visible)
         {
             Match match = backingFieldRegex.Match(label.text);

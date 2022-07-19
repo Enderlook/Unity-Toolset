@@ -113,5 +113,18 @@ namespace Enderlook.Unity.Toolset
             }
             return property.tooltip;
         }
+
+        internal static void TryReplaceDisplayNameAndTooltip(SerializedProperty property, LabelAttribute attribute, ref string label, ref string tooltip)
+        {
+            GUIContent content = Interlocked.Exchange(ref staticContent, null) ?? new GUIContent();
+            content.text = label;
+            content.tooltip = tooltip;
+            UseGUIContent(attribute, property, ref content);
+            label = content.text;
+            tooltip = content.tooltip;
+            content.text = null;
+            content.tooltip = null;
+            staticContent = content;
+        }
     }
 }
