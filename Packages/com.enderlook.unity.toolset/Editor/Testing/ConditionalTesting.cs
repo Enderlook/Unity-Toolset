@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Testing
 {
-    internal static class ConditionalfIfTesting
+    internal static class ConditionalfTesting
     {
         private static readonly Dictionary<Type, List<(FieldInfo field, IConditionalAttribute attribute)>> typesAndAttributes = new Dictionary<Type, List<(FieldInfo field, IConditionalAttribute attribute)>>();
 
