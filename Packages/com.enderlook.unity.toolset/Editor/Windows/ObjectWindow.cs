@@ -419,6 +419,13 @@ namespace Enderlook.Unity.Toolset.Windows
                 }
                 createContent.Add(addToSceneButton);
 
+                Label label = new Label("Types");
+                {
+                    label.style.unityFontStyleAndWeight = FontStyle.Bold;
+                    label.style.unityTextAlign = TextAnchor.MiddleCenter;
+                }
+                createContent.Add(label);
+
                 ListView list;
                 Box box = new Box();
                 {
@@ -502,6 +509,13 @@ namespace Enderlook.Unity.Toolset.Windows
                     buttonsBar.Add(searchInAssets);
                 }
                 pickerContent.Add(buttonsBar);
+
+                Label label = new Label("Values");
+                {
+                    label.style.unityFontStyleAndWeight = FontStyle.Bold;
+                    label.style.unityTextAlign = TextAnchor.MiddleCenter;
+                }
+                pickerContent.Add(label);
 
                 ListView list;
                 Box box = new Box();
