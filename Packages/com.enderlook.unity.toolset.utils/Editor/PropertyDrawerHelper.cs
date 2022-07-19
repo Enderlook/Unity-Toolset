@@ -11,8 +11,6 @@ namespace Enderlook.Unity.Toolset.Utils
     /// </summary>
     public static class PropertyDrawerHelper
     {
-        private const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-
         /// <summary>
         /// Get all <see cref="SerializedProperty"/> of the <see cref="UnityEngine.MonoBehaviour"/>s of the current(s) active(s) editor(s).
         /// </summary>
