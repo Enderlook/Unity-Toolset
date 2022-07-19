@@ -78,7 +78,7 @@ namespace Enderlook.Unity.Toolset.Utils
         public static void DrawScriptField(this Editor source)
         {
             // https://answers.unity.com/questions/550829/how-to-add-a-script-field-in-custom-inspector.html
-            GUI.enabled = false;
+            EditorGUI.BeginDisabledGroup(true);
             object target = Convert.ChangeType(source.target, source.target.GetType());
             MonoScript script;
             if (source.target.GetType().IsSubclassOf(typeof(MonoBehaviour)))
@@ -86,9 +86,12 @@ namespace Enderlook.Unity.Toolset.Utils
             else if (source.target.GetType().IsSubclassOf(typeof(ScriptableObject)))
                 script = MonoScript.FromScriptableObject((ScriptableObject)target);
             else
+            {
+                EditorGUI.EndDisabledGroup();
                 throw new InvalidCastException($"Only support {typeof(MonoBehaviour)} or {typeof(ScriptableObject)}");
+            }
             EditorGUILayout.ObjectField("Script", script, typeof(MonoScript), false);
-            GUI.enabled = true;
+            EditorGUI.EndDisabledGroup();
         }
     }
 }
