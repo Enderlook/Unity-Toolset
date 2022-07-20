@@ -2,18 +2,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Threading;
 
 using UnityEditor;
 using UnityEditor.Callbacks;
-using UnityEditor.Compilation;
 
 using UnityEngine;
-
-using SystemAssembly = System.Reflection.Assembly;
-using UnityAssembly = UnityEditor.Compilation.Assembly;
 
 namespace Enderlook.Unity.Toolset.Drawers
 {
@@ -33,28 +27,10 @@ namespace Enderlook.Unity.Toolset.Drawers
         [DidReloadScripts]
         private static void Reset()
         {
-            // Unsafe code can only be executed in the main thread.
-            UnityAssembly[] editorAssemblies = CompilationPipeline.GetAssemblies(AssembliesType.Editor);
-            UnityAssembly[] playerAssemblies = CompilationPipeline.GetAssemblies(AssembliesType.Player);
-
             task = BackgroundTask.Enqueue(() =>
             {
                 drawersMap.Clear();
-
-                UnityAssembly[] unityAssemblies = editorAssemblies
-                    .Concat(playerAssemblies)
-                    .ToArray();
-
-                HashSet<SystemAssembly> assemblies = new HashSet<SystemAssembly>();
-                foreach (SystemAssembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-                {
-                    string name = assembly.GetName().Name;
-                    foreach (UnityAssembly unityAssembly in unityAssemblies)
-                        if (name == unityAssembly.name)
-                            assemblies.Add(assembly);
-                }
-
-                foreach (SystemAssembly assembly in assemblies)
+                foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
                     foreach (Type type in assembly.GetTypes())
                         foreach (CustomStackablePropertyDrawerAttribute attribute in type.GetCustomAttributes<CustomStackablePropertyDrawerAttribute>())
                             drawersMap.Add(attribute.Type, (type, attribute.UseForChildren));
