@@ -153,7 +153,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
             // Can't do unsafe work in non-main thread. And this is unsafe
             IEnumerable<Type> types = GetAllTypesThatShouldBeInspected();
 
-            await Task.Run(() =>
+            BackgroundTask.Enqueue(() =>
             {
                 ScanAssemblies(types);
                 ExecuteCallbacks();

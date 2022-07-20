@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 
 using UnityEditor;
+using UnityEditor.Callbacks;
 
 using UnityEngine;
 
@@ -20,6 +21,17 @@ namespace Enderlook.Unity.Toolset.Utils
 
         private static List<SerializedPropertyPathNode> nodes = new List<SerializedPropertyPathNode>();
         private static readonly Dictionary<string, Type> types = new Dictionary<string, Type>();
+        private static ReadWriteLock typesLock = new ReadWriteLock();
+
+        [DidReloadScripts]
+        private static void Reset()
+        {
+            typesLock.WriteBegin();
+            {
+                types.Clear();
+            }
+            typesLock.WriteEnd();
+        }
 
         /// <summary>
         /// Gets the property nodes hierarchy of <paramref name="source"/>.
@@ -1301,7 +1313,14 @@ namespace Enderlook.Unity.Toolset.Utils
 
             find:
             {
-                if (types.TryGetValue(typeName, out Type type_))
+                bool found;
+                Type type_;
+                typesLock.ReadBegin();
+                {
+                    found = types.TryGetValue(typeName, out type_);
+                }
+                typesLock.ReadEnd();
+                if (found)
                     type = type_;
                 else
                     type = FindType();
@@ -1337,7 +1356,11 @@ namespace Enderlook.Unity.Toolset.Utils
                             Type type__ = type_;
                             if (isArray)
                                 type__ = type__.MakeArrayType();
-                            types.Add(source.type, type__);
+                            typesLock.WriteBegin();
+                            {
+                                types.Add(source.type, type__);
+                            }
+                            typesLock.WriteEnd();
                             return type__;
                         }
                     }

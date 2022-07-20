@@ -24,7 +24,8 @@ namespace Enderlook.Unity.Toolset.Drawers
         // Inspired in https://github.com/j1930021/Stackable-Decorator.
 
         private static readonly Comparison<StackablePropertyDrawer> ORDER_SELECTOR = (a, b) => (a.Attribute?.order ?? 0).CompareTo(b.Attribute?.order ?? 0);
-        private static Dictionary<Type, (Type Drawer, bool UseForChildren)> drawersMap;
+        private static readonly Dictionary<Type, (Type Drawer, bool UseForChildren)> drawersMap = new Dictionary<Type, (Type Drawer, bool UseForChildren)>();
+        private static BackgroundTask task;
 
         private List<StackablePropertyDrawer> Drawers;
         private StackablePropertyDrawer main;
@@ -32,32 +33,38 @@ namespace Enderlook.Unity.Toolset.Drawers
         [DidReloadScripts]
         private static void Reset()
         {
-            Dictionary<Type, (Type Drawer, bool UseForChildren)> dictionary = Interlocked.Exchange(ref drawersMap, null) ?? new Dictionary<Type, (Type Drawer, bool UseForChildren)>();
-            dictionary.Clear();
+            // Unsafe code can only be executed in the main thread.
+            UnityAssembly[] editorAssemblies = CompilationPipeline.GetAssemblies(AssembliesType.Editor);
+            UnityAssembly[] playerAssemblies = CompilationPipeline.GetAssemblies(AssembliesType.Player);
 
-            UnityAssembly[] unityAssemblies = CompilationPipeline.GetAssemblies(AssembliesType.Editor)
-                .Concat(CompilationPipeline.GetAssemblies(AssembliesType.Player))
-                .ToArray();
-
-            HashSet<SystemAssembly> assemblies = new HashSet<SystemAssembly>();
-            foreach (SystemAssembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+            task = BackgroundTask.Enqueue(() =>
             {
-                string name = assembly.GetName().Name;
-                foreach (UnityAssembly unityAssembly in unityAssemblies)
-                    if (name == unityAssembly.name)
-                        assemblies.Add(assembly);
-            }
+                drawersMap.Clear();
 
-            foreach (SystemAssembly assembly in assemblies)
-                foreach (Type type in assembly.GetTypes())
-                    foreach (CustomStackablePropertyDrawerAttribute attribute in type.GetCustomAttributes<CustomStackablePropertyDrawerAttribute>())
-                        dictionary.Add(attribute.Type, (type, attribute.UseForChildren));
+                UnityAssembly[] unityAssemblies = editorAssemblies
+                    .Concat(playerAssemblies)
+                    .ToArray();
 
-            drawersMap = dictionary;
+                HashSet<SystemAssembly> assemblies = new HashSet<SystemAssembly>();
+                foreach (SystemAssembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+                {
+                    string name = assembly.GetName().Name;
+                    foreach (UnityAssembly unityAssembly in unityAssemblies)
+                        if (name == unityAssembly.name)
+                            assemblies.Add(assembly);
+                }
+
+                foreach (SystemAssembly assembly in assemblies)
+                    foreach (Type type in assembly.GetTypes())
+                        foreach (CustomStackablePropertyDrawerAttribute attribute in type.GetCustomAttributes<CustomStackablePropertyDrawerAttribute>())
+                            drawersMap.Add(attribute.Type, (type, attribute.UseForChildren));
+            });
         }
 
         private List<StackablePropertyDrawer> GetDrawers()
         {
+            task.EnsureExecute();
+
             if (drawersMap is null)
                 Reset();
 

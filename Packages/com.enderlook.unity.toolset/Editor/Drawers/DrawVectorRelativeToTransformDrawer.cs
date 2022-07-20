@@ -33,10 +33,6 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         private static (SerializedProperty serializedProperty, Vector3 position, DrawVectorRelativeToTransformAttribute drawVectorRelativeToTransform, MemberInfo memberInfo) selected;
 
-        private static readonly GUIContent OBJECT_LABEL = new GUIContent();
-        private static readonly GUIContent PROPERTY_PATH_LABEL = new GUIContent();
-        private static readonly GUIContent PROPERTY_NAME_LABEL = new GUIContent();
-
         private static bool showButton;
 
         private static bool enableFeature;
@@ -285,12 +281,11 @@ namespace Enderlook.Unity.Toolset.Drawers
                         GUI.skin.box.Draw(screenRect, GUIContent.none, false, true, true, false);
                     EditorGUI.BeginChangeCheck();
 
-                    OBJECT_LABEL.text = selected.serializedProperty.serializedObject.targetObject.name;
-                    EditorGUILayout.LabelField(OBJECT_CONTENT, OBJECT_LABEL);
+                    EditorGUILayout.LabelField(OBJECT_CONTENT, new GUIContent(selected.serializedProperty.serializedObject.targetObject.name));
 
-                    PROPERTY_PATH_LABEL.text = $"{selected.memberInfo.DeclaringType.Name}.{selected.serializedProperty.propertyPath.Replace(".Array.data", "")}";
-                    EditorGUILayout.LabelField(PATH_CONTENT, PROPERTY_PATH_LABEL);
+                    EditorGUILayout.LabelField(PATH_CONTENT, new GUIContent($"{selected.memberInfo.DeclaringType.Name}.{selected.serializedProperty.propertyPath.Replace(".Array.data", "")}"));
 
+                    string propertyName;
                     if (selected.serializedProperty.propertyPath.EndsWith("]"))
                     {
                         string[] parts = selected.serializedProperty.propertyPath.Replace(".Array.data", "").Split(SPLIT_BY_BRACKET);
@@ -298,11 +293,11 @@ namespace Enderlook.Unity.Toolset.Drawers
                         string number = rawNumber.Substring(0, rawNumber.Length - 1);
                         string[] prefixes = parts[parts.Length - 2].Split(SPLIT_BY_DOT);
                         string prefix = prefixes[prefixes.Length - 1];
-                        PROPERTY_NAME_LABEL.text = $"{ObjectNames.NicifyVariableName(prefix)}[{number}]"; 
+                        propertyName = $"{ObjectNames.NicifyVariableName(prefix)}[{number}]"; 
                     }
                     else
-                        PROPERTY_NAME_LABEL.text = selected.serializedProperty.displayName;
-                    EditorGUILayout.LabelField(PROPERTY_CONTENT, PROPERTY_NAME_LABEL);
+                        propertyName = selected.serializedProperty.displayName;
+                    EditorGUILayout.LabelField(PROPERTY_CONTENT, new GUIContent(propertyName));
 
                     EditorGUILayout.PropertyField(selected.serializedProperty, RELATIVE_POSITION_CONTENT);
 

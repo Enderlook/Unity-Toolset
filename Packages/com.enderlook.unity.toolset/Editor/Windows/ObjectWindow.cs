@@ -54,14 +54,12 @@ namespace Enderlook.Unity.Toolset.Windows
         {
             EditorApplication.contextualPropertyMenu += (GenericMenu menu, SerializedProperty property) =>
             {
-                if (property.IsArrayOrListSize())
+                if (property.IsArrayOrListSize() || !property.TryGetMemberInfo(out MemberInfo memberInfo))
                     return;
 
-                if (typeof(UnityObject).IsAssignableFrom(property.GetPropertyType()))
+                if (typeof(UnityObject).IsAssignableFrom(property.GetPropertyType())
+                    || (memberInfo.IsDefined(typeof(SerializeReference)) && !property.GetPropertyType().IsValueType))
                 {
-                    if (!property.TryGetMemberInfo(out MemberInfo memberInfo))
-                        return;
-
                     menu.AddItem(
                         CONTEXT_PROPERTY_MENU,
                         false,

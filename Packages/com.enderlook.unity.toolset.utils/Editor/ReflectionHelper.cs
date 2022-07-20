@@ -16,8 +16,6 @@ namespace Enderlook.Unity.Toolset.Utils
     /// </summary>
     public static class ReflectionHelper
     {
-        private static readonly Dictionary<Type, Array> zeroArray = new Dictionary<Type, Array>();
-
         private static readonly Type[] UNITY_DEFAULT_NON_PRIMITIVE_TYPES = new Type[]
         {
             typeof(Vector2), typeof(Vector3), typeof(Vector4),
@@ -35,6 +33,9 @@ namespace Enderlook.Unity.Toolset.Utils
             typeof(float),
             typeof(char)
         };
+
+        private static readonly Dictionary<Type, Array> zeroArray = new Dictionary<Type, Array>();
+        private static ReadWriteLock zeroArrayLock = new ReadWriteLock();
 
         /// <summary>
         /// Check if the given type can be serialized by Unity.
@@ -103,16 +104,24 @@ namespace Enderlook.Unity.Toolset.Utils
         {
             if (elementType is null) Helper.ThrowArgumentNullException_ElementType();
 
-            // TODO: Replace this with a custom read-write lock.
-            lock (zeroArray)
+            bool value;
+            Array array;
+            zeroArrayLock.ReadBegin();
             {
-                if (zeroArray.TryGetValue(elementType, out Array array))
-                {
-                    array = Array.CreateInstance(elementType, 0);
-                    zeroArray.Add(elementType, array);
-                }
-                return array;
+                value = zeroArray.TryGetValue(elementType, out array);
             }
+            zeroArrayLock.ReadEnd();
+
+            if (value)
+            {
+                zeroArrayLock.WriteBegin();
+                {
+                    if (!zeroArray.TryGetValue(elementType, out array))
+                        zeroArray.Add(elementType, array = Array.CreateInstance(elementType, 0));
+                }
+                zeroArrayLock.WriteEnd();
+            }
+            return array;
         }
 
         /// <summary>

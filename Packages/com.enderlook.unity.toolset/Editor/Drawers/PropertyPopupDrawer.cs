@@ -15,27 +15,45 @@ namespace Enderlook.Unity.Toolset.Drawers
     [CustomStackablePropertyDrawer(typeof(PropertyPopupAttribute), true)]
     internal sealed class PropertyPopupDrawer : StackablePropertyDrawer
     {
+        private static ReadWriteLock @lock = new ReadWriteLock();
         private static readonly Dictionary<Type, PropertyPopup> allowedTypes = new Dictionary<Type, PropertyPopup>();
 
         protected internal override bool RequestMain => true;
 
         [DidReloadScripts]
-        private static void Reset() => allowedTypes.Clear();
+        private static void Reset()
+        {
+            @lock.WriteBegin();
+            {
+                allowedTypes.Clear();
+            }
+            @lock.WriteEnd();
+        }
 
         public static bool IsFieldOption(FieldInfo fieldInfo)
         {
             Type classType = fieldInfo.ReflectedType;
-            if (!allowedTypes.TryGetValue(classType, out var propertyPopup))
+            PropertyPopup propertyPopup;
+            @lock.ReadBegin();
             {
-                PropertyPopupAttribute propertyPopupAttribute = classType.GetCustomAttribute<PropertyPopupAttribute>(true);
-                if (propertyPopupAttribute is null)
+                if (!allowedTypes.TryGetValue(classType, out propertyPopup))
                 {
-                    allowedTypes.Add(classType, null);
-                    return false;
-                }
+                    PropertyPopupAttribute propertyPopupAttribute = classType.GetCustomAttribute<PropertyPopupAttribute>(true);
+                    if (propertyPopupAttribute is null)
+                    {
+                        @lock.ReadEnd();
+                        @lock.WriteBegin();
+                        {
+                            allowedTypes.Add(classType, null);
+                        }
+                        @lock.WriteEnd();
+                        return false;
+                    }
 
-                return true;
+                    return true;
+                }
             }
+            @lock.ReadEnd();
             return !(propertyPopup is null);
         }
 
@@ -57,12 +75,22 @@ namespace Enderlook.Unity.Toolset.Drawers
         private static bool TryGetPropertyPopup(SerializedProperty property, out PropertyPopup propertyPopup)
         {
             Type classType = property.GetPropertyType();
-            if (!allowedTypes.TryGetValue(classType, out propertyPopup))
+            bool value;
+            @lock.ReadBegin();
+            {
+                value = allowedTypes.TryGetValue(classType, out propertyPopup);
+            }
+            @lock.ReadEnd();
+            if (!value)
             {
                 PropertyPopupAttribute propertyPopupAttribute = classType.GetCustomAttribute<PropertyPopupAttribute>(true);
                 if (propertyPopupAttribute is null)
                 {
-                    allowedTypes.Add(classType, null);
+                    @lock.WriteBegin();
+                    {
+                        allowedTypes[classType] = null;
+                    }
+                    @lock.WriteEnd();
                     return false;
                 }
 
@@ -73,8 +101,12 @@ namespace Enderlook.Unity.Toolset.Drawers
 
                 PropertyPopupOption[] modes = list.ToArray();
 
-                propertyPopup = new PropertyPopup(propertyPopupAttribute.ModeName, modes);
-                allowedTypes.Add(classType, propertyPopup);
+                @lock.WriteBegin();
+                {
+                    if (!allowedTypes.TryGetValue(classType, out propertyPopup))
+                        allowedTypes.Add(classType, propertyPopup = new PropertyPopup(propertyPopupAttribute.ModeName, modes));
+                }
+                @lock.WriteEnd();
             }
             return !(propertyPopup is null);
         }
