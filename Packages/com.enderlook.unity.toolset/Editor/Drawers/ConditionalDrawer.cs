@@ -56,7 +56,6 @@ namespace Enderlook.Unity.Toolset.Drawers
             ("HasValue", true), ("HasAny", true), ("IsDefault", false), ("IsDefaultOrEmpty", false), ("IsEmpty", false)
         };
 
-        private static readonly Type[] type1 = new Type[1];
         private static readonly Dictionary<(Type type, MemberInfo memberInfo), Func<object, bool>> members = new Dictionary<(Type type, MemberInfo memberInfo), Func<object, bool>>();
 
         [DidReloadScripts]
