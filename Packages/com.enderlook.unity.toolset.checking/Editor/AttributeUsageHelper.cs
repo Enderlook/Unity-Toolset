@@ -24,6 +24,7 @@ namespace Enderlook.Unity.Toolset.Checking
         {
             if (includeEnumerableTypes)
             {
+                // TODO: On .Net Standard 2.1 assign an initial capacity.
                 HashSet<Type> hashSet = new HashSet<Type>();
                 for (int i = 0; i < types.Length; i++)
                 {
@@ -83,29 +84,52 @@ namespace Enderlook.Unity.Toolset.Checking
 
             if (!contains)
             {
-                void Check(Func<Type, Type, bool> test)
+                // Check if checkingFlags has the following flags
+                // We could use checkingFlags.HasFlag(flag), but it's ~10 times slower
+                if ((typeFlags & TypeCasting.CheckSubclassTypes) != 0)
                 {
                     foreach (Type type in types)
                     {
-                        bool result = test(toCheckType, type);
-                        if (result)
+                        if (toCheckType.IsSubclassOf(type))
                         {
                             contains = true;
                             break;
                         }
                     }
                 }
-
-                // Check if checkingFlags has the following flags
-                // We could use checkingFlags.HasFlag(flag), but it's ~10 times slower
-                if ((typeFlags & TypeCasting.CheckSubclassTypes) != 0)
-                    Check((f, t) => f.IsSubclassOf(t));
                 if ((typeFlags & TypeCasting.CheckSuperclassTypes) != 0 && !contains)
-                    Check((f, t) => t.IsSubclassOf(f));
+                {
+                    foreach (Type type in types)
+                    {
+                        if (type.IsSubclassOf(toCheckType))
+                        {
+                            contains = true;
+                            break;
+                        }
+                    }
+                }
                 if ((typeFlags & TypeCasting.CheckCanBeAssignedTypes) != 0 && !contains)
-                    Check((f, t) => f.IsAssignableFrom(t));
+                {
+                    foreach (Type type in types)
+                    {
+                        if (toCheckType.IsAssignableFrom(type))
+                        {
+                            contains = true;
+                            break;
+                        }
+                    }
+                }
                 if ((typeFlags & TypeCasting.CheckIsAssignableTypes) != 0 && !contains)
-                    Check((f, t) => t.IsAssignableFrom(f));
+                {
+                    foreach (Type type in types)
+                    {
+                        if (type.IsAssignableFrom(toCheckType))
+                        {
+                            contains = true;
+                            break;
+                        }
+                    }
+                }
             }
 
             if (contains == isBlackList)
