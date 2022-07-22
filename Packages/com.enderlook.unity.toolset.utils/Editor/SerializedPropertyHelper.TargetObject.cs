@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Threading;
 
 using UnityEditor;
@@ -18,19 +19,58 @@ namespace Enderlook.Unity.Toolset.Utils
     public static partial class SerializedPropertyHelper
     {
         private const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+        private static readonly Regex AssemblyNameRegex = new Regex("^(.*?),", RegexOptions.Compiled);
+        private static readonly Regex ArrayRegex = new Regex(@"^(.*?)(?:\[])?$", RegexOptions.Compiled);
+        private static readonly Dictionary<string, Type> Types = new Dictionary<string, Type>();
 
-        private static List<SerializedPropertyPathNode> nodes = new List<SerializedPropertyPathNode>();
-        private static readonly Dictionary<string, Type> types = new Dictionary<string, Type>();
-        private static ReadWriteLock typesLock = new ReadWriteLock();
+        private static BackgroundTask task;
+        private static List<SerializedPropertyPathNode> nodes;
 
         [DidReloadScripts]
         private static void Reset()
         {
-            typesLock.WriteBegin();
-            {
-                types.Clear();
-            }
-            typesLock.WriteEnd();
+            task = BackgroundTask.Enqueue(
+                token => Progress.Start($"Initialize {typeof(SerializedPropertyHelper)}", "Enqueued process."),
+                (id, token) =>
+                {
+                    if (token.IsCancellationRequested)
+                        goto cancelled;
+
+                    Progress.SetDescription(id, null);
+                    Types.Clear();
+
+                    Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+                    int total = 0;
+                    foreach (Assembly assembly in assemblies)
+                        total += assembly.GetTypes().Length;
+                    Progress.Report(id, 0, total);
+
+                    int current = 0;
+                    foreach (Assembly assembly in assemblies)
+                    {
+                        foreach (Type type in assembly.GetTypes())
+                        {
+                            if (token.IsCancellationRequested)
+                                goto cancelled;
+
+                            Progress.Report(id, current++, total);
+
+                            if (type.IsValueType)
+                                continue;
+
+                            string assemblyName = AssemblyNameRegex.Match(type.Assembly.FullName).Groups[1].Value;
+                            string namespaceParentAndTypeName = type.FullName.Replace('+', '/');
+                            string name = $"{assemblyName} {namespaceParentAndTypeName}";
+                            Types.Add(name, type);
+                        }
+                    }
+
+                    Progress.Finish(id);
+                    return;
+                cancelled:
+                    Progress.Finish(id, Progress.Status.Canceled);
+                }
+            );
         }
 
         /// <summary>
@@ -57,6 +97,7 @@ namespace Enderlook.Unity.Toolset.Utils
 
             nodes.Clear();
 
+            // TODO: This allocation could be ellided.
             string path = source.propertyPath.Replace(".Array.data[", "[");
             string[] pathSections = path.Split(Helper.DOT_SEPARATOR);
             int total = pathSections.Length;
@@ -465,6 +506,12 @@ namespace Enderlook.Unity.Toolset.Utils
                         return (T)(object)source.rectValue;
                     if (typeof(T) == typeof(RectInt) && propertyType == SerializedPropertyType.RectInt)
                         return (T)(object)source.rectIntValue;
+                    if (typeof(T) == typeof(decimal) && propertyType == SerializedPropertyType.Float && source.type == "decimal")
+                        return (T)(object)(decimal)source.doubleValue;
+#if UNITY_2021_1_OR_NEWER
+                    if (typeof(T) == typeof(Hash128) && propertyType == SerializedPropertyType.Hash128)
+                        return (Hash128)(object)source.hash128Value;
+#endif
                     return Fallback();
                 }
 
@@ -523,7 +570,8 @@ namespace Enderlook.Unity.Toolset.Utils
                     case SerializedPropertyType.FixedBufferSize:
                         return (T)(object)source.fixedBufferSize;
                     case SerializedPropertyType.Integer:
-                    {
+                        // Technically, int and long are the only valid types,
+                        // but we put the others to be sure.
                         switch (source.type)
                         {
                             case "long":
@@ -545,7 +593,6 @@ namespace Enderlook.Unity.Toolset.Utils
                             default:
                                 goto fallback;
                         }
-                    }
                     case SerializedPropertyType.Boolean:
                         return (T)(object)source.boolValue;
                     case SerializedPropertyType.Bounds:
@@ -557,12 +604,16 @@ namespace Enderlook.Unity.Toolset.Utils
                     case SerializedPropertyType.Color:
                         return (T)(object)source.colorValue;
                     case SerializedPropertyType.Float:
+                        // Technically, float and double are the only valid types,
+                        // but we put the others to be sure.
                         switch (source.type)
                         {
                             case "float":
                                 return (T)(object)source.floatValue;
                             case "double":
                                 return (T)(object)source.doubleValue;
+                            case "decimal":
+                                return (T)(object)(decimal)source.doubleValue;
                             default:
                                 goto fallback;
                         }
@@ -655,54 +706,54 @@ namespace Enderlook.Unity.Toolset.Utils
                             propertyInfo.SetValue(previousNode.Object, newValue_);
                             break;
                         case null:
-                        {
-                            if (previousNode.Object is U[] array)
                             {
-                                if (previousNode.Index < array.Length)
+                                if (previousNode.Object is U[] array)
                                 {
-                                    array[previousNode.Index] = newValue_;
-                                    break;
+                                    if (previousNode.Index < array.Length)
+                                    {
+                                        array[previousNode.Index] = newValue_;
+                                        break;
+                                    }
+                                    goto indexError;
                                 }
-                                goto indexError;
-                            }
 
-                            // Check if type implement IList<U>, this is only useful for the first call of this method.
-                            if (previousNode.Object is IList<U> list)
-                            {
-                                if (previousNode.Index < list.Count)
+                                // Check if type implement IList<U>, this is only useful for the first call of this method.
+                                if (previousNode.Object is IList<U> list)
                                 {
-                                    list[previousNode.Index] = newValue_;
-                                    break;
+                                    if (previousNode.Index < list.Count)
+                                    {
+                                        list[previousNode.Index] = newValue_;
+                                        break;
+                                    }
+                                    goto indexError;
                                 }
-                                goto indexError;
-                            }
 
-                            if (previousNode.Object is IList list_)
-                            {
-                                if (previousNode.Index < list_.Count)
+                                if (previousNode.Object is IList list_)
                                 {
-                                    list_[previousNode.Index] = newValue_;
-                                    break;
+                                    if (previousNode.Index < list_.Count)
+                                    {
+                                        list_[previousNode.Index] = newValue_;
+                                        break;
+                                    }
+                                    goto indexError;
                                 }
-                                goto indexError;
-                            }
 
-                            // TODO: Support for IList<> based of runtime type of newValue_ may be required.
+                                // TODO: Support for IList<> based of runtime type of newValue_ may be required.
 
-                            if (notThrow) goto error_;
-                            ThrowTypeNotSupported();
+                                if (notThrow) goto error_;
+                                ThrowTypeNotSupported();
 
-                            void ThrowTypeNotSupported() => throw new NotSupportedException($"Error while assigning value to '{string.Join(".", nodes_.Take(i + 1).Select(e => e.path ?? $"Array.data[{e.Index}]"))}' from path '{string.Join(".", nodes_.Select(e => e.path ?? $"Array.data[{e.Index}]"))}'. Can only mutate fields, properties or types that implement {nameof(IList)}.");
+                                void ThrowTypeNotSupported() => throw new NotSupportedException($"Error while assigning value to '{string.Join(".", nodes_.Take(i + 1).Select(e => e.path ?? $"Array.data[{e.Index}]"))}' from path '{string.Join(".", nodes_.Select(e => e.path ?? $"Array.data[{e.Index}]"))}'. Can only mutate fields, properties or types that implement {nameof(IList)}.");
 
                             indexError:
-                            if (notThrow) goto error_;
-                            ThrowIndexMustBeLowerThanArraySize();
+                                if (notThrow) goto error_;
+                                ThrowIndexMustBeLowerThanArraySize();
 
-                            void ThrowIndexMustBeLowerThanArraySize()
-                                => throw new NotSupportedException($"Error while assigning value to '{string.Join(".", nodes_.Take(i + 1).Select(e => e.path ?? $"Array.data[{e.Index}]"))}' from path '{string.Join(".", nodes_.Select(e => e.path ?? $"Array.data[{e.Index}]"))}'. Index {previousNode.Index} must be lwoer than '{string.Join(".", nodes_.Take(i).Select(e => e.path ?? $"Array.data[{e.Index}]"))}.Array.arraySize' ({((IList)previousNode.Object).Count}).");
+                                void ThrowIndexMustBeLowerThanArraySize()
+                                    => throw new NotSupportedException($"Error while assigning value to '{string.Join(".", nodes_.Take(i + 1).Select(e => e.path ?? $"Array.data[{e.Index}]"))}' from path '{string.Join(".", nodes_.Select(e => e.path ?? $"Array.data[{e.Index}]"))}'. Index {previousNode.Index} must be lwoer than '{string.Join(".", nodes_.Take(i).Select(e => e.path ?? $"Array.data[{e.Index}]"))}.Array.arraySize' ({((IList)previousNode.Object).Count}).");
 
-                            break;
-                        }
+                                break;
+                            }
                         default:
                             Debug.Assert(false, "Impossible state.");
                             break;
@@ -775,6 +826,9 @@ namespace Enderlook.Unity.Toolset.Utils
                         break;
                     case SerializedPropertyType.ExposedReference:
                         source.exposedReferenceValue = (UnityObject)(object)newValue;
+                        break;
+                    case SerializedPropertyType.ManagedReference:
+                        source.managedReferenceValue = newValue;
                         break;
                     case SerializedPropertyType.Gradient:
                     case SerializedPropertyType.Generic:
@@ -944,6 +998,12 @@ namespace Enderlook.Unity.Toolset.Utils
                         source.rectValue = (Rect)(object)newValue;
                     else if (typeof(T) == typeof(RectInt) && propertyType == SerializedPropertyType.RectInt)
                         source.rectIntValue = (RectInt)(object)newValue;
+                    else if (typeof(T) == typeof(decimal) && propertyType == SerializedPropertyType.Float && source.type == "decimal")
+                        source.doubleValue = (double)(decimal)(object)newValue;
+#if UNITY_2021_1_OR_NEWER
+                    else if (typeof(T) == typeof(Hash128) && propertyType == SerializedPropertyType.Hash128)
+                       source.hash128Value = (Hash128)(object)newValue;
+#endif
                     else
                         Fallback();
                 }
@@ -1017,7 +1077,8 @@ namespace Enderlook.Unity.Toolset.Utils
                         void Throw() => throw new InvalidOperationException("Can't mutate size of a Fixed Buffer.");
                         break;
                     case SerializedPropertyType.Integer:
-                    {
+                        // Technically, int and long are the only valid types,
+                        // but we put the others to be sure.
                         switch (source.type)
                         {
                             case "long":
@@ -1048,7 +1109,6 @@ namespace Enderlook.Unity.Toolset.Utils
                                 goto fallback;
                         }
                         break;
-                    }
                     case SerializedPropertyType.Boolean:
                         source.boolValue = (bool)(object)newValue;
                         break;
@@ -1065,6 +1125,8 @@ namespace Enderlook.Unity.Toolset.Utils
                         source.colorValue = (Color)(object)newValue;
                         break;
                     case SerializedPropertyType.Float:
+                        // Technically, float and double are the only valid types,
+                        // but we put the others to be sure.
                         switch (source.type)
                         {
                             case "float":
@@ -1072,6 +1134,9 @@ namespace Enderlook.Unity.Toolset.Utils
                                 break;
                             case "double":
                                 source.doubleValue = (double)(object)newValue;
+                                break;
+                            case "decimal":
+                                source.doubleValue = (double)(decimal)(object)newValue;
                                 break;
                             default:
                                 goto fallback;
@@ -1196,9 +1261,9 @@ namespace Enderlook.Unity.Toolset.Utils
                     type = typeof(int);
                     goto done;
                 case SerializedPropertyType.Integer:
-                {
-                    typeName = source.type;
-                    switch (typeName)
+                    // Technically, int and long are the only valid types,
+                    // but we put the others to be sure.
+                    switch (source.type)
                     {
                         case "long":
                             type = typeof(long);
@@ -1226,9 +1291,8 @@ namespace Enderlook.Unity.Toolset.Utils
                             goto done;
                         default:
                             defaultType = typeof(int);
-                            goto find;
+                            goto fallback;
                     }
-                }
                 case SerializedPropertyType.Boolean:
                     type = typeof(bool);
                     goto done;
@@ -1245,9 +1309,9 @@ namespace Enderlook.Unity.Toolset.Utils
                     type = typeof(Color);
                     goto done;
                 case SerializedPropertyType.Float:
-                {
-                    typeName = source.type;
-                    switch (typeName)
+                    // Technically, float and double are the only valid types,
+                    // but we put the others to be sure.
+                    switch (source.type)
                     {
                         case "float":
                             type = typeof(float);
@@ -1255,11 +1319,12 @@ namespace Enderlook.Unity.Toolset.Utils
                         case "double":
                             type = typeof(double);
                             goto done;
+                        case "decimal":
+                            type = typeof(decimal);
+                            goto done;
                         default:
-                            defaultType = typeof(float);
-                            goto find;
+                            goto fallback;
                     }
-                }
                 case SerializedPropertyType.Gradient:
                     type = typeof(Gradient);
                     goto done;
@@ -1293,18 +1358,29 @@ namespace Enderlook.Unity.Toolset.Utils
                 case SerializedPropertyType.Vector4:
                     type = typeof(Vector4);
                     goto done;
+#if UNITY_2021_1_OR_NEWER
+                case SerializedPropertyType.Hash128:
+                    type = typeof(Hash128);
+                    goto done;
+#endif
                 case SerializedPropertyType.Generic:
-                {
-                    typeName = source.type;
+                    // We don't use source.type in order to extract the type since it doesn't specify to which assembly the type belongs,
+                    // which means that it would produce wrong results if two assemblies uses the same type name.
                     defaultType = typeof(object);
-                    goto find;
-                }
+                    goto fallback;
                 case SerializedPropertyType.Enum:
                     defaultType = typeof(Enum);
                     goto fallback;
                 case SerializedPropertyType.ObjectReference:
                 case SerializedPropertyType.ExposedReference:
                     defaultType = typeof(UnityObject);
+                    goto fallback;
+                case SerializedPropertyType.ManagedReference:
+                    typeName = source.managedReferenceFieldTypename;
+                    defaultType = typeof(object);
+                    task.EnsureExecute();
+                    if (Types.TryGetValue(typeName, out type))
+                        goto done;
                     goto fallback;
                 default:
                     defaultType = typeof(object);
@@ -1313,17 +1389,10 @@ namespace Enderlook.Unity.Toolset.Utils
 
         find:
             {
-                bool found;
-                Type type_;
-                typesLock.ReadBegin();
-                {
-                    found = types.TryGetValue(typeName, out type_);
-                }
-                typesLock.ReadEnd();
-                if (found)
-                    type = type_;
-                else
-                    type = FindType();
+                task.EnsureExecute();
+
+                if (!Types.TryGetValue(typeName, out type))
+                    goto fallback;
             }
 
         done:
@@ -1340,34 +1409,6 @@ namespace Enderlook.Unity.Toolset.Utils
 
         end:
             return type;
-
-            Type FindType()
-            {
-                bool isArray = typeName.EndsWith("[]");
-                if (isArray)
-                    typeName = typeName.Substring(0, typeName.Length - "[]".Length);
-
-                foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-                {
-                    foreach (Type type_ in assembly.GetTypes())
-                    {
-                        if (type_.Name == typeName)
-                        {
-                            Type type__ = type_;
-                            if (isArray)
-                                type__ = type__.MakeArrayType();
-                            typesLock.WriteBegin();
-                            {
-                                types.Add(source.type, type__);
-                            }
-                            typesLock.WriteEnd();
-                            return type__;
-                        }
-                    }
-                }
-
-                return Fallback();
-            }
 
             Type Fallback()
             {
