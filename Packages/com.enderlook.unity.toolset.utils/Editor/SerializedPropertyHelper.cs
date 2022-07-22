@@ -86,7 +86,7 @@ namespace Enderlook.Unity.Toolset.Utils
         /// Check if <paramref name="source"/> is the array or list size.
         /// </summary>
         /// <param name="source"><see cref="SerializedProperty"/> to check.</param>
-        /// <returns>Whenever it's the array or list size, or not</returns>
+        /// <returns>Whenever it's the array or list size, or not.</returns>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> is <see langword="null"/>.</exception>
         public static bool IsArrayOrListSize(this SerializedProperty source)
         {
