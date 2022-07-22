@@ -1,13 +1,14 @@
+using System;
+using System.Buffers;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
-using System;
-using System.Collections.Generic;
-using System.Buffers;
+using UnityEditor.AssetImporters;
 
 using UnityEngine;
 
 using UnityObject = UnityEngine.Object;
-using System.Linq;
 
 namespace Enderlook.Unity.Toolset.Utils
 {
@@ -16,12 +17,12 @@ namespace Enderlook.Unity.Toolset.Utils
     /// </summary>
     public static class ReflectionHelper
     {
-        private static readonly Type[] UNITY_DEFAULT_NON_PRIMITIVE_TYPES = new Type[]
+        private static readonly Type[] UNITY_BUILT_IN_SUPPORTED_TYPES = new Type[]
         {
             typeof(Vector2), typeof(Vector3), typeof(Vector4),
             typeof(Rect), typeof(Quaternion), typeof(Matrix4x4),
             typeof(Color), typeof(Color32), typeof(LayerMask),
-            typeof(AnimationCurve), typeof(Gradient), typeof(RectOffset), typeof(GUIStyle)
+            typeof(AnimationCurve), typeof(Gradient), typeof(RectOffset), typeof(GUIStyle),
         };
 
         private static readonly Type[] VALID_ENUM_TYPES = new Type[]
@@ -38,37 +39,61 @@ namespace Enderlook.Unity.Toolset.Utils
         private static ReadWriteLock zeroArrayLock = new ReadWriteLock();
 
         /// <summary>
-        /// Check if the given type can be serialized by Unity.
+        /// Check if the given type can be serialized by Unity.<br/>
+        /// Note that in some cases this may give misleading results: if you have a <see cref="FieldInfo"/>, it's better to call <see cref="CanBeSerializedByUnity(FieldInfo)"/> instead as some cases are affected by the field itself and the type which declares that field.
         /// </summary>
         /// <param name="type">Type to check.</param>
-        /// <returns>Whenever the field can be serialized by Unity of not.</returns>
-        public static bool CanBeSerializedByUnity(this Type type)
+        /// <param name="isSerializedByReference">If <see langword="true"/>, consider that type is being serialized with <see cref="SerializeReference"/>.<br/>
+        /// Otherwise it's considered as using <see cref="SerializeField"/>.</param>
+        /// <returns>Whenever the field can be serialized by Unity or not.</returns>
+        public static bool CanBeSerializedByUnity(this Type type, bool isSerializedByReference = false)
         {
+            // https://docs.unity3d.com/Manual/script-Serialization.html
+
             if (type.IsArray)
             {
                 if (type.GetArrayRank() > 1)
                     return false;
                 type = type.GetElementType();
             }
-            else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
-                type = type.GetGenericArguments()[0];
+            else if (type.IsGenericType)
+            {
+                if (type.GetGenericTypeDefinition() == typeof(List<>))
+                    type = type.GetGenericArguments()[0];
+                else
+                    return false;
+            }
+            else
+                goto skip;
 
-            if (type.IsAbstract || type.IsGenericType || type.IsInterface)
+            if (type.IsArray || type.IsGenericType)
                 return false;
 
-            if (type.IsSubclassOf(typeof(UnityObject)))
+        skip:
+            if (!isSerializedByReference)
+            {
+                if (type.IsPrimitive || type.IsSubclassOf(typeof(UnityObject))
+                    || (type.IsValueType && UNITY_BUILT_IN_SUPPORTED_TYPES.Contains(type)))
+                    return true;
+
+                if (type.IsAbstract || type.IsInterface)
+                    return false;
+
+                if (type.IsEnum)
+                    return VALID_ENUM_TYPES.Contains(Enum.GetUnderlyingType(type));
+
+                if (type.IsDefined(typeof(SerializableAttribute)))
+                    return true;
+
+                return false;
+            }
+            else
+            {
+                if (type.IsPrimitive || type.IsValueType || type.IsSubclassOf(typeof(UnityObject)))
+                    return false;
+
                 return true;
-
-            if (type.IsPrimitive || type.IsValueType || UNITY_DEFAULT_NON_PRIMITIVE_TYPES.Contains(type))
-                return true;
-
-            if (type.IsEnum)
-                return VALID_ENUM_TYPES.Contains(Enum.GetUnderlyingType(type));
-
-            if (type.IsDefined(typeof(SerializableAttribute)) || type.IsDefined(typeof(SerializeReference)))
-                return true;
-
-            return false;
+            }
         }
 
         /// <summary>
@@ -78,22 +103,19 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <returns>Whenever the field can be serialized by Unity or not.</returns>
         public static bool CanBeSerializedByUnity(this FieldInfo fieldInfo)
         {
-            if (fieldInfo.IsPublic || fieldInfo.IsDefined(typeof(SerializeField)))
-            {
-                if (fieldInfo.IsStatic || fieldInfo.IsInitOnly || fieldInfo.IsLiteral || fieldInfo.IsDefined(typeof(NonSerializedAttribute)))
-                    return false;
+            // https://docs.unity3d.com/Manual/script-Serialization.html
 
-                return fieldInfo.FieldType.CanBeSerializedByUnity();
-            }
-            return false;
+            bool serializeReference = fieldInfo.IsDefined(typeof(SerializeReference));
+            if ((!serializeReference && !fieldInfo.IsPublic && !fieldInfo.IsDefined(typeof(SerializeField)))
+                || fieldInfo.IsStatic || fieldInfo.IsInitOnly || fieldInfo.IsLiteral || fieldInfo.IsDefined(typeof(NonSerializedAttribute))
+                // SerializeReference don't support Animation fields on specific cases:
+                // https://docs.unity3d.com/ScriptReference/SerializeReference.html
+                || (fieldInfo.FieldType == typeof(Animation) && serializeReference
+                    && (fieldInfo.DeclaringType.IsSubclassOf(typeof(ScriptableObject))
+                        || fieldInfo.DeclaringType.IsSubclassOf(typeof(ScriptedImporter)))))
+                return false;
+            return fieldInfo.FieldType.CanBeSerializedByUnity(serializeReference);
         }
-
-        /// <summary>
-        /// Check if the given type can be serialized by Unity.
-        /// </summary>
-        /// <param name="typeInfo">Typeinfo of type to check.</param>
-        /// <returns>Whenever the field can be serialized by Unity of not.</returns>
-        public static bool CanBeSerializedByUnity(this TypeInfo typeInfo) => typeInfo.GetType().CanBeSerializedByUnity();
 
         /// <summary>
         /// Get an empty array of element type <paramref name="elementType"/>.
