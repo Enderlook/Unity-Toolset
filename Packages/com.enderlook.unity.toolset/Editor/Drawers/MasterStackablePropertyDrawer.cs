@@ -193,7 +193,7 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            List<StackablePropertyDrawer> drawers = Drawers??= GetDrawers();
+            List<StackablePropertyDrawer> drawers = Drawers ??= GetDrawers();
 
             bool includeChildren = true;
             bool visible = true;
