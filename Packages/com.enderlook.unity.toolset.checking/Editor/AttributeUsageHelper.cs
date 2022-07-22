@@ -52,7 +52,7 @@ namespace Enderlook.Unity.Toolset.Checking
             stringBuilder
                 .Append(isBlackList ? "doesn't" : "only")
                 .Append(" accept types of ")
-                .Append(string.Join(", ", types.Select(e => e.Name)));
+                .Append(string.Join(", ", types.Select(e => '\'' + e.Name + '\'')));
             if ((checkingFlags & TypeCasting.CheckSubclassTypes) != 0)
                 stringBuilder.Append(", their subclasses");
             if ((checkingFlags & TypeCasting.CheckSuperclassTypes) != 0)
@@ -109,7 +109,7 @@ namespace Enderlook.Unity.Toolset.Checking
             }
 
             if (contains == isBlackList)
-                Debug.LogError($"According to {attributeCheckerName}, {attributeName} {allowedTypes}. {toCheckName} is {toCheckType.Name} type.");
+                Debug.LogError($"According to '{attributeCheckerName}', '{attributeName}' '{allowedTypes}'. '{toCheckName}' is '{toCheckType.Name}' type.");
         }
     }
 }

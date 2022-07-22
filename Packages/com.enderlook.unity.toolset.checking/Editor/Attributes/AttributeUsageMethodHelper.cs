@@ -33,7 +33,7 @@ namespace Enderlook.Unity.Toolset.Checking
         /// <remarks>Only use in Unity Editor.</remarks>
         public void CheckAllowance(MethodInfo methodInfo, string attributeName)
         {
-            string GetMessageInit() => $"{MESSAGE_BASE} {attributeName} require a method with";
+            string GetMessageInit() => $"{MESSAGE_BASE} '{attributeName}' require a method with";
 
             if (attribute.parameterNumber == 0)
             {
@@ -43,7 +43,7 @@ namespace Enderlook.Unity.Toolset.Checking
                 if (attribute.parameterType == ParameterMode.VoidOrNone)
                 {
                     if (type == typeof(void))
-                        Debug.LogError($"{GetMessageInit()} a return type must be {typeof(void).Name}. {methodInfo.Name} is {type} type.");
+                        Debug.LogError($"{GetMessageInit()} a return type must be '{typeof(void).Name}'. '{methodInfo.Name}' is '{type}' type.");
                 }
                 else if (attribute.parameterType == ParameterMode.Common)
                     AttributeUsageHelper.CheckContains(
@@ -57,7 +57,7 @@ namespace Enderlook.Unity.Toolset.Checking
                         "Return Type"
                     );
                 else
-                    Debug.LogError($"{nameof(AttributeUsageMethodAttribute)} can only have as {nameof(attribute.parameterType)} {nameof(ParameterMode.Common)} or {nameof(ParameterMode.VoidOrNone)} if used with {nameof(attribute.parameterNumber)} 0. Attribute in {attributeName} has a {nameof(attribute.parameterNumber)} 0 but {nameof(attribute.parameterType)} {attribute.parameterType}.");
+                    Debug.LogError($"'{nameof(AttributeUsageMethodAttribute)}' can only have as '{nameof(attribute.parameterType)}' '{nameof(ParameterMode.Common)}' or '{nameof(ParameterMode.VoidOrNone)}' if used with '{nameof(attribute.parameterNumber)}' 0. Attribute in' {attributeName}' has a '{nameof(attribute.parameterNumber)}' 0 but '{nameof(attribute.parameterType)}' '{attribute.parameterType}'.");
             }
             else
             {
@@ -73,7 +73,7 @@ namespace Enderlook.Unity.Toolset.Checking
                 {
                     // Parameter doesn't exist, check if was on purpose
                     if (attribute.parameterType != ParameterMode.VoidOrNone)
-                        Debug.LogError($"{GetMessageInit()} a {attribute.parameterNumber}º parameter. {methodInfo.Name} only have {parameterInfos.Length} parameter{(parameterInfos.Length > 0 ? "s" : "")}.");
+                        Debug.LogError($"{GetMessageInit()} a {attribute.parameterNumber}º parameter. '{methodInfo.Name}' only have {parameterInfos.Length} parameter{(parameterInfos.Length > 0 ? "s" : "")}.");
                     return;
                 }
 
@@ -100,7 +100,7 @@ namespace Enderlook.Unity.Toolset.Checking
 
                 // Check parameter keyword
                 void RaiseKeyWordError(string keywordString)
-                    => Debug.LogError($"{GetMessageInit()} a parameter at {parameterInfo.Position} position named {parameterInfo.Name} that has {keywordString} keyword, according to {nameof(attribute.parameterType)} {nameof(ParameterMode)} {mode}. Instead has {attribute.parameterType}.");
+                    => Debug.LogError($"{GetMessageInit()} a parameter at {parameterInfo.Position} position named '{parameterInfo.Name}' that has '{keywordString}' keyword, according to '{nameof(attribute.parameterType)}' '{nameof(ParameterMode)}.{mode}'. Instead has '{attribute.parameterType}'.");
                 if (attribute.parameterType != mode)
                 {
                     if (attribute.parameterType != ParameterMode.Out)
@@ -135,7 +135,7 @@ namespace Enderlook.Unity.Toolset.Checking
                         false,
                         AllowedTypes,
                         parameterInfo.ParameterType,
-                        $"{attributeName} parameter {parameterInfo.Name} in position {parameterInfo.Position}",
+                        $"'{attributeName}' parameter '{parameterInfo.Name}' in position {parameterInfo.Position}",
                         "Parameter"
                     );
             }

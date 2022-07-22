@@ -42,7 +42,7 @@ namespace Enderlook.Unity.Toolset.Checking
         {
             HashSet<Type> toIgnore = new HashSet<Type>(type.GetAttributeTypesThatShouldBeIgnored());
             if (!toIgnore.Contains(typeof(AttributeUsageMethodAttribute)))
-                CheckSomething(type.GetCustomAttributes(), toIgnore, type, AttributeTargets.Class, $"Class {type.Name}");
+                CheckSomething(type.GetCustomAttributes(), toIgnore, type, AttributeTargets.Class, $"Class '{type.Name}'");
         }
 
         [ExecuteOnEachFieldOfEachTypeWhenScriptsReloads(FieldSerialization.EitherSerializableOrNotByUnity, 1)]

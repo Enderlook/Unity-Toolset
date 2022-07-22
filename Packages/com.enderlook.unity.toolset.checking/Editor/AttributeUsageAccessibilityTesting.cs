@@ -28,7 +28,7 @@ namespace Enderlook.Unity.Toolset.Checking
                 Type type = attribute.GetType();
                 if (checkers.TryGetValue(type, out Action<MemberInfo, string> check)
                     && !memberInfo.CheckIfShouldBeIgnored(type))
-                    check(memberInfo, $"Member {memberInfo.Name} in {memberInfo.DeclaringType.Name} class");
+                    check(memberInfo, $"Member '{memberInfo.Name}' in '{memberInfo.DeclaringType.Name}' class");
             }
         }
     }

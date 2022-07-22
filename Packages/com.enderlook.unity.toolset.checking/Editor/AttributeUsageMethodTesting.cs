@@ -30,7 +30,7 @@ namespace Enderlook.Unity.Toolset.Checking
                 Type type = attribute.GetType();
                 if (checkers.TryGetValue(attribute.GetType(), out Action<MethodInfo, string> check)
                     && !methodInfo.CheckIfShouldBeIgnored(type))
-                    check(methodInfo, $"method {methodInfo.Name} in {methodInfo.DeclaringType.Name} class");
+                    check(methodInfo, $"method '{methodInfo.Name}' in '{methodInfo.DeclaringType.Name}' class");
             }
         }
     }

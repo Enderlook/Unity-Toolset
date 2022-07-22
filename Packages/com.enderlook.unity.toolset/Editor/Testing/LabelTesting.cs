@@ -50,18 +50,18 @@ namespace Enderlook.Unity.Toolset.Testing
                     if (attribute.TooltipMode == LabelMode.ByReference && attribute.Tooltip is string tooltip)
                     {
                         if (!stringSet.Contains(tooltip))
-                            Debug.LogError($"Type {classToCheck.Key} does not have a field, property (with Get method) or method (with only optional or params parameters) that returns {typeof(string)} named '{tooltip}' necessary for the parameter 'tooltip' of attribute {nameof(LabelAttribute)} on field named {field.Name}.");
+                            Debug.LogError($"Type '{classToCheck.Key}' does not have a field, property (with Get method) or method (with only optional or params parameters) that returns '{typeof(string)}' named '{tooltip}' necessary for the parameter 'tooltip' of attribute '{nameof(LabelAttribute)}' on field named '{field.Name}'.");
                         if (attribute.DisplayNameMode == LabelMode.ByReference
                             && attribute.DisplayNameOrGuiContent is string displayName
                             && !stringSet.Contains(displayName))
-                            Debug.LogError($"Type {classToCheck.Key} does not have a field, property (with Get method) or method (with only optional or params parameters) that returns {typeof(string)} named '{displayName}' necessary for the parameter 'displayName' of attribute {nameof(LabelAttribute)} on field named {field.Name}.");
+                            Debug.LogError($"Type '{classToCheck.Key}' does not have a field, property (with Get method) or method (with only optional or params parameters) that returns '{typeof(string)}' named '{displayName}' necessary for the parameter 'displayName' of attribute '{nameof(LabelAttribute)}' on field named '{field.Name}'.");
                     }
                     else
                     {
                         if (attribute.DisplayNameMode == LabelMode.ByReference && attribute.DisplayNameOrGuiContent is string displayNameOrGuiContent)
                         {
                             if (!stringSet.Contains(displayNameOrGuiContent) && !guiContentSet.Contains(displayNameOrGuiContent))
-                                Debug.LogError($"Type {classToCheck.Key} does not have a field, property (with Get method) or method (with only optional or params parameters) that returns {typeof(string)} or {typeof(GUIContent)} named '{displayNameOrGuiContent}' necessary for the parameter 'displayName' of attribute {nameof(LabelAttribute)} on field named {field.Name}.");
+                                Debug.LogError($"Type '{classToCheck.Key}' does not have a field, property (with Get method) or method (with only optional or params parameters) that returns '{typeof(string)}' or '{typeof(GUIContent)}' named '{displayNameOrGuiContent}' necessary for the parameter 'displayName' of attribute '{nameof(LabelAttribute)}' on field named '{field.Name}'.");
                         }
                     }
                 }

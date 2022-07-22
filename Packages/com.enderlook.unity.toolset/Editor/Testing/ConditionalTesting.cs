@@ -49,14 +49,14 @@ namespace Enderlook.Unity.Toolset.Testing
                     string firstProperty = attribute.FirstProperty;
                     if (firstProperty is null)
                     {
-                        Debug.LogError($"Value of property {nameof(attribute.FirstProperty)} is null or empty in attribute {attribute.GetType()} in field {field.Name} of type {field.ReflectedType.Name}.");
+                        Debug.LogError($"Value of property '{nameof(attribute.FirstProperty)}' is null or empty in attribute '{attribute.GetType()}' in field '{field.Name}' of type '{field.ReflectedType.Name}'.");
                         continue;
                     }
 
                     Type firstType = GetType(kvp.Key, firstProperty);
                     if (firstType is null)
                     {
-                        Debug.LogError($"No field, property (with Get method), or method with no mandatory parameters of name '{attribute.FirstProperty}' in attribute {attribute.GetType()} in field {field.Name} of type {field.ReflectedType.Name} was found.");
+                        Debug.LogError($"No field, property (with Get method), or method with no mandatory parameters of name '{attribute.FirstProperty}' in attribute '{attribute.GetType()}' in field '{field.Name}' of type '{field.ReflectedType.Name}' was found.");
                         continue;
                     }
 
@@ -77,14 +77,14 @@ namespace Enderlook.Unity.Toolset.Testing
                             string secondProperty = attribute.SecondProperty;
                             if (secondProperty is null)
                             {
-                                Debug.LogError($"Value of property {nameof(attribute.SecondProperty)} is null or empty in attribute {attribute.GetType()} in field {field.Name} of type {field.ReflectedType.Name}.");
+                                Debug.LogError($"Value of property '{nameof(attribute.SecondProperty)}' is null or empty in attribute '{attribute.GetType()}' in field '{field.Name}' of type '{field.ReflectedType.Name}'.");
                                 break;
                             }
 
                             Type secondType = GetType(kvp.Key, secondProperty);
                             if (secondType is null)
                             {
-                                Debug.LogError($"No field, property (with Get method), or method with no mandatory parameters of name '{attribute.SecondProperty}' in attribute {attribute.GetType()} in field {field.Name} of type {field.ReflectedType.Name} was found.");
+                                Debug.LogError($"No field, property (with Get method), or method with no mandatory parameters of name '{attribute.SecondProperty}' in attribute '{attribute.GetType()}' in field '{field.Name}' of type '{field.ReflectedType.Name}' was found.");
                                 break;
                             }
 
