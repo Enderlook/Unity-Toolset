@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 
 using UnityEditor;
@@ -14,132 +16,65 @@ using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Checking.PostCompiling
 {
-    public static class PostCompilingAssembliesHelper
+    internal class PostCompilingAssembliesHelper
     {
-        public static bool onlyCheckAssembliesFromPlayerAndEditor = true;
-        public static bool OnlyCheckAssembliesFromPlayerAndEditor {
-            get => onlyCheckAssembliesFromPlayerAndEditor;
-            set {
-                onlyCheckAssembliesFromPlayerAndEditor = value;
-                ExecuteAnalysis();
-            }
-        }
-
 #pragma warning disable CS0649
-        // Type Less Enum
-        private static readonly Dictionary<int, Action<Type>> executeOnEachTypeLessEnums = new Dictionary<int, Action<Type>>();
-
-        /// <summary>
-        /// Subscribes <paramref name="action"/> to be executed on each <see cref="Type"/> in the assemblies compiled by Unity which <see cref="Type.IsEnum"/> is <see langword="false"/>.<br/>
-        /// If possible, it's strongly advisable to use <see cref="ExecuteOnEachTypeWhenScriptsReloads"/> attribute instead of this method.
-        /// </summary>
-        /// <param name="action">Action to subscribe.</param>
-        /// <param name="order">Priority of this method to execute. After all other callbacks of lower order are executed on all targets this will be executed.</param>
-        public static void SubscribeOnEachTypeLessEnums(Action<Type> action, int order) => SubscribeCallback(executeOnEachTypeLessEnums, action, order);
-
-        // Type Enum
-        private static readonly Dictionary<int, Action<Type>> executeOnEachTypeEnum = new Dictionary<int, Action<Type>>();
-
-        /// <summary>
-        /// Subscribes <paramref name="action"/> to be executed on each <see cref="Type"/> in the assemblies compiled by Unity which <see cref="Type.IsEnum"/> is <see langword="true"/>.<br/>
-        /// If possible, it's strongly advisable to use <see cref="ExecuteOnEachTypeWhenScriptsReloads"/> attribute instead of this method.
-        /// </summary>
-        /// <param name="action">Action to subscribe.</param>
-        /// <param name="order">Priority of this method to execute. After all other callbacks of lower order are executed on all targets this will be executed.</param>
-        public static void SubscribeOnEachTypeEnum(Action<Type> action, int order) => SubscribeCallback(executeOnEachTypeEnum, action, order);
-
-        // Member
-        private static readonly Dictionary<int, Action<MemberInfo>> executeOnEachMemberOfTypes = new Dictionary<int, Action<MemberInfo>>();
-
-        /// <summary>
-        /// Subscribes <paramref name="action"/> to be executed on each member of each <see cref="Type"/> in the assemblies compiled by Unity.<br/>
-        /// If possible, it's strongly advisable to use <see cref="ExecuteOnEachTypeWhenScriptsReloads"/> attribute instead of this method.
-        /// </summary>
-        /// <param name="action">Action to subscribe.</param>
-        /// <param name="order">Priority of this method to execute. After all other callbacks of lower order are executed on all targets this will be executed.</param>
-        public static void SubscribeOnEachMemberOfTypes(Action<MemberInfo> action, int order) => SubscribeCallback(executeOnEachMemberOfTypes, action, order);
-
-        // Serializable By Unity Field
-        private static readonly Dictionary<int, Action<FieldInfo>> executeOnEachSerializableByUnityFieldOfTypes = new Dictionary<int, Action<FieldInfo>>();
-
-        /// <summary>
-        /// Subscribes <paramref name="action"/> to be executed on each field of each <see cref="Type"/> in the assemblies compiled by Unity which can be serialized by Unity (<seealso cref="ReflectionHelper.CanBeSerializedByUnity(FieldInfo)"/>).<br/>
-        /// If possible, it's strongly advisable to use <see cref="ExecuteOnEachTypeWhenScriptsReloads"/> attribute instead of this method.
-        /// </summary>
-        /// <param name="action">Action to subscribe.</param>
-        /// <param name="order">Priority of this method to execute. After all other callbacks of lower order are executed on all targets this will be executed.</param>
-        public static void SubscribeOnEachSerializableByUnityFieldOfTypes(Action<FieldInfo> action, int order) => SubscribeCallback(executeOnEachSerializableByUnityFieldOfTypes, action, order);
-
-        // Non Serializable By Unity Field
-        private static readonly Dictionary<int, Action<FieldInfo>> executeOnEachNonSerializableByUnityFieldOfTypes = new Dictionary<int, Action<FieldInfo>>();
-
-        /// <summary>
-        /// Subscribes <paramref name="action"/> to be executed on each member of each <see cref="Type"/> in the assemblies compiled by Unity which can be serialized by Unity (<seealso cref="ReflectionHelper.CanBeSerializedByUnity(FieldInfo)"/>).<br/>
-        /// If possible, it's strongly advisable to use <see cref="ExecuteOnEachTypeWhenScriptsReloads"/> attribute instead of this method.
-        /// </summary>
-        /// <param name="action">Action to subscribe.</param>
-        /// <param name="order">Priority of this method to execute. After all other callbacks of lower order are executed on all targets this will be executed.</param>
-        public static void SubscribeOnEachNonSerializableByUnityFieldOfTypes(Action<FieldInfo> action, int order) => SubscribeCallback(executeOnEachNonSerializableByUnityFieldOfTypes, action, order);
-
-        // Property
-        private static readonly Dictionary<int, Action<PropertyInfo>> executeOnEachPropertyOfTypes = new Dictionary<int, Action<PropertyInfo>>();
-
-        /// <summary>
-        /// Subscribes <paramref name="action"/> to be executed on each property of each <see cref="Type"/> in the assemblies compiled by Unity.<br/>
-        /// If possible, it's strongly advisable to use <see cref="ExecuteOnEachTypeWhenScriptsReloads"/> attribute instead of this method.
-        /// </summary>
-        /// <param name="action">Action to subscribe.</param>
-        /// <param name="order">Priority of this method to execute. After all other callbacks of lower order are executed on all targets this will be executed.</param>
-        public static void SubscribeOnEachPropertyOfTypes(Action<PropertyInfo> action, int order) => SubscribeCallback(executeOnEachPropertyOfTypes, action, order);
-
-        // Method
-        private static readonly Dictionary<int, Action<MethodInfo>> executeOnEachMethodOfTypes = new Dictionary<int, Action<MethodInfo>>();
-
-        /// <summary>
-        /// Subscribes <paramref name="action"/> to be executed on each method of each <see cref="Type"/> in the assemblies compiled by Unity.<br/>
-        /// If possible, it's strongly advisable to use <see cref="ExecuteOnEachTypeWhenScriptsReloads"/> attribute instead of this method.
-        /// </summary>
-        /// <param name="action">Action to subscribe.</param>
-        /// <param name="order">Priority of this method to execute. After all other callbacks of lower order are executed on all targets this will be executed.</param>
-        public static void SubscribeOnEachMethodOfTypes(Action<MethodInfo> action, int order) => SubscribeCallback(executeOnEachMethodOfTypes, action, order);
-
-        // Once
-        private static readonly Dictionary<int, Action> executeOnce = new Dictionary<int, Action>();
-
-        /// <summary>
-        /// Subscribes <paramref name="action"/> to be executed once wen Unity ompiles assemblies.<br/>
-        /// If possible, it's strongly advisable to use <see cref="ExecuteWhenScriptsReloads"/> attribute instead of this method.
-        /// </summary>
-        /// <param name="action">Action to subscribe.</param>
-        /// <param name="order">Priority of this method to execute. After all other callbacks of lower order are executed on all targets this will be executed.</param>
-        public static void SubscribeToExecuteOnce(Action action, int order) => SubscribeCallback(executeOnce, action, order);
-
-        private static void SubscribeCallback<T>(Dictionary<int, Action<T>> dictionary, Action<T> action, int order)
-        {
-            if (dictionary.ContainsKey(order))
-                dictionary[order] += action;
-            else
-                dictionary.Add(order, action);
-        }
-
-        private static void SubscribeCallback(Dictionary<int, Action> dictionary, Action action, int order)
-        {
-            if (dictionary.ContainsKey(order))
-                dictionary[order] += action;
-            else
-                dictionary.Add(order, action);
-        }
+        private const string MENU_NAME = "Enderlook/Toolset/Check All Assemblies";
+        private static bool checkAllAssemblies;
 
         private const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
 
-        private static readonly List<Type> enumTypes = new List<Type>();
-        private static readonly List<Type> nonEnumTypes = new List<Type>();
-        private static readonly List<MemberInfo> memberInfos = new List<MemberInfo>();
-        private static readonly List<FieldInfo> fieldInfosNonSerializableByUnity = new List<FieldInfo>();
-        private static readonly List<FieldInfo> fieldInfosSerializableByUnity = new List<FieldInfo>();
-        private static readonly List<PropertyInfo> propertyInfos = new List<PropertyInfo>();
-        private static readonly List<MethodInfo> methodInfos = new List<MethodInfo>();
-        
+        private readonly Container bag = new Container();
+
+        private readonly int progressId;
+        private readonly CancellationToken token;
+
+        private int current;
+
+        static PostCompilingAssembliesHelper()
+        {
+            checkAllAssemblies = EditorPrefs.GetBool(MENU_NAME, true);
+            EditorApplication.delayCall += () => SetFeature(checkAllAssemblies);
+        }
+
+        [MenuItem(MENU_NAME)]
+        private static void ToggleFeatureButton() => SetFeature(!checkAllAssemblies);
+
+        private static void SetFeature(bool enabled)
+        {
+            checkAllAssemblies = enabled;
+            Menu.SetChecked(MENU_NAME, enabled);
+            EditorPrefs.SetBool(MENU_NAME, enabled);
+        }
+
+        public PostCompilingAssembliesHelper(int progressId, CancellationToken token)
+        {
+            this.progressId = progressId;
+            this.token = token;
+        }
+
+        private class Container
+        {
+            // TODO: Check if lazy initialization improves perfomance.
+
+            public readonly Dictionary<int, Action<Type>> executeOnEachTypeLessEnums = new Dictionary<int, Action<Type>>();
+            public readonly Dictionary<int, Action<Type>> executeOnEachTypeEnum = new Dictionary<int, Action<Type>>();
+            public readonly Dictionary<int, Action<MemberInfo>> executeOnEachMemberOfTypes = new Dictionary<int, Action<MemberInfo>>();
+            public readonly Dictionary<int, Action<FieldInfo>> executeOnEachSerializableByUnityFieldOfTypes = new Dictionary<int, Action<FieldInfo>>();
+            public readonly Dictionary<int, Action<FieldInfo>> executeOnEachNonSerializableByUnityFieldOfTypes = new Dictionary<int, Action<FieldInfo>>();
+            public readonly Dictionary<int, Action<PropertyInfo>> executeOnEachPropertyOfTypes = new Dictionary<int, Action<PropertyInfo>>();
+            public readonly Dictionary<int, Action<MethodInfo>> executeOnEachMethodOfTypes = new Dictionary<int, Action<MethodInfo>>();
+            public readonly Dictionary<int, Action> executeOnce = new Dictionary<int, Action>();
+
+            public readonly List<Type> enumTypes = new List<Type>();
+            public readonly List<Type> nonEnumTypes = new List<Type>();
+            public readonly List<MemberInfo> memberInfos = new List<MemberInfo>();
+            public readonly List<FieldInfo> fieldInfosNonSerializableByUnity = new List<FieldInfo>();
+            public readonly List<FieldInfo> fieldInfosSerializableByUnity = new List<FieldInfo>();
+            public readonly List<PropertyInfo> propertyInfos = new List<PropertyInfo>();
+            public readonly List<MethodInfo> methodInfos = new List<MethodInfo>();
+        }
+
         [DidReloadScripts(2)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by Unity Editor")]
         private static async void ExecuteAnalysis()
@@ -150,75 +85,210 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
             if (millisecondsDelay > 0)
                 await Task.Delay(millisecondsDelay).ConfigureAwait(true);
 
-            // Can't do unsafe work in non-main thread. And this is unsafe
-            IEnumerable<Type> types = GetAllTypesThatShouldBeInspected();
+            // Unsafe code muset be executed in main thread.
+            Assembly[] assemblies = checkAllAssemblies ? AppDomain.CurrentDomain.GetAssemblies() : AssembliesHelper.GetAllAssembliesOfPlayerAndEditorAssemblies().ToArray();
 
-            BackgroundTask.Enqueue(() =>
-            {
-                ScanAssemblies(types);
-                ExecuteCallbacks();
-            });
-        }
-
-        private static IEnumerable<Assembly> GetAssemblies()
-        {
-            if (onlyCheckAssembliesFromPlayerAndEditor)
-                return AssembliesHelper.GetAllAssembliesOfPlayerAndEditorAssemblies();
-            else
-                return AppDomain.CurrentDomain.GetAssemblies();
-        }
-
-        /// <summary>
-        /// Get all types from assemblies which doesn't have <see cref="DoNotInspectAttribute"/> either the type or the assembly.
-        /// </summary>
-        /// <returns>All types of Player and Editor assemblies, which matches criteria..</returns>
-        private static IEnumerable<Type> GetAllTypesThatShouldBeInspected() =>
-            GetAssemblies()
-                .Where(e => !e.IsDefined(typeof(DoNotInspectAttribute)))
-                .SelectMany(e => e.GetTypes()).Where(e => !e.IsDefined(typeof(DoNotInspectAttribute)));
-
-        private static void ScanAssemblies(IEnumerable<Type> types)
-        {
-            // We don't filter by DoNotInspectAttribute because we did that before
-            foreach (Type classType in types)
-                if (classType.IsEnum)
-                    enumTypes.Add(classType);
-                else
+            BackgroundTask.Enqueue(
+                token => Progress.Start("Execute Post Compiling Checkings", "Ensure that Enderlook attributes are being used correctly."),
+                (id, token) =>
                 {
-                    nonEnumTypes.Add(classType);
+                    if (token.IsCancellationRequested)
+                        goto cancelled;
 
-                    foreach (MemberInfo memberInfo in classType.GetMembers(bindingFlags)
-                        // We don't check those member which doesn't want to be checked
-                        .Where(e => !e.IsDefined(typeof(DoNotInspectAttribute))))
+                    PostCompilingAssembliesHelper self = new PostCompilingAssembliesHelper(id, token);
+
+                    int scanId = Progress.Start("Scan Assemblies", parentId: id);
+                    int analysisId = Progress.Start("Execute Analysis", parentId: id);
+
+                    self.ScanAssemblies(scanId, assemblies);
+
+                    if (token.IsCancellationRequested)
                     {
-                        memberInfos.Add(memberInfo);
+                        Progress.Finish(scanId, Progress.Status.Canceled);
+                        goto cancelled2;
+                    }
 
-                        switch (memberInfo.MemberType)
+                    Progress.Finish(scanId);
+                    Progress.Report(id, .5f);
+
+                    self.ExecuteCallbacks(analysisId);
+
+                    if (token.IsCancellationRequested)
+                        goto cancelled2;
+
+                    Progress.Finish(analysisId);
+                    Progress.Finish(id);
+                    return;
+                cancelled2:
+                    Progress.Finish(analysisId, Progress.Status.Canceled);
+                cancelled:
+                    Progress.Finish(id, Progress.Status.Canceled);
+                }
+            );
+        }
+
+        private void ScanAssemblies(int id, Assembly[] assemblies)
+        {
+            int total = 0;
+            foreach (Assembly assembly in assemblies)
+            {
+                if (token.IsCancellationRequested)
+                    goto end;
+
+                total += assembly.GetTypes().Length;
+            }
+            Progress.Report(id, 0, total);
+
+            // Sharing collections and using Interlocked.Exchange as synchronization per collection decreases perfomances by 23%.
+            // Instead, allocating a collection per assembly and merge them later increases perfomance by 40%.
+            Container[] containers = new Container[assemblies.Length];
+
+            current = 0;
+            Parallel.For(0, assemblies.Length, i =>
+            {
+                if (token.IsCancellationRequested)
+                    return;
+
+                Container container = new Container();
+                containers[i] = container;
+
+                Assembly assembly = assemblies[i];
+
+                if (assembly.IsDefined(typeof(DoNotInspectAttribute)))
+                {
+                    Progress.Report(id, Interlocked.Add(ref current, assembly.GetTypes().Length), total);
+                    return;
+                }
+
+                foreach (Type classType in assembly.GetTypes())
+                {
+                    if (token.IsCancellationRequested)
+                        return;
+
+                    Progress.Report(id, Interlocked.Increment(ref current), total);
+
+                    if (classType.IsDefined(typeof(DoNotInspectAttribute)))
+                        continue;
+
+                    if (classType.IsEnum)
+                        container.enumTypes.Add(classType);
+                    else
+                    {
+                        container.nonEnumTypes.Add(classType);
+
+                        foreach (MemberInfo memberInfo in classType.GetMembers(bindingFlags))
                         {
-                            case MemberTypes.Field:
-                                FieldInfo fieldInfo = (FieldInfo)memberInfo;
-                                if (fieldInfo.CanBeSerializedByUnity())
-                                    fieldInfosSerializableByUnity.Add((FieldInfo)memberInfo);
-                                else
-                                    fieldInfosNonSerializableByUnity.Add((FieldInfo)memberInfo);
-                                break;
-                            case MemberTypes.Property:
-                                propertyInfos.Add((PropertyInfo)memberInfo);
-                                break;
-                            case MemberTypes.Method:
-                                MethodInfo methodInfo = (MethodInfo)memberInfo;
-                                methodInfos.Add(methodInfo);
-                                GetExecuteAttributes(methodInfo);
-                                break;
+                            try
+                            {
+                                if (memberInfo.IsDefined(typeof(DoNotInspectAttribute)))
+                                    continue;
+                            }
+                            catch (BadImageFormatException)
+                            {
+                                continue;
+                            }
+
+                            container.memberInfos.Add(memberInfo);
+
+                            switch (memberInfo.MemberType)
+                            {
+                                case MemberTypes.Field:
+                                    FieldInfo fieldInfo = (FieldInfo)memberInfo;
+                                    if (fieldInfo.CanBeSerializedByUnity())
+                                        container.fieldInfosSerializableByUnity.Add((FieldInfo)memberInfo);
+                                    else
+                                        container.fieldInfosNonSerializableByUnity.Add((FieldInfo)memberInfo);
+                                    break;
+                                case MemberTypes.Property:
+                                    container.propertyInfos.Add((PropertyInfo)memberInfo);
+                                    break;
+                                case MemberTypes.Method:
+                                    MethodInfo methodInfo = (MethodInfo)memberInfo;
+                                    container.methodInfos.Add(methodInfo);
+                                    GetExecuteAttributes(container, methodInfo);
+                                    break;
+                            }
                         }
                     }
                 }
+            });
+
+            if (token.IsCancellationRequested)
+                goto end;
+
+            int enumTypesCount = 0;
+            int nonEnumTypesCount = 0;
+            int memberInfosCount = 0;
+            int fieldInfosNonSerializableByUnityCount = 0;
+            int fieldInfosSerializableByUnityCount = 0;
+            int propertyInfosCount = 0;
+            int methodInfosCount = 0;
+            for (int i = 0; i < containers.Length; i++)
+            {
+                if (token.IsCancellationRequested)
+                    goto end;
+
+                Container c = containers[i];
+
+                enumTypesCount += c.enumTypes.Count;
+                nonEnumTypesCount += c.nonEnumTypes.Count;
+                memberInfosCount += c.memberInfos.Count;
+                fieldInfosNonSerializableByUnityCount += c.fieldInfosNonSerializableByUnity.Count;
+                fieldInfosSerializableByUnityCount += c.fieldInfosSerializableByUnity.Count;
+                propertyInfosCount += c.propertyInfos.Count;
+                methodInfosCount += c.methodInfos.Count;
+            }
+
+            bag.enumTypes.Capacity = enumTypesCount;
+            bag.nonEnumTypes.Capacity = nonEnumTypesCount;
+            bag.memberInfos.Capacity = memberInfosCount;
+            bag.fieldInfosNonSerializableByUnity.Capacity = fieldInfosNonSerializableByUnityCount;
+            bag.fieldInfosSerializableByUnity.Capacity = fieldInfosSerializableByUnityCount;
+            bag.propertyInfos.Capacity = propertyInfosCount;
+            bag.methodInfos.Capacity = methodInfosCount;
+
+            for (int i = 0; i < containers.Length; i++)
+            {
+                if (token.IsCancellationRequested)
+                    goto end;
+
+                Container c = containers[i];
+
+                foreach (KeyValuePair<int, Action<Type>> kvp in c.executeOnEachTypeLessEnums)
+                    SubscribeConcurrent(bag.executeOnEachTypeLessEnums, kvp.Value, kvp.Key);
+                foreach (KeyValuePair<int, Action<Type>> kvp in c.executeOnEachTypeEnum)
+                    SubscribeConcurrent(bag.executeOnEachTypeEnum, kvp.Value, kvp.Key);
+                foreach (KeyValuePair<int, Action<MemberInfo>> kvp in c.executeOnEachMemberOfTypes)
+                    SubscribeConcurrent(bag.executeOnEachMemberOfTypes, kvp.Value, kvp.Key);
+                foreach (KeyValuePair<int, Action<FieldInfo>> kvp in c.executeOnEachSerializableByUnityFieldOfTypes)
+                    SubscribeConcurrent(bag.executeOnEachSerializableByUnityFieldOfTypes, kvp.Value, kvp.Key);
+                foreach (KeyValuePair<int, Action<FieldInfo>> kvp in c.executeOnEachNonSerializableByUnityFieldOfTypes)
+                    SubscribeConcurrent(bag.executeOnEachNonSerializableByUnityFieldOfTypes, kvp.Value, kvp.Key);
+                foreach (KeyValuePair<int, Action<PropertyInfo>> kvp in c.executeOnEachPropertyOfTypes)
+                    SubscribeConcurrent(bag.executeOnEachPropertyOfTypes, kvp.Value, kvp.Key);
+                foreach (KeyValuePair<int, Action<MethodInfo>> kvp in c.executeOnEachMethodOfTypes)
+                    SubscribeConcurrent(bag.executeOnEachMethodOfTypes, kvp.Value, kvp.Key);
+                foreach (KeyValuePair<int, Action> kvp in c.executeOnce)
+                    SubscribeConcurrent(bag.executeOnce, kvp.Value, kvp.Key);
+
+                bag.enumTypes.AddRange(c.enumTypes);
+                bag.nonEnumTypes.AddRange(c.nonEnumTypes);
+                bag.memberInfos.AddRange(c.memberInfos);
+                bag.fieldInfosNonSerializableByUnity.AddRange(c.fieldInfosNonSerializableByUnity);
+                bag.fieldInfosSerializableByUnity.AddRange(c.fieldInfosSerializableByUnity);
+                bag.propertyInfos.AddRange(c.propertyInfos);
+                bag.methodInfos.AddRange(c.methodInfos);
+            }
+
+        end:
+            current = 0;
         }
 
-        private static void GetExecuteAttributes(MethodInfo methodInfo)
+        private void GetExecuteAttributes(Container container, MethodInfo methodInfo)
         {
             if (!methodInfo.IsStatic)
                 return;
+
             foreach (BaseExecuteWhenScriptsReloads attribute in methodInfo.GetCustomAttributes<BaseExecuteWhenScriptsReloads>())
             {
                 int loop = attribute.loop;
@@ -229,32 +299,42 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
                     if (TryGetDelegate(methodInfo, out Action<Type> action))
                     {
                         if ((typeFlags & ExecuteOnEachTypeWhenScriptsReloads.TypeFlags.IsEnum) != 0)
-                            SubscribeOnEachTypeEnum(action, loop);
+                            SubscribeConcurrent(container.executeOnEachTypeEnum, action, loop);
                         if ((typeFlags & ExecuteOnEachTypeWhenScriptsReloads.TypeFlags.IsNonEnum) != 0)
-                            SubscribeOnEachTypeLessEnums(action, loop);
+                            SubscribeConcurrent(container.executeOnEachTypeLessEnums, action, loop);
                     }
                 }
-                if (attribute is ExecuteOnEachMemberOfEachTypeWhenScriptsReloads executeOnEachMemberOfEachTypeWhenScriptsReloads)
+                else if (attribute is ExecuteOnEachMemberOfEachTypeWhenScriptsReloads executeOnEachMemberOfEachTypeWhenScriptsReloads)
+                {
                     if (TryGetDelegate(methodInfo, out Action<MemberInfo> action))
-                        SubscribeOnEachMemberOfTypes(action, loop);
-                if (attribute is ExecuteOnEachFieldOfEachTypeWhenScriptsReloads executeOnEachFieldOfEachTypeWhenScriptsReloads)
+                        SubscribeConcurrent(container.executeOnEachMemberOfTypes, action, loop);
+                }
+                else if (attribute is ExecuteOnEachFieldOfEachTypeWhenScriptsReloads executeOnEachFieldOfEachTypeWhenScriptsReloads)
+                {
                     if (TryGetDelegate(methodInfo, out Action<FieldInfo> action))
                     {
                         FieldSerialization fieldFags = executeOnEachFieldOfEachTypeWhenScriptsReloads.fieldFilter;
                         if ((fieldFags & FieldSerialization.SerializableByUnity) != 0)
-                            SubscribeOnEachSerializableByUnityFieldOfTypes(action, loop);
+                            SubscribeConcurrent(container.executeOnEachSerializableByUnityFieldOfTypes, action, loop);
                         if ((fieldFags & FieldSerialization.NotSerializableByUnity) != 0)
-                            SubscribeOnEachNonSerializableByUnityFieldOfTypes(action, loop);
+                            SubscribeConcurrent(container.executeOnEachNonSerializableByUnityFieldOfTypes, action, loop);
                     }
-                if (attribute is ExecuteOnEachPropertyOfEachTypeWhenScriptsReloads executeOnEachPropertyOfEachTypeWhenScriptsReloads)
+                }
+                else if (attribute is ExecuteOnEachPropertyOfEachTypeWhenScriptsReloads executeOnEachPropertyOfEachTypeWhenScriptsReloads)
+                {
                     if (TryGetDelegate(methodInfo, out Action<PropertyInfo> action))
-                        SubscribeOnEachPropertyOfTypes(action, loop);
-                if (attribute is ExecuteOnEachMethodOfEachTypeWhenScriptsReloads executeOnEachMethodOfEachTypeWhenScriptsReloads)
+                        SubscribeConcurrent(container.executeOnEachPropertyOfTypes, action, loop);
+                }
+                else if (attribute is ExecuteOnEachMethodOfEachTypeWhenScriptsReloads executeOnEachMethodOfEachTypeWhenScriptsReloads)
+                {
                     if (TryGetDelegate(methodInfo, out Action<MethodInfo> action))
-                        SubscribeOnEachMethodOfTypes(action, loop);
-                if (attribute is ExecuteWhenScriptsReloads executeWhenScriptsReloads)
+                        SubscribeConcurrent(container.executeOnEachMethodOfTypes, action, loop);
+                }
+                else if (attribute is ExecuteWhenScriptsReloads executeWhenScriptsReloads)
+                {
                     if (TryGetDelegate(methodInfo, out Action action))
-                        SubscribeToExecuteOnce(action, loop);
+                        SubscribeConcurrent(container.executeOnce, action, loop);
+                }
             }
         }
 
@@ -282,49 +362,131 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
             }
             catch (ArgumentException e)
             {
-                Type[] genericArguments = typeof(T).GetGenericArguments();
-                string signature = genericArguments.Length == 0 ? "nothing" : string.Join(", ", genericArguments.Select(a => a.Name));
-                Debug.LogException(new ArgumentException(string.Format(ATTRIBUTE_METHOD_ERROR, methodInfo.Name, methodInfo.DeclaringType, signature), e));
+                Error();
+
+                void Error()
+                {
+                    Type[] genericArguments = typeof(T).GetGenericArguments();
+                    string signature = genericArguments.Length == 0 ? "nothing" : string.Join(", ", genericArguments.Select(a => a.Name));
+                    Debug.LogException(new ArgumentException(string.Format(ATTRIBUTE_METHOD_ERROR, methodInfo.Name, methodInfo.DeclaringType, signature), e));
+                }
             }
             return null;
         }
 
-        private static void ExecuteCallbacks()
+        private void ExecuteCallbacks(int id)
         {
-            foreach (int loop in GetKeySortedUnion(
-                executeOnEachTypeEnum.Keys,
-                executeOnEachTypeLessEnums.Keys,
-                executeOnEachMemberOfTypes.Keys,
-                executeOnEachSerializableByUnityFieldOfTypes.Keys,
-                executeOnEachNonSerializableByUnityFieldOfTypes.Keys,
-                executeOnEachPropertyOfTypes.Keys,
-                executeOnEachMethodOfTypes.Keys
-                ))
-            {
-                void ExecuteList<T>(Dictionary<int, Action<T>> callbacks, List<T> values) => ExecuteLoop(loop, callbacks, values);
+            int total = bag.executeOnce.Count;
+            HashSet<int> keys = new HashSet<int>();
 
-                Task.WaitAll(new Task[] {
-                    Task.Run(() => ExecuteList(executeOnEachTypeEnum, enumTypes)),
-                    Task.Run(() => ExecuteList(executeOnEachTypeLessEnums, nonEnumTypes)),
-                    Task.Run(() => ExecuteList(executeOnEachMemberOfTypes, memberInfos)),
-                    Task.Run(() => ExecuteList(executeOnEachSerializableByUnityFieldOfTypes, fieldInfosSerializableByUnity)),
-                    Task.Run(() => ExecuteList(executeOnEachNonSerializableByUnityFieldOfTypes, fieldInfosNonSerializableByUnity)),
-                    Task.Run(() => ExecuteList(executeOnEachPropertyOfTypes, propertyInfos)),
-                    Task.Run(() => ExecuteList(executeOnEachMethodOfTypes, methodInfos)),
-                    Task.Run(() => {
-                        if (executeOnce.TryGetValue(loop, out Action action))
-                            action();
-                    })
-                });
+            keys.UnionWith(bag.executeOnEachTypeEnum.Keys);
+            total += bag.executeOnEachTypeEnum.Count * bag.enumTypes.Count;
+            if (token.IsCancellationRequested)
+                goto end;
+
+            keys.UnionWith(bag.executeOnEachTypeLessEnums.Keys);
+            total += bag.executeOnEachTypeLessEnums.Count * bag.nonEnumTypes.Count;
+            if (token.IsCancellationRequested)
+                goto end;
+
+            keys.UnionWith(bag.executeOnEachMemberOfTypes.Keys);
+            total += bag.executeOnEachMemberOfTypes.Count * bag.memberInfos.Count;
+            if (token.IsCancellationRequested)
+                goto end;
+
+            keys.UnionWith(bag.executeOnEachSerializableByUnityFieldOfTypes.Keys);
+            total += bag.executeOnEachSerializableByUnityFieldOfTypes.Count * bag.fieldInfosSerializableByUnity.Count;
+            if (token.IsCancellationRequested)
+                goto end;
+
+            keys.UnionWith(bag.executeOnEachNonSerializableByUnityFieldOfTypes.Keys);
+            total += bag.executeOnEachNonSerializableByUnityFieldOfTypes.Count * bag.fieldInfosNonSerializableByUnity.Count;
+            if (token.IsCancellationRequested)
+                goto end;
+
+            keys.UnionWith(bag.executeOnEachPropertyOfTypes.Keys);
+            total += bag.executeOnEachPropertyOfTypes.Count * bag.propertyInfos.Count;
+            if (token.IsCancellationRequested)
+                goto end;
+
+            keys.UnionWith(bag.executeOnEachMethodOfTypes.Keys);
+            total += bag.executeOnEachMethodOfTypes.Count * bag.methodInfos.Count;
+            if (token.IsCancellationRequested)
+                goto end;
+
+            List<int> orderedKeys = keys.ToList();
+            if (token.IsCancellationRequested)
+                goto end;
+
+            orderedKeys.Sort();
+            if (token.IsCancellationRequested)
+                goto end;
+
+            Progress.Report(id, 0, total);
+
+            int loop = 0;
+            Action[] actions = new Action[]
+            {
+                () => ExecuteLoop(bag.executeOnEachTypeEnum, bag.enumTypes),
+                () => ExecuteLoop(bag.executeOnEachTypeLessEnums, bag.nonEnumTypes),
+                () => ExecuteLoop(bag.executeOnEachMemberOfTypes, bag.memberInfos),
+                () => ExecuteLoop(bag.executeOnEachSerializableByUnityFieldOfTypes, bag.fieldInfosSerializableByUnity),
+                () => ExecuteLoop(bag.executeOnEachNonSerializableByUnityFieldOfTypes, bag.fieldInfosNonSerializableByUnity),
+                () => ExecuteLoop(bag.executeOnEachPropertyOfTypes, bag.propertyInfos),
+                () => ExecuteLoop(bag.executeOnEachMethodOfTypes, bag.methodInfos),
+                () =>
+                {
+                    if (bag.executeOnce.TryGetValue(loop, out Action action))
+                    {
+                        action();
+                        Progress.Report(id, Interlocked.Increment(ref current), total);
+                    }
+                }
+            };
+
+            current = 0;
+            foreach (int loop_ in orderedKeys)
+            {
+                if (token.IsCancellationRequested)
+                    goto end;
+
+                loop = loop_;
+
+                Parallel.Invoke(actions);
+            }
+
+        end:
+            loop = 0;
+            current = 0;
+
+            void ExecuteLoop<T>(Dictionary<int, Action<T>> callbacks, List<T> values)
+            {
+                if (callbacks.TryGetValue(loop, out Action<T> action))
+                {
+                    if (token.IsCancellationRequested)
+                        return;
+
+                    foreach (T element in values)
+                    {
+                        if (token.IsCancellationRequested)
+                            return;
+
+                        action(element);
+
+                        Progress.Report(id, Interlocked.Increment(ref current), total);
+                    }
+                }
             }
         }
 
-        private static IEnumerable<int> GetKeySortedUnion(params IEnumerable<int>[] keys) => keys.SelectMany(e => e).Distinct().OrderByDescending(e => e).Reverse();
-
-        private static void ExecuteLoop<T>(int loop, Dictionary<int, Action<T>> callbacks, List<T> values)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void SubscribeConcurrent<T>(Dictionary<int, T> dictionary, T action, int order)
+            where T : Delegate
         {
-            if (callbacks.TryGetValue(loop, out Action<T> action))
-                values.ForEach(action);
+            if (dictionary.TryGetValue(order, out T value))
+                dictionary[order] = (T)Delegate.Combine(value, action);
+            else
+                dictionary.Add(order, action);
         }
     }
 }

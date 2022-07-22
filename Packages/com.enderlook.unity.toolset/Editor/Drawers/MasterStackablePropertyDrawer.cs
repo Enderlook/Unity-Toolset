@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading.Tasks;
 
 using UnityEditor;
 using UnityEditor.Callbacks;
@@ -27,14 +28,46 @@ namespace Enderlook.Unity.Toolset.Drawers
         [DidReloadScripts]
         private static void Reset()
         {
-            task = BackgroundTask.Enqueue(() =>
-            {
-                drawersMap.Clear();
-                foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-                    foreach (Type type in assembly.GetTypes())
-                        foreach (CustomStackablePropertyDrawerAttribute attribute in type.GetCustomAttributes<CustomStackablePropertyDrawerAttribute>())
-                            drawersMap.Add(attribute.Type, (type, attribute.UseForChildren));
-            });
+            task = BackgroundTask.Enqueue(
+                token => Progress.Start($"Initialize {typeof(MasterStackablePropertyDrawer)}", "Enqueued process."),
+                (id, token) =>
+                {
+                    if (token.IsCancellationRequested)
+                        goto cancelled;
+
+                    Progress.SetDescription(id, null);
+                    drawersMap.Clear();
+
+                    Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+                    int total = 0;
+                    foreach (Assembly assembly in assemblies)
+                        total += assembly.GetTypes().Length;
+                    Progress.Report(id, 0, total);
+
+                    int current = 0;
+                    foreach (Assembly assembly in assemblies)
+                    {
+                        if (token.IsCancellationRequested)
+                            goto cancelled;
+
+                        foreach (Type type in assembly.GetTypes())
+                        {
+                            if (token.IsCancellationRequested)
+                                goto cancelled;
+
+                            Progress.Report(id, current++, total);
+
+                            foreach (CustomStackablePropertyDrawerAttribute attribute in type.GetCustomAttributes<CustomStackablePropertyDrawerAttribute>())
+                                drawersMap.Add(attribute.Type, (type, attribute.UseForChildren));
+                        }
+                    }
+
+                    Progress.Finish(id);
+                    return;
+                cancelled:
+                    Progress.Finish(id, Progress.Status.Canceled);
+                }
+            );
         }
 
         private List<StackablePropertyDrawer> GetDrawers()
