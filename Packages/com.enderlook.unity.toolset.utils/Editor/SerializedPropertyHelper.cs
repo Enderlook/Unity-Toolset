@@ -100,7 +100,7 @@ namespace Enderlook.Unity.Toolset.Utils
         /// </summary>
         /// <param name="source"><see cref="SerializedProperty"/> element of array.</param>
         /// <returns>Its index.</returns>
-        /// <exception cref="ArgumentException">Thrown when <paramref name="source"/> doesn't come from an array.</exception>
+        /// <exception cref="ArgumentException">Thrown when <paramref name="source"/> is <see langword="null"/> or doesn't come from an array.</exception>
         public static int GetIndexFromArray(this SerializedProperty source)
         {
             if (source is null) Helper.ThrowArgumentNullException_Source();
@@ -130,6 +130,8 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <param name="source"><see cref="SerializedProperty"/> where the <see cref="SerializedProperty"/> will be taken.</param>
         /// <param name="name">Name of the property which backing field will be get.</param>
         /// <returns><see cref="SerializedProperty"/> of the backing field of <paramref name="name"/> property.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> or <paramref name="name"/> are <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">Thrown when <paramref name="name"/> is empty.</exception>
         public static SerializedProperty FindRelativeBackingFieldOfProperty(this SerializedProperty source, string name)
         {
             if (source is null) Helper.ThrowArgumentNullException_Source();
@@ -145,6 +147,8 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <param name="source"><see cref="SerializedProperty"/> where the <see cref="SerializedProperty"/> will be taken.</param>
         /// <param name="name">Name of the property to get.</param>
         /// <returns><see cref="SerializedProperty"/> of the field or backing field of <paramref name="name"/> property.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> or <paramref name="name"/> are <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">Thrown when <paramref name="name"/> is empty.</exception>
         public static SerializedProperty FindRelativePropertyOrBackingField(this SerializedProperty source, string name)
         {
             if (source is null) Helper.ThrowArgumentNullException_Source();
