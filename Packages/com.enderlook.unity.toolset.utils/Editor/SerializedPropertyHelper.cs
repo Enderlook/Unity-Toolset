@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Linq;
-using System.Text.RegularExpressions;
 
 using UnityEditor;
 
@@ -12,11 +10,6 @@ namespace Enderlook.Unity.Toolset.Utils
     public static partial class SerializedPropertyHelper
     {
         // https://github.com/lordofduct/spacepuppy-unity-framework/blob/master/SpacepuppyBaseEditor/EditorHelper.cs
-
-        private static readonly Regex BACKING_FIELD_REGEX = new Regex("^<(.*)>k__BackingField", RegexOptions.Compiled);
-        private static readonly Regex IS_ARRAY_REGEX = new Regex(@"Array.data\[\d+\]$", RegexOptions.Compiled);
-        private static readonly string[] ARRAY_DATA_SEPARATOR = new string[] { ".Array.data[" };
-        private static readonly char[] OPEN_BRACKET_SEPARATOR = new char[] { '[' }; // TODO: On .NET standard 2.1 use string.Split(char, StringSplitOptions) instead
 
         /// <summary>
         /// Get the name of the backing field of a property.
@@ -41,10 +34,11 @@ namespace Enderlook.Unity.Toolset.Utils
         {
             if (source is null) Helper.ThrowArgumentNullException_Source();
 
-            Match match = BACKING_FIELD_REGEX.Match(source);
-            if (match.Length == 0)
+            if (!source.EndsWith(">k__BackingField"))
                 return source;
-            return match.Groups[1].Value;
+
+            ReadOnlySpan<char> span = source.AsSpan(1);
+            return span.Slice(0, span.Length - ">k__BackingField".Length).ToString();
         }
 
         /// <summary>
@@ -57,7 +51,8 @@ namespace Enderlook.Unity.Toolset.Utils
         {
             if (source is null) Helper.ThrowArgumentNullException_Source();
 
-            return IS_ARRAY_REGEX.IsMatch(source.propertyPath);
+            string propertyPath = source.propertyPath;
+            return propertyPath[propertyPath.Length - 1] == ']';
         }
 
         /// <summary>
@@ -70,20 +65,21 @@ namespace Enderlook.Unity.Toolset.Utils
         {
             if (source is null) Helper.ThrowArgumentNullException_Source();
 
-            string path;
-            if (source.IsArrayOrListSize())
-                path = source.propertyPath.Substring(0, source.propertyPath.Length - ".Array.size".Length);
-            else if (source.IsArrayOrListElement())
+            ReadOnlySpan<char> path = source.propertyPath.AsSpan();
+            // Is array or list size.
+            int i = path.LastIndexOf(".Array.size".AsSpan());
+            if (i == -1)
             {
-                string[] tmp = source.propertyPath.Split(ARRAY_DATA_SEPARATOR, StringSplitOptions.None);
-                path = tmp[tmp.Length - 2];
+                // Is array element.
+                i = path.LastIndexOf(".Array.data[".AsSpan());
             }
-            else
-                path = source.propertyPath;
-            {
-                string[] tmp = path.Split(Helper.DOT_SEPARATOR);
-                return tmp[tmp.Length - 1];
-            }
+
+            if (i != -1)
+                path = path.Slice(0, i);
+
+            path = path.Slice(path.LastIndexOf('.') + 1);
+
+            return path.ToString();
         }
 
         /// <summary>
@@ -107,16 +103,23 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <exception cref="ArgumentException">Thrown when <paramref name="source"/> doesn't come from an array.</exception>
         public static int GetIndexFromArray(this SerializedProperty source)
         {
-            if (source == null) Helper.ThrowArgumentNullException_Source();
+            if (source is null) Helper.ThrowArgumentNullException_Source();
 
-            string part = source.propertyPath.Split(Helper.DOT_SEPARATOR).Last().Split(OPEN_BRACKET_SEPARATOR).LastOrDefault();
-            if (part == default)
-            {
+            ReadOnlySpan<char> path = source.propertyPath.AsSpan();
+            int j = path.LastIndexOf('.');
+            if (j == -1)
+                j = 0;
+
+            ReadOnlySpan<char> lastPath = path.Slice(j + 1);
+            j = lastPath.LastIndexOf('[');
+
+            if (j == -1)
                 Throw();
-                return 0;
-            }
-            else
-                return int.Parse(part.Replace("]", ""));
+
+            ReadOnlySpan<char> part = lastPath.Slice(j + 1, lastPath.Length - j - 2);
+
+            // TODO: In .Net Standard 2.1 the .ToString() can be avoided.
+            return int.Parse(part.ToString());
 
             void Throw() => throw new ArgumentException("It doesn't come from an array", nameof(source));
         }
@@ -129,8 +132,8 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <returns><see cref="SerializedProperty"/> of the backing field of <paramref name="name"/> property.</returns>
         public static SerializedProperty FindRelativeBackingFieldOfProperty(this SerializedProperty source, string name)
         {
-            if (source == null) Helper.ThrowArgumentNullException_Source();
-            if (name == null) Helper.ThrowArgumentNullException_Name();
+            if (source is null) Helper.ThrowArgumentNullException_Source();
+            if (name is null) Helper.ThrowArgumentNullException_Name();
             if (name.Length == 0) Helper.ThrowArgumentException_NameCannotBeEmpty();
 
             return source.FindPropertyRelative(GetBackingFieldName(name));
@@ -144,12 +147,12 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <returns><see cref="SerializedProperty"/> of the field or backing field of <paramref name="name"/> property.</returns>
         public static SerializedProperty FindRelativePropertyOrBackingField(this SerializedProperty source, string name)
         {
-            if (source == null) Helper.ThrowArgumentNullException_Source();
-            if (name == null) Helper.ThrowArgumentNullException_Name();
+            if (source is null) Helper.ThrowArgumentNullException_Source();
+            if (name is null) Helper.ThrowArgumentNullException_Name();
             if (name.Length == 0) Helper.ThrowArgumentException_NameCannotBeEmpty();
 
             SerializedProperty serializedProperty = source.FindPropertyRelative(name);
-            if (serializedProperty == null)
+            if (serializedProperty is null)
                 serializedProperty = source.FindPropertyRelative(GetBackingFieldName(name));
             return serializedProperty;
         }
