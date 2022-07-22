@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
+using UnityEditor.Callbacks;
 using UnityEditor.Compilation;
 
 using SystemAssembly = System.Reflection.Assembly;
@@ -13,26 +13,41 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
     {
         private static HashSet<SystemAssembly> assemblies;
 
+        [DidReloadScripts(-10)]
+        private static void Reset() => assemblies = null;
+
         /// <summary>
-        /// Get all assemblies from <see cref="AppDomain.CurrentDomain"/> which are in the <see cref="CompilationPipeline.GetAssemblies(AssembliesType)"/> either <see cref="AssembliesType.Editor"/> and <see cref="AssembliesType.Player"/>.
+        /// Get all assemblies from <see cref="AppDomain.CurrentDomain"/> which are in the <see cref="CompilationPipeline.GetAssemblies(AssembliesType)"/> either <see cref="AssembliesType.Editor"/> or <see cref="AssembliesType.Player"/>.
         /// </summary>
-        /// <param name="ingoreCache">Whenever it should recalculate the value regardless the cache.</param>
         /// <returns>Assemblies which matches criteria.</returns>
-        public static IReadOnlyCollection<SystemAssembly> GetAllAssembliesOfPlayerAndEditorAssemblies(bool ingoreCache = false)
+        public static IReadOnlyCollection<SystemAssembly> GetAllAssembliesOfPlayerAndEditorAssemblies()
         {
             // Cached because it takes like 100ms to do.
-            if (assemblies == null || ingoreCache)
+            if (assemblies == null)
             {
-                UnityAssembly[] unityAssemblies = CompilationPipeline.GetAssemblies(AssembliesType.Editor).Concat(CompilationPipeline.GetAssemblies(AssembliesType.Player)).ToArray();
+                UnityAssembly[] editorAsemblies = CompilationPipeline.GetAssemblies(AssembliesType.Editor);
+                UnityAssembly[] playerAssemblies = CompilationPipeline.GetAssemblies(AssembliesType.Player);
                 assemblies = new HashSet<SystemAssembly>();
                 foreach (SystemAssembly assembly in AppDomain.CurrentDomain.GetAssemblies())
                 {
                     string name = assembly.GetName().Name;
-                    foreach (UnityAssembly unityAssembly in unityAssemblies)
+                    foreach (UnityAssembly unityAssembly in editorAsemblies)
                     {
                         if (name == unityAssembly.name)
+                        {
                             assemblies.Add(assembly);
+                            goto next;
+                        }
                     }
+                    foreach (UnityAssembly unityAssembly in playerAssemblies)
+                    {
+                        if (name == unityAssembly.name)
+                        {
+                            assemblies.Add(assembly);
+                            goto next;
+                        }
+                    }
+                next:;
                 }
             }
             return assemblies;
