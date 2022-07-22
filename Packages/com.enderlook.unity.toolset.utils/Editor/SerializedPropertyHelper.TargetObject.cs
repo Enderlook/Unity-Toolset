@@ -235,7 +235,7 @@ namespace Enderlook.Unity.Toolset.Utils
             }
 
             Debug.Assert(false, "Impossible state.");
-            isFalse:
+        isFalse:
             nodes.Clear();
             return false;
 
@@ -389,7 +389,7 @@ namespace Enderlook.Unity.Toolset.Utils
                         return (T)(object)(uint)source.longValue;
                     if (typeof(T) == typeof(float) && propertyType == SerializedPropertyType.Float && source.type == "float")
                         return (T)(object)source.floatValue;
-                fallback:
+                    fallback:
                     return Fallback();
                 }
 
@@ -508,7 +508,7 @@ namespace Enderlook.Unity.Toolset.Utils
                 if (underlyingType == typeof(double))
                     return (T)Enum.ToObject(typeof(T), (double)source.doubleValue);
 
-            fallback:
+                fallback:
                 return (T)GetTargetObject(source);
             }
 
@@ -595,7 +595,7 @@ namespace Enderlook.Unity.Toolset.Utils
                     case SerializedPropertyType.Gradient:
                     case SerializedPropertyType.Generic:
                     default:
-                        fallback:
+                    fallback:
                         return (T)GetTargetObject(source);
                 }
             }
@@ -710,13 +710,13 @@ namespace Enderlook.Unity.Toolset.Utils
                     nodes_.Clear();
                     nodes = nodes_;
                     return true;
-                    error_:
+                error_:
                     nodes_.Clear();
                     nodes = nodes_;
                     return false;
                 }
             }
-            error:
+        error:
             nodes_.Clear();
             return false;
         }
@@ -856,7 +856,7 @@ namespace Enderlook.Unity.Toolset.Utils
                         source.floatValue = (float)(object)newValue;
                     else
                         goto fallback;
-                end:
+                    end:
                     return;
                 fallback:
                     Fallback();
@@ -1120,7 +1120,7 @@ namespace Enderlook.Unity.Toolset.Utils
                         source.exposedReferenceValue = (UnityObject)(object)newValue;
                         break;
                     default:
-                        fallback:
+                    fallback:
                         source.SetTargetObject(newValue, false);
                         break;
                 }
@@ -1311,7 +1311,7 @@ namespace Enderlook.Unity.Toolset.Utils
                     goto fallback;
             }
 
-            find:
+        find:
             {
                 bool found;
                 Type type_;
@@ -1326,7 +1326,7 @@ namespace Enderlook.Unity.Toolset.Utils
                     type = FindType();
             }
 
-            done:
+        done:
             if (source.isArray)
             {
                 defaultType = type.MakeArrayType();
@@ -1338,7 +1338,7 @@ namespace Enderlook.Unity.Toolset.Utils
             fallback:
             type = Fallback();
 
-            end:
+        end:
             return type;
 
             Type FindType()
