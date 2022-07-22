@@ -75,7 +75,7 @@ namespace Enderlook.Unity.Toolset.Utils
         /// Check if the given field can be serialized by Unity.
         /// </summary>
         /// <param name="fieldInfo">Field to check.</param>
-        /// <returns>Whenever the field can be serialized by Unity of not.</returns>
+        /// <returns>Whenever the field can be serialized by Unity or not.</returns>
         public static bool CanBeSerializedByUnity(this FieldInfo fieldInfo)
         {
             if (fieldInfo.IsPublic || fieldInfo.IsDefined(typeof(SerializeField)))
