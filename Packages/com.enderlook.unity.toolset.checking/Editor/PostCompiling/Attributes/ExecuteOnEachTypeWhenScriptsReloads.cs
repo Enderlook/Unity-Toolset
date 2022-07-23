@@ -23,13 +23,13 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling.Attributes
         /// </summary>
         /// <param name="typeFlags">Determines rules about in which types does match.</param>
         /// <param name="loop">In which loop of the execution will this script execute.</param>
-        public ExecuteOnEachTypeWhenScriptsReloads(TypeFlags typeFlags = TypeFlags.IsEitherEnumNonEnum, int loop = 0) : base(loop) => typeFilter = typeFlags;
+        public ExecuteOnEachTypeWhenScriptsReloads(TypeFlags typeFlags = TypeFlags.AnyType, int loop = 0) : base(loop) => typeFilter = typeFlags;
 
         /// <summary>
         /// Executes the method decorated by this attribute for each <see cref="Type"/> compiled by Unity, that matches the <paramref name="typeFlags"/> criteria.<br/>
         /// The method to decorate must have the signature DoSomething(<see cref="Type"/>).
         /// </summary>
         /// <param name="loop">In which loop of the execution will this script execute.</param>
-        public ExecuteOnEachTypeWhenScriptsReloads(int loop = 0) : base(loop) => typeFilter = TypeFlags.IsEitherEnumNonEnum;
+        public ExecuteOnEachTypeWhenScriptsReloads(int loop = 0) : base(loop) => typeFilter = TypeFlags.AnyType;
     }
 }

@@ -19,8 +19,8 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling.Attributes
         IsNonEnum = 1 << 2,
 
         /// <summary>
-        /// Execute on types regardless <see cref="Type.IsEnum"/>.
+        /// Execute on any type.
         /// </summary>
-        IsEitherEnumNonEnum = IsEnum | IsNonEnum,
+        AnyType = IsEnum | IsNonEnum,
     }
 }
