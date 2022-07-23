@@ -15,7 +15,11 @@ namespace Enderlook.Unity.Toolset.Testing
     {
         private static readonly Dictionary<Type, List<(FieldInfo field, LabelAttribute attribute)>> typesAndAttributes = new Dictionary<Type, List<(FieldInfo field, LabelAttribute attribute)>>();
 
-        [ExecuteOnEachFieldOfEachTypeWhenScriptsReloads(FieldSerialization.SerializableByUnity, 0)]
+        [ExecuteWhenScriptsReloads(0)]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper")]
+        private static void Reset() => typesAndAttributes.Clear();
+
+        [ExecuteOnEachFieldOfEachTypeWhenScriptsReloads(FieldSerialization.SerializableByUnity, 1)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper")]
         private static void GetFields(FieldInfo fieldInfo)
         {
@@ -28,7 +32,7 @@ namespace Enderlook.Unity.Toolset.Testing
             }
         }
 
-        [ExecuteWhenScriptsReloads(1)]
+        [ExecuteWhenScriptsReloads(2)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper")]
         private static void CheckFields()
         {

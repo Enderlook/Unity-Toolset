@@ -14,7 +14,11 @@ namespace Enderlook.Unity.Toolset.Testing
     {
         private static readonly HashSet<Type> types = new HashSet<Type>();
 
-        [ExecuteOnEachTypeWhenScriptsReloads]
+        [ExecuteWhenScriptsReloads(0)]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper")]
+        private static void Reset() => types.Clear();
+
+        [ExecuteOnEachTypeWhenScriptsReloads(1)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper")]
         private static void GetTypes(Type type)
         {
@@ -22,7 +26,7 @@ namespace Enderlook.Unity.Toolset.Testing
                 types.Add(type);
         }
 
-        [ExecuteOnEachFieldOfEachTypeWhenScriptsReloads(FieldSerialization.EitherSerializableOrNotByUnity, 1)]
+        [ExecuteOnEachFieldOfEachTypeWhenScriptsReloads(FieldSerialization.EitherSerializableOrNotByUnity, 2)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper")]
         private static void GetFields(FieldInfo fieldInfo)
         {
