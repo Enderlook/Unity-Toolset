@@ -10,13 +10,13 @@ namespace Enderlook.Unity.Toolset.Checking
     {
         /// <summary>
         /// Non serializable fields by Unity are allowed.<br/>
-        /// <seealso cref="ReflectionHelper.CanBeSerializedByUnity(FieldInfo)"/>.
+        /// <seealso cref="Utils.ReflectionHelper.CanBeSerializedByUnity(FieldInfo)"/>.
         /// </summary>
         NotSerializableByUnity = 1,
 
         /// <summary>
         /// Serializable fields by Unity are allowed.
-        /// <seealso cref="ReflectionHelper.CanBeSerializedByUnity(FieldInfo)"/>.
+        /// <seealso cref="Utils.ReflectionHelper.CanBeSerializedByUnity(FieldInfo)"/>.
         /// </summary>
         SerializableByUnity = 1 << 1,
 
