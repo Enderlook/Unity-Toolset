@@ -10,11 +10,11 @@ namespace Enderlook.Unity.Toolset.Checking
     {
         private static readonly Dictionary<Type, (AttributeTargets targets, Action<Type, string> checker)> checkers = new Dictionary<Type, (AttributeTargets targets, Action<Type, string> checker)>();
 
-        [ExecuteWhenScriptsReloads(0)]
+        [ExecuteWhenCheckAttribute(0)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper")]
         private static void Reset() => checkers.Clear();
 
-        [ExecuteOnEachTypeWhenScriptsReloads(TypeFlags.IsNonEnum, 1)]
+        [ExecuteOnEachTypeWhenCheckAttribute(TypeFlags.IsNonEnum, 1)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper.")]
         private static void GetAttributesAndTypes(Type type)
         {
@@ -40,7 +40,7 @@ namespace Enderlook.Unity.Toolset.Checking
 
         private static void CheckSomething(MemberInfo memberInfo, Type type, string memberType, AttributeTargets checkIf) => CheckSomething(memberInfo.GetCustomAttributes(), new HashSet<Type>(memberInfo.GetAttributeTypesThatShouldBeIgnored()), type, checkIf, $"{memberType} {memberInfo.Name} in {memberInfo.DeclaringType.Name} class");
 
-        [ExecuteOnEachTypeWhenScriptsReloads(TypeFlags.IsNonEnum, 2)]
+        [ExecuteOnEachTypeWhenCheckAttribute(TypeFlags.IsNonEnum, 2)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper.")]
         private static void CheckClasses(Type type)
         {
@@ -49,15 +49,15 @@ namespace Enderlook.Unity.Toolset.Checking
                 CheckSomething(type.GetCustomAttributes(), toIgnore, type, AttributeTargets.Class, $"Class '{type.Name}'");
         }
 
-        [ExecuteOnEachFieldOfEachTypeWhenScriptsReloads(FieldSerialization.EitherSerializableOrNotByUnity, 2)]
+        [ExecuteOnEachFieldOfEachTypeWhenCheckAttribute(FieldSerialization.EitherSerializableOrNotByUnity, 2)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper.")]
         private static void CheckFields(FieldInfo fieldInfo) => CheckSomething(fieldInfo, fieldInfo.FieldType, "Field", AttributeTargets.Field);
 
-        [ExecuteOnEachPropertyOfEachTypeWhenScriptsReloads(2)]
+        [ExecuteOnEachPropertyOfEachTypeWhenCheckAttribute(2)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper.")]
         private static void CheckProperties(PropertyInfo propertyInfo) => CheckSomething(propertyInfo, propertyInfo.PropertyType, "Property", AttributeTargets.Property);
 
-        [ExecuteOnEachMethodOfEachTypeWhenScriptsReloads(2)]
+        [ExecuteOnEachMethodOfEachTypeWhenCheckAttribute(2)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper.")]
         private static void CheckMethodReturns(MethodInfo methodInfo) => CheckSomething(methodInfo, methodInfo.ReturnType, "Method return", AttributeTargets.Method);
     }

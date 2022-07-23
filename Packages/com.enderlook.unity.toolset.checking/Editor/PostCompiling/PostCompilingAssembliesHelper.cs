@@ -357,10 +357,10 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
             if (!methodInfo.IsStatic)
                 return;
 
-            foreach (BaseExecuteWhenScriptsReloads attribute in methodInfo.GetCustomAttributes<BaseExecuteWhenScriptsReloads>())
+            foreach (BaseExecuteWhenCheckAttribute attribute in methodInfo.GetCustomAttributes<BaseExecuteWhenCheckAttribute>())
             {
                 int loop = attribute.loop;
-                if (attribute is ExecuteOnEachTypeWhenScriptsReloads executeOnEachTypeWhenScriptsReloads)
+                if (attribute is ExecuteOnEachTypeWhenCheckAttribute executeOnEachTypeWhenScriptsReloads)
                 {
                     TypeFlags typeFlags = executeOnEachTypeWhenScriptsReloads.typeFilter;
 
@@ -372,12 +372,12 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
                             SubscribeConcurrent(container.executeOnEachTypeLessEnums, action, loop);
                     }
                 }
-                else if (attribute is ExecuteOnEachMemberOfEachTypeWhenScriptsReloads executeOnEachMemberOfEachTypeWhenScriptsReloads)
+                else if (attribute is ExecuteOnEachMemberOfEachTypeWhenCheckAttribute executeOnEachMemberOfEachTypeWhenScriptsReloads)
                 {
                     if (TryGetDelegate(methodInfo, out Action<MemberInfo> action))
                         SubscribeConcurrent(container.executeOnEachMemberOfTypes, action, loop);
                 }
-                else if (attribute is ExecuteOnEachFieldOfEachTypeWhenScriptsReloads executeOnEachFieldOfEachTypeWhenScriptsReloads)
+                else if (attribute is ExecuteOnEachFieldOfEachTypeWhenCheckAttribute executeOnEachFieldOfEachTypeWhenScriptsReloads)
                 {
                     if (TryGetDelegate(methodInfo, out Action<FieldInfo> action))
                     {
@@ -388,17 +388,17 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
                             SubscribeConcurrent(container.executeOnEachNonSerializableByUnityFieldOfTypes, action, loop);
                     }
                 }
-                else if (attribute is ExecuteOnEachPropertyOfEachTypeWhenScriptsReloads executeOnEachPropertyOfEachTypeWhenScriptsReloads)
+                else if (attribute is ExecuteOnEachPropertyOfEachTypeWhenCheckAttribute executeOnEachPropertyOfEachTypeWhenScriptsReloads)
                 {
                     if (TryGetDelegate(methodInfo, out Action<PropertyInfo> action))
                         SubscribeConcurrent(container.executeOnEachPropertyOfTypes, action, loop);
                 }
-                else if (attribute is ExecuteOnEachMethodOfEachTypeWhenScriptsReloads executeOnEachMethodOfEachTypeWhenScriptsReloads)
+                else if (attribute is ExecuteOnEachMethodOfEachTypeWhenCheckAttribute executeOnEachMethodOfEachTypeWhenScriptsReloads)
                 {
                     if (TryGetDelegate(methodInfo, out Action<MethodInfo> action))
                         SubscribeConcurrent(container.executeOnEachMethodOfTypes, action, loop);
                 }
-                else if (attribute is ExecuteWhenScriptsReloads executeWhenScriptsReloads)
+                else if (attribute is ExecuteWhenCheckAttribute executeWhenScriptsReloads)
                 {
                     if (TryGetDelegate(methodInfo, out Action action))
                         SubscribeConcurrent(container.executeOnce, action, loop);
@@ -406,7 +406,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
             }
         }
 
-        private static readonly string ATTRIBUTE_METHOD_ERROR = $"Method {{0}} in {{1}} does not follow the requirements of attribute {nameof(ExecuteOnEachTypeWhenScriptsReloads)}. It's signature must be {{2}}.";
+        private static readonly string ATTRIBUTE_METHOD_ERROR = $"Method {{0}} in {{1}} does not follow the requirements of attribute {nameof(ExecuteOnEachTypeWhenCheckAttribute)}. It's signature must be {{2}}.";
 
         private static bool TryGetDelegate<T>(MethodInfo methodInfo, out Action<T> action)
         {

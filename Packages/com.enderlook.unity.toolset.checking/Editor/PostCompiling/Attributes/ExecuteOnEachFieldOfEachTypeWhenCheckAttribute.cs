@@ -10,7 +10,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling.Attributes
     [AttributeUsageAccessibility(BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public)]
     [AttributeUsageMethod(1, typeof(FieldInfo))]
     [AttributeUsage(AttributeTargets.Method, Inherited = true)]
-    public sealed class ExecuteOnEachFieldOfEachTypeWhenScriptsReloads : BaseExecuteWhenScriptsReloads
+    public sealed class ExecuteOnEachFieldOfEachTypeWhenCheckAttribute : BaseExecuteWhenCheckAttribute
     {
         /// <summary>
         /// Determines rules about in which field does match.
@@ -23,6 +23,6 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling.Attributes
         /// </summary>
         /// <param name="fieldFlags">Whenever it must be Unity able to serialize it or if it does not matter.</param>
         /// <param name="loop">In which loop of the execution will this script execute.</param>
-        public ExecuteOnEachFieldOfEachTypeWhenScriptsReloads(FieldSerialization fieldFlags = FieldSerialization.EitherSerializableOrNotByUnity, int loop = 0) : base(loop) => fieldFilter = fieldFlags;
+        public ExecuteOnEachFieldOfEachTypeWhenCheckAttribute(FieldSerialization fieldFlags = FieldSerialization.EitherSerializableOrNotByUnity, int loop = 0) : base(loop) => fieldFilter = fieldFlags;
     }
 }

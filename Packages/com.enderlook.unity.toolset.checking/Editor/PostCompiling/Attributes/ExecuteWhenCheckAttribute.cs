@@ -8,13 +8,13 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling.Attributes
     /// </summary>
     [AttributeUsageAccessibility(BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public)]
     [AttributeUsageMethod(1, parameterType = ParameterMode.VoidOrNone)]
-    public sealed class ExecuteWhenScriptsReloads : BaseExecuteWhenScriptsReloads
+    public sealed class ExecuteWhenCheckAttribute : BaseExecuteWhenCheckAttribute
     {
         /// <summary>
         /// Executes the method decorated by this attribute.<br/>
         /// The method to decorate must have the signature DoSomething().
         /// </summary>
         /// <param name="loop">In which loop of the execution will this script execute.</param>
-        public ExecuteWhenScriptsReloads(int loop = 0) : base(loop) { }
+        public ExecuteWhenCheckAttribute(int loop = 0) : base(loop) { }
     }
 }

@@ -20,11 +20,11 @@ namespace Enderlook.Unity.Toolset.Checking
                     Debug.LogError(string.Format(MUST_INHERIT_FROM_ATTRIBUTE, type, foundIn));
         }
 
-        [ExecuteOnEachTypeWhenScriptsReloads(0)]
+        [ExecuteOnEachTypeWhenCheckAttribute(0)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper.")]
         private static void GetAttributeFromMember(Type type) => CheckAttributes(type.GetCustomAttribute<DoNotCheckAttribute>(), $"type {type.Name}");
 
-        [ExecuteOnEachMemberOfEachTypeWhenScriptsReloads(0)]
+        [ExecuteOnEachMemberOfEachTypeWhenCheckAttribute(0)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper.")]
         private static void GetAttributeFromMember(MemberInfo memberInfo) => CheckAttributes(memberInfo.GetCustomAttribute<DoNotCheckAttribute>(), $"member {memberInfo.MemberType} {memberInfo.Name} in class {memberInfo.ReflectedType}");
 
