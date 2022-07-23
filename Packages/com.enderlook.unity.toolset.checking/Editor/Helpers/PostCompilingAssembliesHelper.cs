@@ -21,6 +21,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
 #pragma warning disable CS0649
         private const string EDITOR_CONFIGURATION_NAME = "Enderlook/Toolset/Checking/Mode";
         private const string MENU_NAME = "Enderlook/Toolset/Checking/";
+        private const string MENU_NAME_REFRESH = MENU_NAME + "Refresh";
         private const string MENU_NAME_DISABLED = MENU_NAME + "Disabled";
         private const string MENU_NAME_UNITY = MENU_NAME + "Unity Compilation Pipeline";
         private const string MENU_NAME_ALL = MENU_NAME + "Entire AppDomain";
@@ -58,14 +59,19 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
         [MenuItem(MENU_NAME_DISABLED, priority = 2)]
         private static void CheckDisabled() => SetFeature(CHECK_DISABLED, true);
 
+        [MenuItem(MENU_NAME_REFRESH, priority = 3)]
+        private static void Refresh() => ExecuteAnalysis();
+
         private static void SetFeature(int mode, bool execute)
         {
+            int oldValue = checkMode;
             checkMode = mode;
             Menu.SetChecked(MENU_NAME_ALL, mode == CHECK_ENABLED_ALL);
             Menu.SetChecked(MENU_NAME_UNITY, mode == CHECK_ENABLED_UNITY);
             Menu.SetChecked(MENU_NAME_DISABLED, mode == CHECK_DISABLED);
+            Menu.SetChecked(MENU_NAME_REFRESH, mode != CHECK_DISABLED);
             EditorPrefs.SetInt(EDITOR_CONFIGURATION_NAME, mode);
-            if (execute)
+            if (execute && oldValue != mode)
                 ExecuteAnalysis();
         }
 
