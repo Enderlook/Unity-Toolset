@@ -8,7 +8,7 @@ namespace Enderlook.Unity.Toolset.Utils
 
         public static void ThrowArgumentNullException_Asset()
             => throw new ArgumentNullException("asset");
-        
+
         public static void ThrowArgumentNullException_ElementType()
             => throw new ArgumentNullException("elementType");
 
