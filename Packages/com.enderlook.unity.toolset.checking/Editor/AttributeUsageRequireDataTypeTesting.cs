@@ -14,7 +14,7 @@ namespace Enderlook.Unity.Toolset.Checking
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper")]
         private static void Reset() => checkers.Clear();
 
-        [ExecuteOnEachTypeWhenScriptsReloads(ExecuteOnEachTypeWhenScriptsReloads.TypeFlags.IsNonEnum, 1)]
+        [ExecuteOnEachTypeWhenScriptsReloads(TypeFlags.IsNonEnum, 1)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper.")]
         private static void GetAttributesAndTypes(Type type)
         {
@@ -40,7 +40,7 @@ namespace Enderlook.Unity.Toolset.Checking
 
         private static void CheckSomething(MemberInfo memberInfo, Type type, string memberType, AttributeTargets checkIf) => CheckSomething(memberInfo.GetCustomAttributes(), new HashSet<Type>(memberInfo.GetAttributeTypesThatShouldBeIgnored()), type, checkIf, $"{memberType} {memberInfo.Name} in {memberInfo.DeclaringType.Name} class");
 
-        [ExecuteOnEachTypeWhenScriptsReloads(ExecuteOnEachTypeWhenScriptsReloads.TypeFlags.IsNonEnum, 2)]
+        [ExecuteOnEachTypeWhenScriptsReloads(TypeFlags.IsNonEnum, 2)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper.")]
         private static void CheckClasses(Type type)
         {

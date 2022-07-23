@@ -362,13 +362,13 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
                 int loop = attribute.loop;
                 if (attribute is ExecuteOnEachTypeWhenScriptsReloads executeOnEachTypeWhenScriptsReloads)
                 {
-                    ExecuteOnEachTypeWhenScriptsReloads.TypeFlags typeFlags = executeOnEachTypeWhenScriptsReloads.typeFilter;
+                    TypeFlags typeFlags = executeOnEachTypeWhenScriptsReloads.typeFilter;
 
                     if (TryGetDelegate(methodInfo, out Action<Type> action))
                     {
-                        if ((typeFlags & ExecuteOnEachTypeWhenScriptsReloads.TypeFlags.IsEnum) != 0)
+                        if ((typeFlags & TypeFlags.IsEnum) != 0)
                             SubscribeConcurrent(container.executeOnEachTypeEnum, action, loop);
-                        if ((typeFlags & ExecuteOnEachTypeWhenScriptsReloads.TypeFlags.IsNonEnum) != 0)
+                        if ((typeFlags & TypeFlags.IsNonEnum) != 0)
                             SubscribeConcurrent(container.executeOnEachTypeLessEnums, action, loop);
                     }
                 }

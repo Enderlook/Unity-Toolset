@@ -13,28 +13,6 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling.Attributes
     public sealed class ExecuteOnEachTypeWhenScriptsReloads : BaseExecuteWhenScriptsReloads
     {
         /// <summary>
-        /// Rules that should be match by the type.
-        /// </summary>
-        [Flags]
-        public enum TypeFlags
-        {
-            /// <summary>
-            /// Only execute on types which <see cref="Type.IsEnum"/> is <see langword="true"/>.
-            /// </summary>
-            IsEnum = 1,
-
-            /// <summary>
-            /// Only execute on types which <see cref="Type.IsEnum"/> is <see langword="false"/>.
-            /// </summary>
-            IsNonEnum = 1 << 2,
-
-            /// <summary>
-            /// Execute on types regardless <see cref="Type.IsEnum"/>.
-            /// </summary>
-            IsEitherEnumNonEnum = IsEnum | IsNonEnum,
-        }
-
-        /// <summary>
         /// Determines rules about in which types does match.
         /// </summary>
         internal readonly TypeFlags typeFilter;

@@ -25,7 +25,7 @@ namespace Enderlook.Unity.Toolset.Testing
             typesAndFieldAttributes.Clear();
         }
 
-        [ExecuteOnEachTypeWhenScriptsReloads(ExecuteOnEachTypeWhenScriptsReloads.TypeFlags.IsNonEnum, 1)]
+        [ExecuteOnEachTypeWhenScriptsReloads(TypeFlags.IsNonEnum, 1)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper")]
         private static void GetTypes(Type type)
         {
