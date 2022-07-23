@@ -67,7 +67,7 @@ namespace Enderlook.Unity.Toolset.Utils
 #endif
                         }
                         catch (Exception exception)
-                    {
+                        {
 #if UNITY_2020_1_OR_NEWER
                             Progress.Finish(task.id, Progress.Status.Failed);
 #endif
