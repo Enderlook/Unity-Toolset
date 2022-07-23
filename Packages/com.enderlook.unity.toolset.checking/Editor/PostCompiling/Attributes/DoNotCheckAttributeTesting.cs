@@ -9,8 +9,7 @@ using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Checking
 {
-    // TODO: This should be internal
-    public static class DoNotCheckAttributeTesting
+    internal static class DoNotCheckAttributeTesting
     {
         private static string MUST_INHERIT_FROM_ATTRIBUTE = "Attribute " + nameof(DoNotCheckAttribute) + " can only have types that inherit from " + nameof(Attribute) + " in the field " + nameof(DoNotCheckAttribute.ignoreTypes) + ". The type {0} is not subclass of " + nameof(Attribute) + ". Found in {1}.";
 

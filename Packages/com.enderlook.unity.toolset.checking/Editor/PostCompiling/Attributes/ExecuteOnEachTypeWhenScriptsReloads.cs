@@ -37,7 +37,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling.Attributes
         /// <summary>
         /// Determines rules about in which types does match.
         /// </summary>
-        public readonly TypeFlags typeFilter;
+        internal readonly TypeFlags typeFilter;
 
         /// <summary>
         /// Executes the method decorated by this attribute for each <see cref="Type"/> compiled by Unity, that matches the <paramref name="typeFlags"/> criteria.<br/>
