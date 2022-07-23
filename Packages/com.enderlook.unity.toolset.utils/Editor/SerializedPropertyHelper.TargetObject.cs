@@ -1404,14 +1404,6 @@ namespace Enderlook.Unity.Toolset.Utils
                     goto fallback;
             }
 
-        find:
-            {
-                task.EnsureExecute();
-
-                if (!Types.TryGetValue(typeName, out type))
-                    goto fallback;
-            }
-
         done:
             if (source.isArray)
             {
