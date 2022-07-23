@@ -19,8 +19,16 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
     internal class PostCompilingAssembliesHelper
     {
 #pragma warning disable CS0649
-        private const string MENU_NAME = "Enderlook/Toolset/Check All Assemblies";
-        private static bool checkAllAssemblies;
+        private const string EDITOR_CONFIGURATION_NAME = "Enderlook/Toolset/Checking/Mode";
+        private const string MENU_NAME = "Enderlook/Toolset/Checking/";
+        private const string MENU_NAME_DISABLED = MENU_NAME + "Disabled";
+        private const string MENU_NAME_UNITY = MENU_NAME + "Unity Compilation Pipeline";
+        private const string MENU_NAME_ALL = MENU_NAME + "Entire AppDomain";
+        private static int checkMode;
+
+        private const int CHECK_DISABLED = 0; 
+        private const int CHECK_ENABLED_UNITY = 1;
+        private const int CHECK_ENABLED_ALL = 2;
 
         private const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
 
@@ -37,18 +45,28 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
 
         static PostCompilingAssembliesHelper()
         {
-            checkAllAssemblies = EditorPrefs.GetBool(MENU_NAME, true);
-            EditorApplication.delayCall += () => SetFeature(checkAllAssemblies);
+            checkMode = EditorPrefs.GetInt(MENU_NAME, 1);
+            EditorApplication.delayCall += () => SetFeature(checkMode, false);
         }
 
-        [MenuItem(MENU_NAME)]
-        private static void ToggleFeatureButton() => SetFeature(!checkAllAssemblies);
+        [MenuItem(MENU_NAME_ALL, priority = 0)]
+        private static void CheckEnableAll() => SetFeature(CHECK_ENABLED_ALL, true);
 
-        private static void SetFeature(bool enabled)
+        [MenuItem(MENU_NAME_UNITY, priority = 1)]
+        private static void CheckEnableUnity() => SetFeature(CHECK_ENABLED_UNITY, true);
+
+        [MenuItem(MENU_NAME_DISABLED, priority = 2)]
+        private static void CheckDisabled() => SetFeature(CHECK_DISABLED, true);
+
+        private static void SetFeature(int mode, bool execute)
         {
-            checkAllAssemblies = enabled;
-            Menu.SetChecked(MENU_NAME, enabled);
-            EditorPrefs.SetBool(MENU_NAME, enabled);
+            checkMode = mode;
+            Menu.SetChecked(MENU_NAME_ALL, mode == CHECK_ENABLED_ALL);
+            Menu.SetChecked(MENU_NAME_UNITY, mode == CHECK_ENABLED_UNITY);
+            Menu.SetChecked(MENU_NAME_DISABLED, mode == CHECK_DISABLED);
+            EditorPrefs.SetInt(EDITOR_CONFIGURATION_NAME, mode);
+            if (execute)
+                ExecuteAnalysis();
         }
 
 #if UNITY_2020_1_OR_NEWER
@@ -88,6 +106,9 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by Unity Editor")]
         private static async void ExecuteAnalysis()
         {
+            if (checkMode == CHECK_DISABLED)
+                return;
+
             // When Unity is started the assemblies haven't loaded yet but this method is called, by adding this timer we reduce the chance of error
             // TODO: This is prone to race condition
             int millisecondsDelay = (10 - (int)EditorApplication.timeSinceStartup) * 1000;
@@ -95,7 +116,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
                 await Task.Delay(millisecondsDelay).ConfigureAwait(true);
 
             // Unsafe code muset be executed in main thread.
-            Assembly[] assemblies = checkAllAssemblies ? AppDomain.CurrentDomain.GetAssemblies() : AssembliesHelper.GetAllAssembliesOfPlayerAndEditorAssemblies().ToArray();
+            Assembly[] assemblies = checkMode == CHECK_ENABLED_ALL ? AppDomain.CurrentDomain.GetAssemblies() : AssembliesHelper.GetAllAssembliesOfPlayerAndEditorAssemblies().ToArray();
 
             BackgroundTask.Enqueue(
 #if UNITY_2020_1_OR_NEWER
