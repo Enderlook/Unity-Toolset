@@ -12,7 +12,7 @@ using UnityEngine;
 namespace Enderlook.Unity.Toolset.Drawers
 {
     [InitializeOnLoad]
-    internal sealed class DrawVectorRelativeToTransformEditor 
+    internal static class DrawVectorRelativeToTransformEditor 
     {
         private const string MENU_NAME = "Enderlook/Toolset/Enable Draw Vector Relative To Tranform";
 
