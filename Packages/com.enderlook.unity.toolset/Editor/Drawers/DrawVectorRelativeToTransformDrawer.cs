@@ -1,9 +1,9 @@
 ﻿using Enderlook.Unity.Toolset.Attributes;
 using Enderlook.Unity.Toolset.Utils;
-using Enderlook.Unity.Utils.Math;
 
 using System;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 using UnityEditor;
 
@@ -166,11 +166,11 @@ namespace Enderlook.Unity.Toolset.Drawers
                 case SerializedPropertyType.Vector2:
                     return serializedProperty.vector2Value + (Vector2)reference;
                 case SerializedPropertyType.Vector2Int:
-                    return (Vector2)(serializedProperty.vector2IntValue + reference.ToVector2Int());
+                    return (Vector2)(serializedProperty.vector2IntValue + ToVector2Int(reference));
                 case SerializedPropertyType.Vector3:
                     return serializedProperty.vector3Value + reference;
                 case SerializedPropertyType.Vector3Int:
-                    return serializedProperty.vector3IntValue + reference.ToVector3Int();
+                    return serializedProperty.vector3IntValue + ToVector3Int(reference);
                 default:
                     Debug.LogError($"The attribute {nameof(DrawVectorRelativeToTransformAttribute)} is only allowed in types of {nameof(Vector2)}, {nameof(Vector2Int)}, {nameof(Vector3)} and {nameof(Vector3Int)}.");
                     return Vector3.zero;
@@ -185,13 +185,13 @@ namespace Enderlook.Unity.Toolset.Drawers
                     serializedProperty.vector2Value = world - reference;
                     break;
                 case SerializedPropertyType.Vector2Int:
-                    serializedProperty.vector2IntValue = ((Vector2)world).ToVector2Int() - reference.ToVector2Int();
+                    serializedProperty.vector2IntValue = ToVector2Int(world - reference);
                     break;
                 case SerializedPropertyType.Vector3:
                     serializedProperty.vector3Value = world - reference;
                     break;
                 case SerializedPropertyType.Vector3Int:
-                    serializedProperty.vector3IntValue = world.ToVector3Int() - reference.ToVector3Int();
+                    serializedProperty.vector3IntValue = ToVector3Int(world - reference);
                     break;
                 default:
                     Debug.LogError($"The attribute {nameof(DrawVectorRelativeToTransformAttribute)} is only allowed in types of {nameof(Vector2)}, {nameof(Vector2Int)}, {nameof(Vector3)} and {nameof(Vector3Int)}.");
@@ -326,5 +326,11 @@ namespace Enderlook.Unity.Toolset.Drawers
                 }
             }
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static Vector2Int ToVector2Int(Vector2 source) => new Vector2Int((int)source.x, (int)source.y);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static Vector3Int ToVector3Int(Vector3 source) => new Vector3Int((int)source.x, (int)source.y, (int)source.z);
     }
 }

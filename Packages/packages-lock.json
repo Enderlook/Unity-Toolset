@@ -7,29 +7,14 @@
       "dependencies": {},
       "hash": "d4fc38c92fb139b4184912f20556ab27a3b519fa"
     },
-    "com.enderlook.enumerables": {
-      "version": "file:.com.enderlook.enumerables@1.0.1",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {}
-    },
-    "com.enderlook.net_compatibility": {
-      "version": "file:.com.enderlook.net_compatibility@0.5.0",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {
-        "com.system.memory": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.system.memory#com.system.memory/v4.5.4"
-      }
-    },
     "com.enderlook.unity.toolset": {
       "version": "file:com.enderlook.unity.toolset",
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.enderlook.enumerables": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.enumerables#com.enderlook.enumerables/v1.0.1",
+        "com.system.memory": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.system.memory#com.system.memory/v4.5.4",
         "com.enderlook.unity.toolset.checking": "https://github.com/Enderlook/Unity-Toolset.git?path=Packages/com.enderlook.unity.toolset.checking#com.enderlook.unity.toolset.checking/v0.1.1",
-        "com.enderlook.unity.toolset.utils": "https://github.com/Enderlook/Unity-Toolset.git?path=Packages/com.enderlook.unity.toolset.utils#com.enderlook.unity.toolset.utils/v0.5.3",
-        "com.enderlook.unity.utils.math": "https://github.com/Enderlook/Unity-Extras.git?path=Packages/com.enderlook.unity.utils.math#com.enderlook.unity.utils.math/v0.1.0"
+        "com.enderlook.unity.toolset.utils": "https://github.com/Enderlook/Unity-Toolset.git?path=Packages/com.enderlook.unity.toolset.utils#com.enderlook.unity.toolset.utils/v0.5.3"
       }
     },
     "com.enderlook.unity.toolset.checking": {
@@ -37,7 +22,6 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.enderlook.utils": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.utils#com.enderlook.utils/v0.1.0",
         "com.enderlook.unity.toolset.utils": "https://github.com/Enderlook/Unity-Toolset.git?path=Packages/com.enderlook.unity.toolset.utils#com.enderlook.unity.toolset.utils/v0.5.4"
       }
     },
@@ -46,29 +30,8 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.enderlook.unity.utils": "https://github.com/Enderlook/Unity-Extras.git?path=Packages/com.enderlook.unity.utils#com.enderlook.unity.utils/v0.1.0",
         "com.system.runtime.compiler_services.unsafe": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.system.runtime.compiler_services.unsafe#com.system.runtime.compiler_services.unsafe/v4.5.3"
       }
-    },
-    "com.enderlook.unity.utils": {
-      "version": "file:.com.enderlook.unity.utils@0.1.0",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {
-        "com.enderlook.net_compatibility": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.net_compatibility#com.enderlook.net_compatibility/v0.5.0"
-      }
-    },
-    "com.enderlook.unity.utils.math": {
-      "version": "file:.com.enderlook.unity.utils.math@0.1.0",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {}
-    },
-    "com.enderlook.utils": {
-      "version": "file:.com.enderlook.utils@0.1.0",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {}
     },
     "com.system.buffers": {
       "version": "file:.com.system.buffers@4.5.1",

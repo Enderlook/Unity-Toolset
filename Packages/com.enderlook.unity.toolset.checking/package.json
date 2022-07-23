@@ -9,7 +9,6 @@
     "editor"
   ],
   "dependencies": {
-    "com.enderlook.utils": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.utils#com.enderlook.utils/v0.1.0",
 	"com.enderlook.unity.toolset.utils": "https://github.com/Enderlook/Unity-Toolset.git?path=Packages/com.enderlook.unity.toolset.utils#com.enderlook.unity.toolset.utils/v0.5.4"
   },
   "author": {

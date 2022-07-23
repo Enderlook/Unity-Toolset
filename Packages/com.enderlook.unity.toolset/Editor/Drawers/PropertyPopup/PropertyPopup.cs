@@ -1,5 +1,4 @@
 ﻿using Enderlook.Unity.Toolset.Utils;
-using Enderlook.Utils;
 
 using System;
 using System.Reflection;
@@ -137,7 +136,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                 // We give special treat with enums
                 Type type = value.GetType();
                 if (type.IsEnum)
-                    value = ((Enum)value).GetUnderlyingValue();
+                    value = Convert.ChangeType(value, Enum.GetUnderlyingType(type));
                 return value;
             }
             return null;

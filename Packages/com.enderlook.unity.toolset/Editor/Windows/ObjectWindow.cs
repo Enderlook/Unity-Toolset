@@ -1,5 +1,4 @@
-﻿using Enderlook.Enumerables;
-using Enderlook.Unity.Toolset.Attributes;
+﻿using Enderlook.Unity.Toolset.Attributes;
 using Enderlook.Unity.Toolset.Utils;
 
 using System;
@@ -30,7 +29,9 @@ namespace Enderlook.Unity.Toolset.Windows
         private static readonly List<HideFlags> HIDE_FLAGS = new List<HideFlags>((HideFlags[])Enum.GetValues(typeof(HideFlags)));
         private static readonly char[] SPLIT = new char[] { '/' };
         private static readonly Comparison<Type> COMPARE_TYPES = (a, b) => a.FullName.CompareTo(b.FullName);
-        private static readonly ILookup<Type, Type> DERIVED_TYPES_EMPTY = Array.Empty<KeyValuePair<Type, Type>>().ToLookup();
+        private static readonly Func<KeyValuePair<Type, Type>, Type> KEY_SELECTOR = e => e.Key;
+        private static readonly Func<KeyValuePair<Type, Type>, Type> ELEMENT_SELECTOR = e => e.Value;
+        private static readonly ILookup<Type, Type> DERIVED_TYPES_EMPTY = Array.Empty<KeyValuePair<Type, Type>>().ToLookup(KEY_SELECTOR, ELEMENT_SELECTOR);
         private static readonly Func<VisualElement> CREATE_LABEL = () => new Label();
 
         // Pool values
@@ -103,8 +104,10 @@ namespace Enderlook.Unity.Toolset.Windows
                         stack.Push(type);
 
                 HashSet<KeyValuePair<Type, Type>> set = new HashSet<KeyValuePair<Type, Type>>();
-                while (stack.TryPop(out Type result))
+                // TODO: In .Net Standard 2.1 use .TryPop.
+                while (stack.Count > 0)
                 {
+                    Type result = stack.Pop();
                     Type baseType = result.BaseType;
                     if (root.IsAssignableFrom(baseType))
                     {
@@ -146,7 +149,7 @@ namespace Enderlook.Unity.Toolset.Windows
                 for (int i = 1; i < sets.Length; i++)
                     keys.UnionWith(sets[i]);
 
-                derivedTypes = keys.ToLookup();
+                derivedTypes = keys.ToLookup(KEY_SELECTOR, ELEMENT_SELECTOR);
             }
         }
 
@@ -243,8 +246,10 @@ namespace Enderlook.Unity.Toolset.Windows
             list.Add(propertyType);
             list.AddRange(stack);
 
-            while (stack.TryPop(out Type result))
+            // TODO: In .Net Standard 2.1 use .TryPop.
+            while (stack.Count > 0)
             {
+                Type result = stack.Pop();
                 foreach (Type type in derivedTypes[result])
                 {
                     stack.Push(type);

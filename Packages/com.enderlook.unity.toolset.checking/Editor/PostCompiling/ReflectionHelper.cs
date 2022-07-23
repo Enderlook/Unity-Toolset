@@ -1,5 +1,4 @@
 ﻿using Enderlook.Unity.Toolset.Utils;
-using Enderlook.Utils;
 
 using System;
 using System.Collections.Generic;
@@ -49,9 +48,9 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
         /// <summary>
         /// Get all member names of <paramref name="class"/> which:
         /// <list type="bullet">
-        ///     <item><description>If <see cref="MethodInfo"/>, its <see cref="MethodInfo.ReturnType"/> must be <typeparamref name="T"/> and it must not require mandatory parameters (can have optionals or params).</description></item>
-        ///     <item><description>If <see cref="PropertyInfo"/>, its <see cref="PropertyInfo.PropertyType"/> must be <typeparamref name="T"/> and it must have a setter.</description></item>
-        ///     <item><description>If <see cref="FieldInfo"/>, its <see cref="FieldInfo.FieldType"/> must be <typeparamref name="T"/>.</description></item>
+        ///     <item><description>If <see cref="MethodInfo"/>, its <see cref="MethodInfo.ReturnType"/> must be assignable to <paramref name="class"/> and it must not require mandatory parameters (can have optionals or params).</description></item>
+        ///     <item><description>If <see cref="PropertyInfo"/>, its <see cref="PropertyInfo.PropertyType"/> must be assignable to <paramref name="class"/> and it must have a setter.</description></item>
+        ///     <item><description>If <see cref="FieldInfo"/>, its <see cref="FieldInfo.FieldType"/> must be assignable to <paramref name="class"/>.</description></item>
         /// </list>
         /// </summary>
         /// <param name="class">Type where member are looked for.</param>
@@ -61,19 +60,19 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
         {
             foreach (FieldInfo field in @class.GetFields(bindingFlags))
             {
-                if (field.FieldType.IsCastableTo(@return))
+                if (@return.IsAssignableFrom(field.FieldType))
                     yield return field.Name;
             }
 
             foreach (PropertyInfo property in @class.GetProperties(bindingFlags))
             {
-                if (property.PropertyType.IsCastableTo(@return) && property.CanRead)
+                if (@return.IsAssignableFrom(property.PropertyType) && property.CanRead)
                     yield return property.Name;
             }
 
             foreach (MethodInfo method in @class.GetMethods(bindingFlags))
             {
-                if (method.ReturnType.IsCastableTo(@return) && method.HasNoMandatoryParameters())
+                if (@return.IsAssignableFrom(method.ReturnType) && method.HasNoMandatoryParameters())
                     yield return method.Name;
             }
         }
@@ -81,9 +80,9 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
         /// <summary>
         /// Get all member names of <paramref name="class"/> which:
         /// <list type="bullet">
-        ///     <item><description>If <see cref="MethodInfo"/>, its <see cref="MethodInfo.ReturnType"/> must be <typeparamref name="T"/> and it must not require mandatory parameters (can have optionals or params).</description></item>
-        ///     <item><description>If <see cref="PropertyInfo"/>, its <see cref="PropertyInfo.PropertyType"/> must be <typeparamref name="T"/> and it must have a setter.</description></item>
-        ///     <item><description>If <see cref="FieldInfo"/>, its <see cref="FieldInfo.FieldType"/> must be <typeparamref name="T"/>.</description></item>
+        ///     <item><description>If <see cref="MethodInfo"/>, its <see cref="MethodInfo.ReturnType"/> must be assignable to <typeparamref name="T"/> and it must not require mandatory parameters (can have optionals or params).</description></item>
+        ///     <item><description>If <see cref="PropertyInfo"/>, its <see cref="PropertyInfo.PropertyType"/> must be assignable to <typeparamref name="T"/> and it must have a setter.</description></item>
+        ///     <item><description>If <see cref="FieldInfo"/>, its <see cref="FieldInfo.FieldType"/> must be assignable to <typeparamref name="T"/>.</description></item>
         /// </list>
         /// </summary>
         /// <typeparam name="T">Return type for criteria.</typeparam>
