@@ -8,7 +8,7 @@ namespace Enderlook.Unity.Toolset.Checking
 {
     internal static class AttributeUsageAccessibilityTesting
     {
-        private static Dictionary<Type, Action<MemberInfo, string>> checkers = new Dictionary<Type, Action<MemberInfo, string>>();
+        private static readonly Dictionary<Type, Action<MemberInfo, string>> checkers = new Dictionary<Type, Action<MemberInfo, string>>();
 
         [ExecuteOnEachTypeWhenScriptsReloads(ExecuteOnEachTypeWhenScriptsReloads.TypeFlags.IsEitherEnumNonEnum, 0)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper.")]

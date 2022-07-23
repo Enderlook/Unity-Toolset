@@ -11,7 +11,7 @@ namespace Enderlook.Unity.Toolset.Checking
 {
     internal static class AttributeUsageFieldMustBeSerializableByUnityTesting
     {
-        private static HashSet<Type> types = new HashSet<Type>();
+        private static readonly HashSet<Type> types = new HashSet<Type>();
 
         [ExecuteOnEachTypeWhenScriptsReloads(ExecuteOnEachTypeWhenScriptsReloads.TypeFlags.IsNonEnum, 0)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper.")]

@@ -12,7 +12,7 @@ namespace Enderlook.Unity.Toolset.Testing
 {
     internal static class CannotBeUsedAsMemberTesting
     {
-        private static HashSet<Type> types = new HashSet<Type>();
+        private static readonly HashSet<Type> types = new HashSet<Type>();
 
         [ExecuteOnEachTypeWhenScriptsReloads]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper")]
