@@ -16,9 +16,7 @@ namespace Enderlook.Unity.Toolset.Checking
         {
             if (type.IsSubclassOf(typeof(Attribute))
                 && type.GetCustomAttribute<AttributeUsageMethodAttribute>(true) is AttributeUsageMethodAttribute attribute)
-            {
                 checkers.Add(type, new AttributeUsageMethodHelper(attribute).CheckAllowance);
-            }
         }
 
         [ExecuteOnEachMethodOfEachTypeWhenScriptsReloads(1)]
@@ -28,7 +26,7 @@ namespace Enderlook.Unity.Toolset.Checking
             foreach (Attribute attribute in methodInfo.GetCustomAttributes())
             {
                 Type type = attribute.GetType();
-                if (checkers.TryGetValue(attribute.GetType(), out Action<MethodInfo, string> check)
+                if (checkers.TryGetValue(type, out Action<MethodInfo, string> check)
                     && !methodInfo.CheckIfShouldBeIgnored(type))
                     check(methodInfo, $"method '{methodInfo.Name}' in '{methodInfo.DeclaringType.Name}' class");
             }
