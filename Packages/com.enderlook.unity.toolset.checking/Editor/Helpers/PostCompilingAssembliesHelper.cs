@@ -115,7 +115,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
             if (millisecondsDelay > 0)
                 await Task.Delay(millisecondsDelay).ConfigureAwait(true);
 
-            // Unsafe code muset be executed in main thread.
+            // Unsafe code must be executed in main thread.
             Assembly[] assemblies = checkMode == CHECK_ENABLED_ALL ? AppDomain.CurrentDomain.GetAssemblies() : AssembliesHelper.GetAllAssembliesOfPlayerAndEditorAssemblies().ToArray();
 
             BackgroundTask.Enqueue(
