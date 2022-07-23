@@ -7,11 +7,10 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling.Attributes
     public abstract class BaseExecuteWhenCheckAttribute : Attribute
     {
         /// <summary>
-        /// In which loop of the execution will this script executed.<br/>
-        /// Accept any kind of number.
+        /// In which order will this method be executedd.
         /// </summary>
-        internal readonly int loop;
+        internal readonly int order;
 
-        protected BaseExecuteWhenCheckAttribute(int loop = 0) => this.loop = loop;
+        protected BaseExecuteWhenCheckAttribute(int order = 0) => this.order = order;
     }
 }

@@ -14,7 +14,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling.Attributes
         /// Executes the method decorated by this attribute.<br/>
         /// The method to decorate must have the signature DoSomething().
         /// </summary>
-        /// <param name="loop">In which loop of the execution will this script execute.</param>
-        public ExecuteWhenCheckAttribute(int loop = 0) : base(loop) { }
+        /// <param name="order">In which order will this method be executed.</param>
+        public ExecuteWhenCheckAttribute(int order = 0) : base(order) { }
     }
 }

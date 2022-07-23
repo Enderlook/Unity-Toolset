@@ -359,7 +359,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
 
             foreach (BaseExecuteWhenCheckAttribute attribute in methodInfo.GetCustomAttributes<BaseExecuteWhenCheckAttribute>())
             {
-                int loop = attribute.loop;
+                int order = attribute.order;
                 if (attribute is ExecuteOnEachTypeWhenCheckAttribute executeOnEachTypeWhenScriptsReloads)
                 {
                     TypeFlags typeFlags = executeOnEachTypeWhenScriptsReloads.typeFilter;
@@ -367,15 +367,15 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
                     if (TryGetDelegate(methodInfo, out Action<Type> action))
                     {
                         if ((typeFlags & TypeFlags.IsEnum) != 0)
-                            SubscribeConcurrent(container.executeOnEachTypeEnum, action, loop);
+                            SubscribeConcurrent(container.executeOnEachTypeEnum, action, order);
                         if ((typeFlags & TypeFlags.IsNonEnum) != 0)
-                            SubscribeConcurrent(container.executeOnEachTypeLessEnums, action, loop);
+                            SubscribeConcurrent(container.executeOnEachTypeLessEnums, action, order);
                     }
                 }
                 else if (attribute is ExecuteOnEachMemberOfEachTypeWhenCheckAttribute executeOnEachMemberOfEachTypeWhenScriptsReloads)
                 {
                     if (TryGetDelegate(methodInfo, out Action<MemberInfo> action))
-                        SubscribeConcurrent(container.executeOnEachMemberOfTypes, action, loop);
+                        SubscribeConcurrent(container.executeOnEachMemberOfTypes, action, order);
                 }
                 else if (attribute is ExecuteOnEachFieldOfEachTypeWhenCheckAttribute executeOnEachFieldOfEachTypeWhenScriptsReloads)
                 {
@@ -383,25 +383,25 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
                     {
                         FieldSerialization fieldFags = executeOnEachFieldOfEachTypeWhenScriptsReloads.fieldFilter;
                         if ((fieldFags & FieldSerialization.SerializableByUnity) != 0)
-                            SubscribeConcurrent(container.executeOnEachSerializableByUnityFieldOfTypes, action, loop);
+                            SubscribeConcurrent(container.executeOnEachSerializableByUnityFieldOfTypes, action, order);
                         if ((fieldFags & FieldSerialization.NotSerializableByUnity) != 0)
-                            SubscribeConcurrent(container.executeOnEachNonSerializableByUnityFieldOfTypes, action, loop);
+                            SubscribeConcurrent(container.executeOnEachNonSerializableByUnityFieldOfTypes, action, order);
                     }
                 }
                 else if (attribute is ExecuteOnEachPropertyOfEachTypeWhenCheckAttribute executeOnEachPropertyOfEachTypeWhenScriptsReloads)
                 {
                     if (TryGetDelegate(methodInfo, out Action<PropertyInfo> action))
-                        SubscribeConcurrent(container.executeOnEachPropertyOfTypes, action, loop);
+                        SubscribeConcurrent(container.executeOnEachPropertyOfTypes, action, order);
                 }
                 else if (attribute is ExecuteOnEachMethodOfEachTypeWhenCheckAttribute executeOnEachMethodOfEachTypeWhenScriptsReloads)
                 {
                     if (TryGetDelegate(methodInfo, out Action<MethodInfo> action))
-                        SubscribeConcurrent(container.executeOnEachMethodOfTypes, action, loop);
+                        SubscribeConcurrent(container.executeOnEachMethodOfTypes, action, order);
                 }
                 else if (attribute is ExecuteWhenCheckAttribute executeWhenScriptsReloads)
                 {
                     if (TryGetDelegate(methodInfo, out Action action))
-                        SubscribeConcurrent(container.executeOnce, action, loop);
+                        SubscribeConcurrent(container.executeOnce, action, order);
                 }
             }
         }
@@ -514,7 +514,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
             Progress.Report(id, 0, total);
 #endif
 
-            int loop = 0;
+            int order = 0;
             Action[] actions = new Action[]
             {
                 () => ExecuteLoop(bag.executeOnEachTypeEnum, bag.enumTypes),
@@ -526,7 +526,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
                 () => ExecuteLoop(bag.executeOnEachMethodOfTypes, bag.methodInfos),
                 () =>
                 {
-                    if (bag.executeOnce.TryGetValue(loop, out Action action))
+                    if (bag.executeOnce.TryGetValue(order, out Action action))
                     {
                         action();
 #if UNITY_2020_1_OR_NEWER
@@ -539,25 +539,25 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
 #if UNITY_2020_1_OR_NEWER
             current = 0;
 #endif
-            foreach (int loop_ in orderedKeys)
+            foreach (int loop in orderedKeys)
             {
                 if (token.IsCancellationRequested)
                     goto end;
 
-                loop = loop_;
+                order = loop;
 
                 Parallel.Invoke(actions);
             }
 
         end:
-            loop = 0;
+            order = 0;
 #if UNITY_2020_1_OR_NEWER
             current = 0;
 #endif
 
             void ExecuteLoop<T>(Dictionary<int, Action<T>> callbacks, List<T> values)
             {
-                if (callbacks.TryGetValue(loop, out Action<T> action))
+                if (callbacks.TryGetValue(order, out Action<T> action))
                 {
                     if (token.IsCancellationRequested)
                         return;

@@ -22,14 +22,14 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling.Attributes
         /// The method to decorate must have the signature DoSomething(<see cref="Type"/>).
         /// </summary>
         /// <param name="typeFlags">Determines rules about in which types does match.</param>
-        /// <param name="loop">In which loop of the execution will this script execute.</param>
-        public ExecuteOnEachTypeWhenCheckAttribute(TypeFlags typeFlags = TypeFlags.AnyType, int loop = 0) : base(loop) => typeFilter = typeFlags;
+        /// <param name="order">In which order will this method be executed.</param>
+        public ExecuteOnEachTypeWhenCheckAttribute(TypeFlags typeFlags = TypeFlags.AnyType, int order = 0) : base(order) => typeFilter = typeFlags;
 
         /// <summary>
         /// Executes the method decorated by this attribute for each <see cref="Type"/> compiled by Unity, that matches the <paramref name="typeFlags"/> criteria.<br/>
         /// The method to decorate must have the signature DoSomething(<see cref="Type"/>).
         /// </summary>
-        /// <param name="loop">In which loop of the execution will this script execute.</param>
-        public ExecuteOnEachTypeWhenCheckAttribute(int loop = 0) : base(loop) => typeFilter = TypeFlags.AnyType;
+        /// <param name="order">In which order will this method be executed.</param>
+        public ExecuteOnEachTypeWhenCheckAttribute(int order = 0) : base(order) => typeFilter = TypeFlags.AnyType;
     }
 }

@@ -22,7 +22,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling.Attributes
         /// The method to decorate must have the signature DoSomething(<see cref="FieldInfo"/>).
         /// </summary>
         /// <param name="fieldFlags">Whenever it must be Unity able to serialize it or if it does not matter.</param>
-        /// <param name="loop">In which loop of the execution will this script execute.</param>
-        public ExecuteOnEachFieldOfEachTypeWhenCheckAttribute(FieldSerialization fieldFlags = FieldSerialization.EitherSerializableOrNotByUnity, int loop = 0) : base(loop) => fieldFilter = fieldFlags;
+        /// <param name="order">In which order will this method be executed.</param>
+        public ExecuteOnEachFieldOfEachTypeWhenCheckAttribute(FieldSerialization fieldFlags = FieldSerialization.EitherSerializableOrNotByUnity, int order = 0) : base(order) => fieldFilter = fieldFlags;
     }
 }
