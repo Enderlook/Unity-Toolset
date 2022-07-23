@@ -26,7 +26,7 @@ namespace Enderlook.Unity.Toolset.Testing
                 types.Add(type);
         }
 
-        [ExecuteOnEachFieldOfEachTypeWhenCheckAttribute(FieldSerialization.EitherSerializableOrNotByUnity, 2)]
+        [ExecuteOnEachFieldOfEachTypeWhenCheckAttribute(FieldSerialization.AnyField, 2)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper")]
         private static void GetFields(FieldInfo fieldInfo)
         {

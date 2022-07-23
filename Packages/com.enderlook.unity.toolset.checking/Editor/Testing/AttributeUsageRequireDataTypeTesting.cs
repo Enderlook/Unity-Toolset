@@ -49,7 +49,7 @@ namespace Enderlook.Unity.Toolset.Checking
                 CheckSomething(type.GetCustomAttributes(), toIgnore, type, AttributeTargets.Class, $"Class '{type.Name}'");
         }
 
-        [ExecuteOnEachFieldOfEachTypeWhenCheckAttribute(FieldSerialization.EitherSerializableOrNotByUnity, 2)]
+        [ExecuteOnEachFieldOfEachTypeWhenCheckAttribute(FieldSerialization.AnyField, 2)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper.")]
         private static void CheckFields(FieldInfo fieldInfo) => CheckSomething(fieldInfo, fieldInfo.FieldType, "Field", AttributeTargets.Field);
 

@@ -24,6 +24,6 @@ namespace Enderlook.Unity.Toolset.Checking
         /// Either serializable or not serializable fields by Unity are allowed.<br/>
         /// <seealso cref="NotSerializableByUnity"/> and <seealso cref="SerializableByUnity"/>.
         /// </summary>
-        EitherSerializableOrNotByUnity = NotSerializableByUnity | SerializableByUnity
+        AnyField = NotSerializableByUnity | SerializableByUnity
     }
 }
