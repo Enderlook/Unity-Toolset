@@ -117,7 +117,7 @@ namespace Enderlook.Unity.Toolset.Drawers
 
                 switch (conditionalAttribute.Mode)
                 {
-                    case IConditionalAttribute.ConditionalMode.Single:
+                    case ConditionalMode.Single:
                     {
                         if (first.type == typeof(bool))
                             return first.expression;
@@ -175,13 +175,13 @@ namespace Enderlook.Unity.Toolset.Drawers
                                 $"Valid types are {nameof(Boolean)}, reference types, types that can be casted to {nameof(Boolean)}, or any type with field, property (with Get method) or method with no mandatory parameters of name 'Length', 'Count', 'GetLength' or 'GetCount' that returns a numeric type or 'HasAny', 'IsEmpty', 'IsDefault' or 'IsDefaultOrEmpty' that returns {nameof(Boolean)}.");
                         return result;
                     }
-                    case IConditionalAttribute.ConditionalMode.WithObject:
+                    case ConditionalMode.WithObject:
                     {
                         object compareTo = conditionalAttribute.CompareTo;
                         (Expression expression, Type type, FieldInfo field) second = (Expression.Constant(compareTo), compareTo?.GetType() ?? first.type, null);
                         return Compare(first, second, conditionalAttribute.Comparison);
                     }
-                    case IConditionalAttribute.ConditionalMode.WithProperty:
+                    case ConditionalMode.WithProperty:
                     {
                         (Expression expression, Type type, FieldInfo field) second = GetValue(originalType, convertedExpression, conditionalAttribute.SecondProperty);
                         if (second == default)

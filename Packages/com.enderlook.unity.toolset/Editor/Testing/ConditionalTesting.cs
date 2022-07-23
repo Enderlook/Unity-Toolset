@@ -27,12 +27,12 @@ namespace Enderlook.Unity.Toolset.Testing
                 && fieldInfo.GetCustomAttribute<EnableIfAttribute>() is EnableIfAttribute attribute2)
                 Add(fieldInfo, attribute2);
 
-            void Add(FieldInfo fieldInfo, IConditionalAttribute attribute)
+            void Add(FieldInfo fieldInfo_, IConditionalAttribute attribute)
             {
-                Type type = fieldInfo.DeclaringType;
+                Type type = fieldInfo_.DeclaringType;
                 if (!typesAndAttributes.TryGetValue(type, out List<(FieldInfo field, IConditionalAttribute attribute)> list))
                     typesAndAttributes.Add(type, list = new List<(FieldInfo field, IConditionalAttribute attribute)>());
-                list.Add((fieldInfo, attribute));
+                list.Add((fieldInfo_, attribute));
             }
         }
 
@@ -62,17 +62,17 @@ namespace Enderlook.Unity.Toolset.Testing
 
                     switch (attribute.Mode)
                     {
-                        case IConditionalAttribute.ConditionalMode.Single:
+                        case ConditionalMode.Single:
                         {
                             // TODO: Check if the comparison is legal.
                             break;
                         }
-                        case IConditionalAttribute.ConditionalMode.WithObject:
+                        case ConditionalMode.WithObject:
                         {
                             // TODO: Check if the comparison is legal.
                             break;
                         }
-                        case IConditionalAttribute.ConditionalMode.WithProperty:
+                        case ConditionalMode.WithProperty:
                         {
                             string secondProperty = attribute.SecondProperty;
                             if (secondProperty is null)

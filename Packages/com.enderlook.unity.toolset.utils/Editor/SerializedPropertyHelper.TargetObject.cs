@@ -30,22 +30,29 @@ namespace Enderlook.Unity.Toolset.Utils
         private static void Reset()
         {
             task = BackgroundTask.Enqueue(
+#if UNITY_2020_1_OR_NEWER
                 token => Progress.Start($"Initialize {typeof(SerializedPropertyHelper)}", "Enqueued process."),
                 (id, token) =>
+#else
+                token =>
+#endif
                 {
                     if (token.IsCancellationRequested)
                         goto cancelled;
-
+#if UNITY_2020_1_OR_NEWER
                     Progress.SetDescription(id, null);
+#endif
                     Types.Clear();
 
                     Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+#if UNITY_2020_1_OR_NEWER
                     int total = 0;
                     foreach (Assembly assembly in assemblies)
                         total += assembly.GetTypes().Length;
                     Progress.Report(id, 0, total);
 
                     int current = 0;
+#endif
                     foreach (Assembly assembly in assemblies)
                     {
                         foreach (Type type in assembly.GetTypes())
@@ -53,7 +60,9 @@ namespace Enderlook.Unity.Toolset.Utils
                             if (token.IsCancellationRequested)
                                 goto cancelled;
 
+#if UNITY_2020_1_OR_NEWER
                             Progress.Report(id, current++, total);
+#endif
 
                             if (type.IsValueType)
                                 continue;
@@ -65,10 +74,14 @@ namespace Enderlook.Unity.Toolset.Utils
                         }
                     }
 
+#if UNITY_2020_1_OR_NEWER
                     Progress.Finish(id);
                     return;
-                cancelled:
+                cancelled:;
                     Progress.Finish(id, Progress.Status.Canceled);
+#else
+                cancelled:;
+#endif
                 }
             );
         }
@@ -827,9 +840,11 @@ namespace Enderlook.Unity.Toolset.Utils
                     case SerializedPropertyType.ExposedReference:
                         source.exposedReferenceValue = (UnityObject)(object)newValue;
                         break;
+#if UNITY_2019_3_OR_NEWER
                     case SerializedPropertyType.ManagedReference:
                         source.managedReferenceValue = newValue;
                         break;
+#endif
                     case SerializedPropertyType.Gradient:
                     case SerializedPropertyType.Generic:
                         source.SetTargetObject(newValue, false);
@@ -1375,6 +1390,7 @@ namespace Enderlook.Unity.Toolset.Utils
                 case SerializedPropertyType.ExposedReference:
                     defaultType = typeof(UnityObject);
                     goto fallback;
+#if UNITY_2019_3_OR_NEWER
                 case SerializedPropertyType.ManagedReference:
                     typeName = source.managedReferenceFieldTypename;
                     defaultType = typeof(object);
@@ -1382,6 +1398,7 @@ namespace Enderlook.Unity.Toolset.Utils
                     if (Types.TryGetValue(typeName, out type))
                         goto done;
                     goto fallback;
+#endif
                 default:
                     defaultType = typeof(object);
                     goto fallback;

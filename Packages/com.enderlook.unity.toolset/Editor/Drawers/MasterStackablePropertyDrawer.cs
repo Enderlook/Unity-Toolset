@@ -29,22 +29,30 @@ namespace Enderlook.Unity.Toolset.Drawers
         private static void Reset()
         {
             task = BackgroundTask.Enqueue(
+#if UNITY_2020_1_OR_NEWER
                 token => Progress.Start($"Initialize {typeof(MasterStackablePropertyDrawer)}", "Enqueued process."),
                 (id, token) =>
+#else
+                token =>
+#endif
                 {
                     if (token.IsCancellationRequested)
                         goto cancelled;
 
+#if UNITY_2020_1_OR_NEWER
                     Progress.SetDescription(id, null);
+#endif
                     drawersMap.Clear();
 
                     Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+#if UNITY_2020_1_OR_NEWER
                     int total = 0;
                     foreach (Assembly assembly in assemblies)
                         total += assembly.GetTypes().Length;
                     Progress.Report(id, 0, total);
 
                     int current = 0;
+#endif
                     foreach (Assembly assembly in assemblies)
                     {
                         if (token.IsCancellationRequested)
@@ -55,23 +63,33 @@ namespace Enderlook.Unity.Toolset.Drawers
                             if (token.IsCancellationRequested)
                                 goto cancelled;
 
+#if UNITY_2020_1_OR_NEWER
                             Progress.Report(id, current++, total);
+#endif
 
                             foreach (CustomStackablePropertyDrawerAttribute attribute in type.GetCustomAttributes<CustomStackablePropertyDrawerAttribute>())
                                 drawersMap.Add(attribute.Type, (type, attribute.UseForChildren));
                         }
                     }
 
+#if UNITY_2020_1_OR_NEWER
                     Progress.Finish(id);
                     return;
                 cancelled:
                     Progress.Finish(id, Progress.Status.Canceled);
+#else
+                cancelled:;
+#endif
                 }
             );
         }
 
         private List<StackablePropertyDrawer> GetDrawers()
         {
+            List<StackablePropertyDrawer> drawers = Drawers;
+            if (!(drawers is null))
+                return drawers;
+
             task.EnsureExecute();
 
             if (drawersMap is null)
@@ -164,11 +182,12 @@ namespace Enderlook.Unity.Toolset.Drawers
             }
 
             list.Sort(ORDER_SELECTOR);
+            Drawers = list;
             return list;
 
-            void WithAttribute(PropertyAttribute attribute, (Type Drawer, bool UseForChildren) tuple)
+            void WithAttribute(PropertyAttribute attribute, (Type Drawer, bool UseForChildren) tuple_)
             {
-                StackablePropertyDrawer drawer = (StackablePropertyDrawer)Activator.CreateInstance(tuple.Drawer);
+                StackablePropertyDrawer drawer = (StackablePropertyDrawer)Activator.CreateInstance(tuple_.Drawer);
                 drawer.Attribute = attribute;
                 drawer.FieldInfo = fieldInfo;
                 if (drawer.RequestMain)
@@ -184,9 +203,9 @@ namespace Enderlook.Unity.Toolset.Drawers
                 list.Add(drawer);
             }
 
-            void WithoutAttribute((Type Drawer, bool UseForChildren) tuple)
+            void WithoutAttribute((Type Drawer, bool UseForChildren) tuple_)
             {
-                StackablePropertyDrawer drawer = (StackablePropertyDrawer)Activator.CreateInstance(tuple.Drawer);
+                StackablePropertyDrawer drawer = (StackablePropertyDrawer)Activator.CreateInstance(tuple_.Drawer);
                 drawer.FieldInfo = fieldInfo;
                 if (drawer.RequestMain)
                 {
@@ -204,7 +223,7 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            List<StackablePropertyDrawer> drawers = Drawers ??= GetDrawers();
+            List<StackablePropertyDrawer> drawers = GetDrawers();
 
             bool includeChildren = true;
             bool visible = true;
@@ -226,7 +245,7 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            List<StackablePropertyDrawer> drawers = Drawers ??= GetDrawers();
+            List<StackablePropertyDrawer> drawers = GetDrawers();
 
             bool includeChildren = true;
             bool visible = true;
@@ -254,7 +273,7 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         public override bool CanCacheInspectorGUI(SerializedProperty property)
         {
-            List<StackablePropertyDrawer> drawers = Drawers ??= GetDrawers();
+            List<StackablePropertyDrawer> drawers = GetDrawers();
             foreach (StackablePropertyDrawer drawer in drawers)
                 if (!drawer.CanCacheInspectorGUI(property))
                     return false;

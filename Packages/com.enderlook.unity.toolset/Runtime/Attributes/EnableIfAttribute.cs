@@ -24,7 +24,7 @@ namespace Enderlook.Unity.Toolset.Attributes
         private readonly bool chain;
 
 #if UNITY_EDITOR
-        private readonly IConditionalAttribute.ConditionalMode mode;
+        private readonly ConditionalMode mode;
 
         string IConditionalAttribute.FirstProperty => firstProperty;
 
@@ -36,7 +36,7 @@ namespace Enderlook.Unity.Toolset.Attributes
 
         bool IConditionalAttribute.Chain => chain;
 
-        IConditionalAttribute.ConditionalMode IConditionalAttribute.Mode => mode;
+        ConditionalMode IConditionalAttribute.Mode => mode;
 #endif
 
         /// <summary>
@@ -49,7 +49,7 @@ namespace Enderlook.Unity.Toolset.Attributes
         public EnableIfAttribute(string property, object compareTo, ComparisonMode comparison = ComparisonMode.Equal, bool chain = true)
         {
 #if UNITY_EDITOR
-            mode = IConditionalAttribute.ConditionalMode.WithObject;
+            mode = ConditionalMode.WithObject;
 #endif
             firstProperty = property;
             this.compareTo = compareTo;
@@ -67,7 +67,7 @@ namespace Enderlook.Unity.Toolset.Attributes
         public EnableIfAttribute(ComparisonMode comparison, string firstProperty, string secondProperty, bool chain = true)
         {
 #if UNITY_EDITOR
-            mode = IConditionalAttribute.ConditionalMode.WithProperty;
+            mode = ConditionalMode.WithProperty;
 #endif
             this.firstProperty = firstProperty;
             this.secondProperty = secondProperty;
@@ -82,7 +82,7 @@ namespace Enderlook.Unity.Toolset.Attributes
         public EnableIfAttribute(string property, bool chain = true)
         {
 #if UNITY_EDITOR
-            mode = IConditionalAttribute.ConditionalMode.Single;
+            mode = ConditionalMode.Single;
 #endif
             firstProperty = property;
             compareTo = TRUE;

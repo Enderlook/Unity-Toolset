@@ -26,10 +26,14 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
 
         private readonly Container bag = new Container();
 
+#if UNITY_2020_1_OR_NEWER
         private readonly int progressId;
+#endif
         private readonly CancellationToken token;
 
+#if UNITY_2020_1_OR_NEWER
         private int current;
+#endif
 
         static PostCompilingAssembliesHelper()
         {
@@ -47,9 +51,14 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
             EditorPrefs.SetBool(MENU_NAME, enabled);
         }
 
+#if UNITY_2020_1_OR_NEWER
         public PostCompilingAssembliesHelper(int progressId, CancellationToken token)
         {
             this.progressId = progressId;
+#else
+        public PostCompilingAssembliesHelper(CancellationToken token)
+        {
+#endif
             this.token = token;
         }
 
@@ -89,46 +98,75 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
             Assembly[] assemblies = checkAllAssemblies ? AppDomain.CurrentDomain.GetAssemblies() : AssembliesHelper.GetAllAssembliesOfPlayerAndEditorAssemblies().ToArray();
 
             BackgroundTask.Enqueue(
+#if UNITY_2020_1_OR_NEWER
                 token => Progress.Start("Execute Post Compiling Checkings", "Ensure that Enderlook attributes are being used correctly."),
                 (id, token) =>
+#else
+                token =>
+#endif
                 {
                     if (token.IsCancellationRequested)
                         goto cancelled;
 
+#if UNITY_2020_1_OR_NEWER
                     PostCompilingAssembliesHelper self = new PostCompilingAssembliesHelper(id, token);
-
                     int scanId = Progress.Start("Scan Assemblies", parentId: id);
                     int analysisId = Progress.Start("Execute Analysis", parentId: id);
+#else
+                    PostCompilingAssembliesHelper self = new PostCompilingAssembliesHelper(token);
+#endif
 
+#if UNITY_2020_1_OR_NEWER
                     self.ScanAssemblies(scanId, assemblies);
+#else
+                    self.ScanAssemblies( assemblies);
+#endif
 
                     if (token.IsCancellationRequested)
-                    {
+                {
+#if UNITY_2020_1_OR_NEWER
                         Progress.Finish(scanId, Progress.Status.Canceled);
+#endif
                         goto cancelled2;
                     }
 
+#if UNITY_2020_1_OR_NEWER
                     Progress.Finish(scanId);
                     Progress.Report(id, .5f);
+#endif
 
+#if UNITY_2020_1_OR_NEWER
                     self.ExecuteCallbacks(analysisId);
+#else
+                    self.ExecuteCallbacks();
+#endif
 
                     if (token.IsCancellationRequested)
                         goto cancelled2;
 
+#if UNITY_2020_1_OR_NEWER
                     Progress.Finish(analysisId);
                     Progress.Finish(id);
                     return;
                 cancelled2:
                     Progress.Finish(analysisId, Progress.Status.Canceled);
-                cancelled:
+                cancelled:;
                     Progress.Finish(id, Progress.Status.Canceled);
+#else
+                cancelled2:
+                cancelled:;
+#endif
                 }
             );
         }
 
+#if UNITY_2020_1_OR_NEWER
         private void ScanAssemblies(int id, Assembly[] assemblies)
+#else
+        private void ScanAssemblies(Assembly[] assemblies)
+#endif
         {
+#if UNITY_2020_1_OR_NEWER
             int total = 0;
             foreach (Assembly assembly in assemblies)
             {
@@ -138,12 +176,15 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
                 total += assembly.GetTypes().Length;
             }
             Progress.Report(id, 0, total);
+#endif
 
             // Sharing collections and using Interlocked.Exchange as synchronization per collection decreases perfomances by 23%.
             // Instead, allocating a collection per assembly and merge them later increases perfomance by 40%.
             Container[] containers = new Container[assemblies.Length];
 
+#if UNITY_2020_1_OR_NEWER
             current = 0;
+#endif
             Parallel.For(0, assemblies.Length, i =>
             {
                 if (token.IsCancellationRequested)
@@ -155,8 +196,10 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
                 Assembly assembly = assemblies[i];
 
                 if (assembly.IsDefined(typeof(DoNotInspectAttribute)))
-                {
+            {
+#if UNITY_2020_1_OR_NEWER
                     Progress.Report(id, Interlocked.Add(ref current, assembly.GetTypes().Length), total);
+#endif
                     return;
                 }
 
@@ -165,7 +208,9 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
                     if (token.IsCancellationRequested)
                         return;
 
+#if UNITY_2020_1_OR_NEWER
                     Progress.Report(id, Interlocked.Increment(ref current), total);
+#endif
 
                     if (classType.IsDefined(typeof(DoNotInspectAttribute)))
                         continue;
@@ -280,8 +325,10 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
                 bag.methodInfos.AddRange(c.methodInfos);
             }
 
-        end:
+        end:;
+#if UNITY_2020_1_OR_NEWER
             current = 0;
+#endif
         }
 
         private void GetExecuteAttributes(Container container, MethodInfo methodInfo)
@@ -374,43 +421,63 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
             return null;
         }
 
+#if UNITY_2020_1_OR_NEWER
         private void ExecuteCallbacks(int id)
+#else
+        private void ExecuteCallbacks()
+#endif
         {
+#if UNITY_2020_1_OR_NEWER
             int total = bag.executeOnce.Count;
+#endif
             HashSet<int> keys = new HashSet<int>();
 
             keys.UnionWith(bag.executeOnEachTypeEnum.Keys);
+#if UNITY_2020_1_OR_NEWER
             total += bag.executeOnEachTypeEnum.Count * bag.enumTypes.Count;
+#endif
             if (token.IsCancellationRequested)
                 goto end;
 
             keys.UnionWith(bag.executeOnEachTypeLessEnums.Keys);
+#if UNITY_2020_1_OR_NEWER
             total += bag.executeOnEachTypeLessEnums.Count * bag.nonEnumTypes.Count;
+#endif
             if (token.IsCancellationRequested)
                 goto end;
 
             keys.UnionWith(bag.executeOnEachMemberOfTypes.Keys);
+#if UNITY_2020_1_OR_NEWER
             total += bag.executeOnEachMemberOfTypes.Count * bag.memberInfos.Count;
+#endif
             if (token.IsCancellationRequested)
                 goto end;
 
             keys.UnionWith(bag.executeOnEachSerializableByUnityFieldOfTypes.Keys);
+#if UNITY_2020_1_OR_NEWER
             total += bag.executeOnEachSerializableByUnityFieldOfTypes.Count * bag.fieldInfosSerializableByUnity.Count;
+#endif
             if (token.IsCancellationRequested)
                 goto end;
 
             keys.UnionWith(bag.executeOnEachNonSerializableByUnityFieldOfTypes.Keys);
+#if UNITY_2020_1_OR_NEWER
             total += bag.executeOnEachNonSerializableByUnityFieldOfTypes.Count * bag.fieldInfosNonSerializableByUnity.Count;
+#endif
             if (token.IsCancellationRequested)
                 goto end;
 
             keys.UnionWith(bag.executeOnEachPropertyOfTypes.Keys);
+#if UNITY_2020_1_OR_NEWER
             total += bag.executeOnEachPropertyOfTypes.Count * bag.propertyInfos.Count;
+#endif
             if (token.IsCancellationRequested)
                 goto end;
 
             keys.UnionWith(bag.executeOnEachMethodOfTypes.Keys);
+#if UNITY_2020_1_OR_NEWER
             total += bag.executeOnEachMethodOfTypes.Count * bag.methodInfos.Count;
+#endif
             if (token.IsCancellationRequested)
                 goto end;
 
@@ -422,7 +489,9 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
             if (token.IsCancellationRequested)
                 goto end;
 
+#if UNITY_2020_1_OR_NEWER
             Progress.Report(id, 0, total);
+#endif
 
             int loop = 0;
             Action[] actions = new Action[]
@@ -439,12 +508,16 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
                     if (bag.executeOnce.TryGetValue(loop, out Action action))
                     {
                         action();
+#if UNITY_2020_1_OR_NEWER
                         Progress.Report(id, Interlocked.Increment(ref current), total);
+#endif
                     }
                 }
             };
 
+#if UNITY_2020_1_OR_NEWER
             current = 0;
+#endif
             foreach (int loop_ in orderedKeys)
             {
                 if (token.IsCancellationRequested)
@@ -457,7 +530,9 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
 
         end:
             loop = 0;
+#if UNITY_2020_1_OR_NEWER
             current = 0;
+#endif
 
             void ExecuteLoop<T>(Dictionary<int, Action<T>> callbacks, List<T> values)
             {
@@ -473,7 +548,9 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
 
                         action(element);
 
+#if UNITY_2020_1_OR_NEWER
                         Progress.Report(id, Interlocked.Increment(ref current), total);
+#endif
                     }
                 }
             }

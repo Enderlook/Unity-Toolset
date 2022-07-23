@@ -3,24 +3,24 @@
 #if UNITY_EDITOR
     internal interface IConditionalAttribute
     {
-        public string FirstProperty { get; }
+        string FirstProperty { get; }
 
-        public string SecondProperty { get; }
+        string SecondProperty { get; }
 
-        public object CompareTo { get; }
+        object CompareTo { get; }
 
-        public ComparisonMode Comparison { get; }
+        ComparisonMode Comparison { get; }
 
-        public bool Chain { get; }
+        bool Chain { get; }
 
-        public ConditionalMode Mode { get; }
+        ConditionalMode Mode { get; }
+    }
 
-        internal enum ConditionalMode
-        {
-            WithObject,
-            WithProperty,
-            Single,
-        }
+    internal enum ConditionalMode
+    {
+        WithObject,
+        WithProperty,
+        Single,
     }
 #endif
 }

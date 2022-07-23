@@ -59,7 +59,10 @@ namespace Enderlook.Unity.Toolset.Windows
                     return;
 
                 if (typeof(UnityObject).IsAssignableFrom(property.GetPropertyType())
-                    || (memberInfo.IsDefined(typeof(SerializeReference)) && !property.GetPropertyType().IsValueType))
+#if UNITY_2019_3_OR_NEWER
+                    || (memberInfo.IsDefined(typeof(SerializeReference)) && !property.GetPropertyType().IsValueType)
+#endif
+                    )
                 {
                     menu.AddItem(
                         CONTEXT_PROPERTY_MENU,

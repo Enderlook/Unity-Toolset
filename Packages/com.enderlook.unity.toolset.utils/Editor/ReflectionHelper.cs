@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-using UnityEditor.AssetImporters;
-
 using UnityEngine;
 
 using UnityObject = UnityEngine.Object;
@@ -43,10 +41,16 @@ namespace Enderlook.Unity.Toolset.Utils
         /// Note that in some cases this may give misleading results: if you have a <see cref="FieldInfo"/>, it's better to call <see cref="CanBeSerializedByUnity(FieldInfo)"/> instead as some cases are affected by the field itself and the type which declares that field.
         /// </summary>
         /// <param name="type">Type to check.</param>
+#if UNITY_2019_3_OR_NEWER
         /// <param name="isSerializedByReference">If <see langword="true"/>, consider that type is being serialized with <see cref="SerializeReference"/>.<br/>
+#endif
         /// Otherwise it's considered as using <see cref="SerializeField"/>.</param>
         /// <returns>Whenever the field can be serialized by Unity or not.</returns>
-        public static bool CanBeSerializedByUnity(this Type type, bool isSerializedByReference = false)
+        public static bool CanBeSerializedByUnity(this Type type
+#if UNITY_2019_3_OR_NEWER
+            , bool isSerializedByReference = false
+#endif
+            )
         {
             // https://docs.unity3d.com/Manual/script-Serialization.html
 
@@ -70,8 +74,10 @@ namespace Enderlook.Unity.Toolset.Utils
                 return false;
 
         skip:
+#if UNITY_2019_3_OR_NEWER
             if (!isSerializedByReference)
             {
+#endif
                 if (type.IsPrimitive || type.IsSubclassOf(typeof(UnityObject))
                     || (type.IsValueType && UNITY_BUILT_IN_SUPPORTED_TYPES.Contains(type)))
                     return true;
@@ -86,6 +92,7 @@ namespace Enderlook.Unity.Toolset.Utils
                     return true;
 
                 return false;
+#if UNITY_2019_3_OR_NEWER
             }
             else
             {
@@ -94,6 +101,7 @@ namespace Enderlook.Unity.Toolset.Utils
 
                 return true;
             }
+#endif
         }
 
         /// <summary>
@@ -105,16 +113,23 @@ namespace Enderlook.Unity.Toolset.Utils
         {
             // https://docs.unity3d.com/Manual/script-Serialization.html
 
+#if UNITY_2019_3_OR_NEWER
             bool serializeReference = fieldInfo.IsDefined(typeof(SerializeReference));
             if ((!serializeReference && !fieldInfo.IsPublic && !fieldInfo.IsDefined(typeof(SerializeField)))
                 || fieldInfo.IsStatic || fieldInfo.IsInitOnly || fieldInfo.IsLiteral || fieldInfo.IsDefined(typeof(NonSerializedAttribute))
                 // SerializeReference don't support Animation fields on specific cases:
                 // https://docs.unity3d.com/ScriptReference/SerializeReference.html
-                || (fieldInfo.FieldType == typeof(Animation) && serializeReference
+                || (serializeReference && fieldInfo.FieldType == typeof(Animation)
                     && (fieldInfo.DeclaringType.IsSubclassOf(typeof(ScriptableObject))
-                        || fieldInfo.DeclaringType.IsSubclassOf(typeof(ScriptedImporter)))))
+                        || fieldInfo.DeclaringType.IsSubclassOf(typeof(UnityEditor.AssetImporters.ScriptedImporter)))))
                 return false;
             return fieldInfo.FieldType.CanBeSerializedByUnity(serializeReference);
+#else
+            if ((!fieldInfo.IsPublic && !fieldInfo.IsDefined(typeof(SerializeField)))
+                || fieldInfo.IsStatic || fieldInfo.IsInitOnly || fieldInfo.IsLiteral || fieldInfo.IsDefined(typeof(NonSerializedAttribute)))
+                return false;
+            return fieldInfo.FieldType.CanBeSerializedByUnity();
+#endif
         }
 
         /// <summary>
@@ -382,7 +397,8 @@ namespace Enderlook.Unity.Toolset.Utils
             {
                 if (array[i].IsOptionalOrParam(out object parameter))
                 {
-                    parameters ??= new object[parameters_.Length];
+                    if (parameters is null)
+                        parameters = new object[parameters_.Length];
                     parameters[num++] = parameter;
                     continue;
                 }
