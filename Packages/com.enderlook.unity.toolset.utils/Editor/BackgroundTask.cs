@@ -71,7 +71,8 @@ namespace Enderlook.Unity.Toolset.Utils
 #if UNITY_2020_1_OR_NEWER
                             Progress.Finish(task.id, Progress.Status.Failed);
 #endif
-                            Debug.LogException(exception);
+                            if (!(exception is ThreadAbortException))
+                                Debug.LogException(exception);
                         }
                         task.completed = true;
                     }
