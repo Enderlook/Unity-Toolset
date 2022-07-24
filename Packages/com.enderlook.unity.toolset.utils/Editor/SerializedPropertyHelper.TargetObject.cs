@@ -102,21 +102,20 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <param name="source"><see cref="SerializedProperty"/> whose value will be get.</param>
         /// <param name="nodes">Hierarchy traveled to get the property nodes.</param>
         /// <param name="count">Depth in the hierarchy to travel.</param>
-        /// <param name="throwIfError">Whenever it should throw if there is an error.</param>
         /// <returns>If <see langword="true"/> <paramref name="target"/> was found. Otherwise <paramref name="target"/> contains an undefined value.</returns>
-        private static bool GetPropertyNodes(this SerializedProperty source, List<SerializedPropertyPathNode> nodes, int count, bool throwIfError)
+        private static bool GetPropertyNodes<TCanThrow>(this SerializedProperty source, List<SerializedPropertyPathNode> nodes, int count)
         {
             // https://github.com/lordofduct/spacepuppy-unity-framework-4.0/blob/master/Framework/com.spacepuppy.core/Editor/src/EditorHelper.cs
 
             if (source == null)
             {
-                if (throwIfError) Helper.ThrowArgumentNullException_Source();
+                if (Toggle.IsToggled<TCanThrow>()) Helper.ThrowArgumentNullException_Source();
                 goto isFalse;
             }
 
             if (nodes is null)
             {
-                if (throwIfError) ThrowNodesIsNull();
+                if (Toggle.IsToggled<TCanThrow>()) ThrowNodesIsNull();
                 goto isFalse;
             }
 
@@ -137,7 +136,7 @@ namespace Enderlook.Unity.Toolset.Utils
 
             if (count > total)
             {
-                if (throwIfError) ThrowCountMustBeLowerThanTotal();
+                if (Toggle.IsToggled<TCanThrow>()) ThrowCountMustBeLowerThanTotal();
                 goto isFalse;
             }
 
@@ -158,7 +157,7 @@ namespace Enderlook.Unity.Toolset.Utils
 
             if (target == null)
             {
-                if (throwIfError) ThrowTargetObjectIsNull();
+                if (Toggle.IsToggled<TCanThrow>()) ThrowTargetObjectIsNull();
                 goto isFalse;
             }
 
@@ -207,7 +206,7 @@ namespace Enderlook.Unity.Toolset.Utils
 
                     if (target is null)
                     {
-                        if (throwIfError) ThrowArrayDataIsNull();
+                        if (Toggle.IsToggled<TCanThrow>()) ThrowArrayDataIsNull();
                         goto isFalse;
                     }
 
@@ -221,7 +220,7 @@ namespace Enderlook.Unity.Toolset.Utils
                             target = list[index];
                             goto next;
                         }
-                        else if (throwIfError) ThrowIndexMustBeLowerThanArraySize();
+                        else if (Toggle.IsToggled<TCanThrow>()) ThrowIndexMustBeLowerThanArraySize();
                         else goto isFalse;
                     }
 
@@ -240,7 +239,7 @@ namespace Enderlook.Unity.Toolset.Utils
                         {
                             if (!enumerator.MoveNext())
                             {
-                                if (throwIfError) ThrowEnumerableExhausted();
+                                if (Toggle.IsToggled<TCanThrow>()) ThrowEnumerableExhausted();
                                 nodes.Clear();
                                 return false;
                             }
@@ -286,7 +285,7 @@ namespace Enderlook.Unity.Toolset.Utils
 
                 if (target == null)
                 {
-                    if (throwIfError) ThrowTargetNull();
+                    if (Toggle.IsToggled<TCanThrow>()) ThrowTargetNull();
                     goto isFalse;
 
                     void ThrowTargetNull()
@@ -319,7 +318,7 @@ namespace Enderlook.Unity.Toolset.Utils
 
                         if (type is null)
                         {
-                            if (throwIfError) ThrowMemberNotFound();
+                            if (Toggle.IsToggled<TCanThrow>()) ThrowMemberNotFound();
                             target__ = default;
                             memberInfo = default;
                             return false;
@@ -381,7 +380,7 @@ namespace Enderlook.Unity.Toolset.Utils
         public static object GetTargetObject(this SerializedProperty source, int last = 0)
         {
             List<SerializedPropertyPathNode> nodes_ = Interlocked.Exchange(ref nodes, null) ?? new List<SerializedPropertyPathNode>();
-            source.GetPropertyNodes(nodes_, last, false);
+            source.GetPropertyNodes<Toggle.Yes>(nodes_, last);
             object @object = nodes_[nodes_.Count - 1].Object;
             nodes_.Clear();
             nodes = nodes_;
@@ -398,7 +397,7 @@ namespace Enderlook.Unity.Toolset.Utils
         public static bool TryGetTargetObject(this SerializedProperty source, out object target, int last = 0)
         {
             List<SerializedPropertyPathNode> nodes_ = Interlocked.Exchange(ref nodes, null) ?? new List<SerializedPropertyPathNode>();
-            if (source.GetPropertyNodes(nodes_, last, true))
+            if (source.GetPropertyNodes<Toggle.No>(nodes_, last))
             {
                 target = nodes_[nodes_.Count - 1].Object;
                 nodes_.Clear();
@@ -773,18 +772,18 @@ namespace Enderlook.Unity.Toolset.Utils
         private static bool SetTargetObject<T>(this SerializedProperty source, T newTarget, bool notThrow)
         {
             List<SerializedPropertyPathNode> nodes_ = Interlocked.Exchange(ref nodes, null) ?? new List<SerializedPropertyPathNode>();
-            if (source.GetPropertyNodes(nodes_, 0, true))
+            if (source.GetPropertyNodes<Toggle.Yes>(nodes_, 0))
             {
                 int i = nodes_.Count - 2;
                 SerializedPropertyPathNode node = nodes_[i];
-                if (!Set<T, bool>(node, newTarget))
+                if (!Set<T, Toggle.Yes>(node, newTarget))
                     goto error;
 
                 while (i > 0 && node.Object.GetType().IsValueType)
                 {
                     node = nodes_[i];
                     SerializedPropertyPathNode previousNode = nodes_[--i];
-                    if (!Set<object, int>(previousNode, node.Object))
+                    if (!Set<object, Toggle.No>(previousNode, node.Object))
                         goto error;
                     node = previousNode;
                 }
@@ -802,7 +801,7 @@ namespace Enderlook.Unity.Toolset.Utils
                         case null:
                             {
                                 // TODO: We could create Toggle.Yes and Toggle.No types.
-                                if (typeof(TFirstCall) == typeof(bool))
+                                if (Toggle.IsToggled<TFirstCall>())
                                 {
                                     if (previousNode.Object is IList<U> list)
                                     {
@@ -1366,7 +1365,7 @@ namespace Enderlook.Unity.Toolset.Utils
         public static MemberInfo GetMemberInfo(this SerializedProperty source)
         {
             List<SerializedPropertyPathNode> nodes_ = Interlocked.Exchange(ref nodes, null) ?? new List<SerializedPropertyPathNode>();
-            source.GetPropertyNodes(nodes_, 0, true);
+            source.GetPropertyNodes<Toggle.Yes>(nodes_, 0);
 
             int i = nodes_.Count - 2;
             SerializedPropertyPathNode node = nodes_[i];
@@ -1387,7 +1386,7 @@ namespace Enderlook.Unity.Toolset.Utils
         public static bool TryGetMemberInfo(this SerializedProperty source, out MemberInfo memberInfo)
         {
             List<SerializedPropertyPathNode> nodes_ = Interlocked.Exchange(ref nodes, null) ?? new List<SerializedPropertyPathNode>();
-            if (!source.GetPropertyNodes(nodes_, 0, false))
+            if (!source.GetPropertyNodes<Toggle.No>(nodes_, 0))
             {
                 nodes_.Clear();
                 nodes = nodes_;
@@ -1573,7 +1572,7 @@ namespace Enderlook.Unity.Toolset.Utils
             Type Fallback()
             {
                 List<SerializedPropertyPathNode> nodes_ = Interlocked.Exchange(ref nodes, null) ?? new List<SerializedPropertyPathNode>();
-                if (!source.GetPropertyNodes(nodes_, 0, !(defaultType is null)))
+                if (!(defaultType is null ? source.GetPropertyNodes<Toggle.Yes>(nodes_, 0) : source.GetPropertyNodes<Toggle.No>(nodes_, 0)))
                 {
                     nodes_.Clear();
                     nodes = nodes_;
