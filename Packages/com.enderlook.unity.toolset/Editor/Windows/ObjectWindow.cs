@@ -586,14 +586,14 @@ namespace Enderlook.Unity.Toolset.Windows
                         list.onItemsChosen += e =>
                         {
                             property.SetValue((UnityObject)e.First());
-                            propertyField.Set(property.objectReferenceValue);
+                            propertyField.Set(property.GetValue<UnityObject>());
                             property.serializedObject.ApplyModifiedProperties();
                         };
 #else
                         list.onItemChosen += e =>
                         {
                             property.SetValue((UnityObject)e);
-                            propertyField.Set(property.objectReferenceValue);
+                            propertyField.Set(property.GetValue<UnityObject>());
                             property.serializedObject.ApplyModifiedProperties();
                         };
 #endif
