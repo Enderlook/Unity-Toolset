@@ -107,17 +107,8 @@ namespace Enderlook.Unity.Toolset.Utils
         {
             // https://github.com/lordofduct/spacepuppy-unity-framework-4.0/blob/master/Framework/com.spacepuppy.core/Editor/src/EditorHelper.cs
 
-            if (source is null)
-            {
-                if (Toggle.IsToggled<TCanThrow>()) Helper.ThrowArgumentNullException_Source();
-                goto isFalse;
-            }
-
-            if (nodes is null)
-            {
-                if (Toggle.IsToggled<TCanThrow>()) ThrowNodesIsNull();
-                goto isFalse;
-            }
+            if (source is null) Helper.ThrowArgumentNullException_Source();
+            if (nodes is null) ThrowNodesIsNull();
 
             nodes.Clear();
 
