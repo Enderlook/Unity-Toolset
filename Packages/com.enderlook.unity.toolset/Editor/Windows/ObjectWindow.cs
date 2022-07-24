@@ -48,7 +48,7 @@ namespace Enderlook.Unity.Toolset.Windows
         private string propertyPath;
         private readonly List<Type> allowedTypesToInstantiate = new List<Type>();
 
-        private List<UnityObject> elements = new List<UnityObject>();
+        private readonly List<UnityObject> elements = new List<UnityObject>();
         private UnityObject original;
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by Unity.")]
