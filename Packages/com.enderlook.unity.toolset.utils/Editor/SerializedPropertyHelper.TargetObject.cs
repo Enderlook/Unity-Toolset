@@ -22,13 +22,23 @@ namespace Enderlook.Unity.Toolset.Utils
         private static readonly Regex AssemblyNameRegex = new Regex("^(.*?),", RegexOptions.Compiled);
         private static readonly Regex ArrayRegex = new Regex(@"^(.*?)(?:\[])?$", RegexOptions.Compiled);
         private static readonly Dictionary<string, Type> Types = new Dictionary<string, Type>();
+        private static readonly Dictionary<Type, (MethodInfo GetCount, MethodInfo SetItems)> IListMethods = new Dictionary<Type, (MethodInfo GetCount, MethodInfo SetItems)>();
+        private static ReadWriteLock IListItemsSetLock = new ReadWriteLock();
 
         private static BackgroundTask task;
         private static List<SerializedPropertyPathNode> nodes;
+        private static Type[] oneType;
+        private static object[] twoObjects;
 
         [DidReloadScripts]
         private static void Reset()
         {
+            IListItemsSetLock.WriteBegin();
+            {
+                IListMethods.Clear();
+            }
+            IListItemsSetLock.WriteEnd();
+
             task = BackgroundTask.Enqueue(
 #if UNITY_2020_1_OR_NEWER
                 token => Progress.Start($"Initialize {typeof(SerializedPropertyHelper)}", "Enqueued process."),
@@ -765,19 +775,19 @@ namespace Enderlook.Unity.Toolset.Utils
             {
                 int i = nodes_.Count - 2;
                 SerializedPropertyPathNode node = nodes_[i];
-                if (!Set(node, newTarget))
+                if (!Set<T, bool>(node, newTarget))
                     goto error;
 
                 while (i > 0 && node.Object.GetType().IsValueType)
                 {
                     node = nodes_[i];
                     SerializedPropertyPathNode previousNode = nodes_[--i];
-                    if (!Set(previousNode, node.Object))
+                    if (!Set<object, int>(previousNode, node.Object))
                         goto error;
                     node = previousNode;
                 }
 
-                bool Set<U>(SerializedPropertyPathNode previousNode, U newValue_)
+                bool Set<U, TFirstCall>(SerializedPropertyPathNode previousNode, U newValue_)
                 {
                     switch (previousNode.MemberInfo)
                     {
@@ -789,27 +799,21 @@ namespace Enderlook.Unity.Toolset.Utils
                             break;
                         case null:
                             {
-                                if (previousNode.Object is U[] array)
+                                // TODO: We could create Toggle.Yes and Toggle.No types.
+                                if (typeof(TFirstCall) == typeof(bool))
                                 {
-                                    if (previousNode.Index < array.Length)
+                                    if (previousNode.Object is IList<U> list)
                                     {
-                                        array[previousNode.Index] = newValue_;
-                                        break;
+                                        if (previousNode.Index < list.Count)
+                                        {
+                                            list[previousNode.Index] = newValue_;
+                                            break;
+                                        }
+                                        goto indexError;
                                     }
-                                    goto indexError;
                                 }
 
-                                // Check if type implement IList<U>, this is only useful for the first call of this method.
-                                if (previousNode.Object is IList<U> list)
-                                {
-                                    if (previousNode.Index < list.Count)
-                                    {
-                                        list[previousNode.Index] = newValue_;
-                                        break;
-                                    }
-                                    goto indexError;
-                                }
-
+                                // Both Array and List<T> implement IList.
                                 if (previousNode.Object is IList list_)
                                 {
                                     if (previousNode.Index < list_.Count)
@@ -820,12 +824,87 @@ namespace Enderlook.Unity.Toolset.Utils
                                     goto indexError;
                                 }
 
-                                // TODO: Support for IList<> based of runtime type of newValue_ may be required.
+                                Type[] typeArray = Interlocked.Exchange(ref oneType, null) ?? new Type[1];
+                                Type previousNodeObjectType = previousNode.Object.GetType();
+                                Type newValueTypeOriginal = newValue_.GetType();
+
+                                Type newValueType = newValueTypeOriginal;
+                                while (!(newValueType is null))
+                                {
+                                    switch (TrySet(newValueType))
+                                    {
+                                        case 1:
+                                            break;
+                                        case -1:
+                                            goto indexError;
+                                    }
+                                    newValueType = newValueType.BaseType;
+                                }
+
+                                foreach (Type newValueInterfaceType in newValueTypeOriginal.GetInterfaces())
+                                {
+                                    switch (TrySet(newValueType))
+                                    {
+                                        case 1:
+                                            break;
+                                        case -1:
+                                            goto indexError;
+                                    }
+                                }
+
+                                typeArray[0] = null;
+                                oneType = typeArray;
+
+                                int TrySet(Type type_)
+                                {
+                                    typeArray[0] = type_;
+                                    Type concreteType = typeof(IList<>).MakeGenericType(typeArray);
+                                    if (concreteType.IsAssignableFrom(previousNodeObjectType))
+                                    {
+                                        typeArray[0] = null;
+                                        oneType = typeArray;
+
+                                        (MethodInfo GetCount, MethodInfo SetItems) methodInfos;
+                                        bool found;
+                                        IListItemsSetLock.ReadBegin();
+                                        {
+                                            found = IListMethods.TryGetValue(concreteType, out methodInfos);
+                                        }
+                                        IListItemsSetLock.ReadEnd();
+                                        if (!found)
+                                        {
+                                            IListItemsSetLock.WriteBegin();
+                                            {
+                                                if (!IListMethods.TryGetValue(concreteType, out methodInfos))
+                                                {
+                                                    MethodInfo setItem = concreteType.GetMethod("set_Item");
+                                                    MethodInfo getCount = concreteType.GetMethod("get_Count");
+                                                    IListMethods.Add(concreteType, methodInfos = (getCount, setItem));
+                                                }
+                                            }
+                                            IListItemsSetLock.WriteEnd();
+                                        }
+
+                                        if (previousNode.Index < (int)methodInfos.GetCount.Invoke(previousNode.Object, null))
+                                        {
+                                            object[] objectsArray = Interlocked.Exchange(ref twoObjects, null) ?? new object[2];
+                                            objectsArray[1] = newValue_;
+                                            objectsArray[0] = previousNode.Index;
+                                            methodInfos.SetItems.Invoke(previousNode.Object, objectsArray);
+                                            objectsArray[1] = null;
+                                            objectsArray[0] = null;
+                                            twoObjects = objectsArray;
+                                            return 1;
+                                        }
+                                        return -1;
+                                    }
+                                    return 0;
+                                }
 
                                 if (notThrow) goto error_;
                                 ThrowTypeNotSupported();
 
-                                void ThrowTypeNotSupported() => throw new NotSupportedException($"Error while assigning value to '{string.Join(".", nodes_.Take(i + 1).Select(e => e.path ?? $"Array.data[{e.Index}]"))}' from path '{string.Join(".", nodes_.Select(e => e.path ?? $"Array.data[{e.Index}]"))}'. Can only mutate fields, properties or types that implement {nameof(IList)}.");
+                                void ThrowTypeNotSupported() => throw new NotSupportedException($"Error while assigning value to '{string.Join(".", nodes_.Take(i + 1).Select(e => e.path ?? $"Array.data[{e.Index}]"))}' from path '{string.Join(".", nodes_.Select(e => e.path ?? $"Array.data[{e.Index}]"))}'. Can only mutate fields, properties or types that implement {nameof(IList)} or IList<T>, where T is any type that is assignable from the value to assign.");
 
                             indexError:
                                 if (notThrow) goto error_;
