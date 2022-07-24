@@ -110,10 +110,18 @@ namespace Enderlook.Unity.Toolset.Utils
 
             nodes.Clear();
 
-            // TODO: This allocation could be ellided.
-            string path = source.propertyPath.Replace(".Array.data[", "[");
-            string[] pathSections = path.Split(Helper.DOT_SEPARATOR);
-            int total = pathSections.Length;
+            int total = 1;
+            ReadOnlySpan<char> propertyPath = source.propertyPath.AsSpan();
+            for (int j = 0; j < propertyPath.Length; j++)
+            {
+                if (propertyPath[j] == '.')
+                {
+                    if (propertyPath.Slice(j).StartsWith(".Array.data[".AsSpan()))
+                        j += ".Array.data[".Length;
+                    else
+                        total++;
+                }
+            }
 
             if (count > total)
             {
@@ -142,14 +150,42 @@ namespace Enderlook.Unity.Toolset.Utils
                 goto isFalse;
             }
 
-            for (int i = 0; i < pathSections.Length; i++)
+            int i = -1;
+            ReadOnlySpan<char> remainingPath = source.propertyPath.AsSpan();
+            while (remainingPath.Length > 0)
             {
-                string element = pathSections[i];
-                if (element.Contains("["))
+                i++;
+                int remainingPathIndex = remainingPath.IndexOf('.');
+                ReadOnlySpan<char> pathSection;
+                int? hasIndex;
+                if (remainingPathIndex == -1)
                 {
-                    string elementName = element.Substring(0, element.IndexOf("["));
-                    int index = int.Parse(element.Substring(element.IndexOf("[")).Replace("[", "").Replace("]", ""));
+                    pathSection = remainingPath;
+                    remainingPath = default;
+                    hasIndex = default;
+                }
+                else if (remainingPath.Slice(remainingPathIndex).StartsWith(".Array.data[".AsSpan()))
+                {
+                    int start = remainingPathIndex + ".Array.data[".Length;
+                    int endIndex = remainingPath.IndexOf(']');
+                    ReadOnlySpan<char> indexText = remainingPath.Slice(start, endIndex - start);
+                    // TODO: In .Net Standard 2.1 the .ToString() can be avoided.
+                    hasIndex = int.Parse(indexText.ToString());
+                    pathSection = remainingPath.Slice(0, remainingPath.IndexOf('.'));
+                    endIndex = remainingPath.Length == ++endIndex ? endIndex : endIndex + 1;
+                    remainingPath = remainingPath.Slice(endIndex);
+                }
+                else
+                {
+                    pathSection = remainingPath.Slice(0, remainingPathIndex);
+                    remainingPath = remainingPath.Slice(remainingPathIndex + 1);
+                    hasIndex = default;
+                }
 
+                string elementName = pathSection.ToString();
+
+                if (hasIndex is int index)
+                {
                     if (!SetObj(elementName, out target, out MemberInfo memberInfo)) goto isFalse;
 
                     node.MemberInfo = memberInfo;
@@ -164,7 +200,7 @@ namespace Enderlook.Unity.Toolset.Utils
                     }
 
                     void ThrowArrayDataIsNull()
-                        => throw new ArgumentException($"source.serializedObject.targetObject.{string.Join(".", pathSections.Take(i)).Replace("[", ".Array.data[")}.{elementName}.Array.data");
+                        => throw new ArgumentException($"source.serializedObject.targetObject.{GetPathSections(i)}.{elementName}.Array.data");
 
                     if (target is IList list)
                     {
@@ -179,8 +215,8 @@ namespace Enderlook.Unity.Toolset.Utils
 
                     void ThrowIndexMustBeLowerThanArraySize()
                     {
-                        string subPath = string.Join(".", pathSections.Take(i)).Replace("[", ".Array.data[");
-                        string subPathPlusOne = string.Join(".", pathSections.Take(i + 1)).Replace("[", ".Array.data[");
+                        string subPath = GetPathSections(i);
+                        string subPathPlusOne = GetPathSections(i + 1);
                         throw new ArgumentException($"source.serializedObject.targetObject.{subPathPlusOne}", $"Index {index} at 'source.serializedObject.targetObject.{subPathPlusOne}' must be lower than 'source.serializedObject.targetObject.{subPath}{(string.IsNullOrEmpty(subPath) ? "" : ".")}{elementName}.Array.arraySize' ({list.Count})");
                     }
 
@@ -199,8 +235,8 @@ namespace Enderlook.Unity.Toolset.Utils
 
                             void ThrowEnumerableExhausted()
                             {
-                                string subPath = string.Join(".", pathSections.Take(i)).Replace("[", ".Array.data[");
-                                string subPathPlusOne = string.Join(".", pathSections.Take(i + 1)).Replace("[", ".Array.data[");
+                                string subPath = GetPathSections(i);
+                                string subPathPlusOne = GetPathSections(i + 1);
                                 throw new ArgumentException($"source.serializedObject.targetObject.{subPathPlusOne}", $"Index {index} at 'source.serializedObject.targetObject.{subPathPlusOne}' must be lower than 'source.serializedObject.targetObject.{subPath}{(string.IsNullOrEmpty(subPath) ? "" : ".")}{elementName}.Array.arraySize' ({j})");
                             }
                         }
@@ -219,12 +255,12 @@ namespace Enderlook.Unity.Toolset.Utils
                     node.Index = -1;
                     node.path = null;
                 }
-                else if (SetObj(element, out target, out MemberInfo memberInfo))
+                else if (SetObj(elementName, out target, out MemberInfo memberInfo))
                 {
                     node.MemberInfo = memberInfo;
                     nodes.Add(node);
                     node.Object = target;
-                    node.path = element;
+                    node.path = elementName;
                 }
                 else
                     goto isFalse;
@@ -242,7 +278,7 @@ namespace Enderlook.Unity.Toolset.Utils
                     goto isFalse;
 
                     void ThrowTargetNull()
-                        => throw new ArgumentException($"source.serializedObject.targetObject.{string.Join(".", pathSections.Take(i + 1)).Replace("[", ".Array.data[")}");
+                        => throw new ArgumentException($"source.serializedObject.targetObject.{GetPathSections(i + 1)}");
                 }
 
                 bool SetObj(string name, out object target__, out MemberInfo memberInfo)
@@ -282,7 +318,7 @@ namespace Enderlook.Unity.Toolset.Utils
 
                     void ThrowMemberNotFound()
                     {
-                        string subPath = string.Join(".", pathSections.Take(i)).Replace("[", ".Array.data[");
+                        string subPath = GetPathSections(i);
                         throw new InvalidOperationException($"From path 'source.serializedObject.targetObject.{source.propertyPath}', member '{name}' (at 'source.serializedObject.targetObject.{subPath}{(string.IsNullOrEmpty(subPath) ? "" : ".")}{name}') was not found.");
                     }
                 }
@@ -292,6 +328,27 @@ namespace Enderlook.Unity.Toolset.Utils
         isFalse:
             nodes.Clear();
             return false;
+
+            string GetPathSections(int take)
+            {
+                if (take == 0)
+                    return default;
+
+                ReadOnlySpan<char> propertyPath_ = source.propertyPath.AsSpan();
+                int i = 0;
+                for (int j = 0; j < propertyPath_.Length; j++)
+                {
+                    if (propertyPath_[j] == '.')
+                    {
+                        if (propertyPath_.Slice(j).StartsWith(".Array.data[".AsSpan()))
+                            j += ".Array.data[".Length;
+                        else if (++i == take)
+                            return propertyPath_.Slice(0, j).ToString();
+                    }
+                }
+
+                return source.propertyPath;
+            }
 
             void ThrowNodesIsNull()
                 => throw new ArgumentNullException(nameof(nodes));
