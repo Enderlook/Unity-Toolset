@@ -5,10 +5,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
 using UnityEditor;
+using UnityEditor.Callbacks;
 using UnityEditor.UIElements;
 
 using UnityEngine;
@@ -31,7 +33,6 @@ namespace Enderlook.Unity.Toolset.Windows
         private static readonly Comparison<Type> COMPARE_TYPES = (a, b) => a.FullName.CompareTo(b.FullName);
         private static readonly Func<KeyValuePair<Type, Type>, Type> KEY_SELECTOR = e => e.Key;
         private static readonly Func<KeyValuePair<Type, Type>, Type> ELEMENT_SELECTOR = e => e.Value;
-        private static readonly ILookup<Type, Type> DERIVED_TYPES_EMPTY = Array.Empty<KeyValuePair<Type, Type>>().ToLookup(KEY_SELECTOR, ELEMENT_SELECTOR);
         private static readonly Func<VisualElement> CREATE_LABEL = () => new Label();
 
         // Pool values
@@ -39,6 +40,7 @@ namespace Enderlook.Unity.Toolset.Windows
         private static List<Type> tmpList;
 
         private static ILookup<Type, Type> derivedTypes;
+        private static BackgroundTask derivedTypesTask;
 
         private SerializedProperty property;
         private RestrictTypeAttribute restrictTypeAttribute;
@@ -73,93 +75,121 @@ namespace Enderlook.Unity.Toolset.Windows
             };
         }
 
+        [DidReloadScripts]
         private static void InitializeDerivedTypes()
         {
-            derivedTypes = null;
-
-            Type root = typeof(UnityObject);
-
-            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            Exception[][] exceptions = new Exception[assemblies.Length][];
-            HashSet<KeyValuePair<Type, Type>>[] sets = new HashSet<KeyValuePair<Type, Type>>[assemblies.Length];
-
-            // By using multithreading we can speed up large workflows around a 60% from 5.5s to 3.5s.
-            // However, we can't use a ConcurrentBag to stores keys because that slowdown the code in a factor of x3 (from 5.5s to 17.2s).
-
-            Parallel.For(0, assemblies.Length, (int i) =>
-            {
-                Assembly assembly = assemblies[i];
-                IEnumerable<Type> loadedTypes;
-                try
+            derivedTypesTask = BackgroundTask.Enqueue(
+#if UNITY_2020_1_OR_NEWER
+                token => Progress.Start("Object Window Initialization", "Enqueued process..."),
+                (id, token) =>
+#else
+                token =>
+#endif
                 {
-                    loadedTypes = assembly.GetTypes();
-                    exceptions[i] = Array.Empty<Exception>();
-                }
-                catch (ReflectionTypeLoadException exception)
-                {
-                    loadedTypes = exception.Types.Where(e => e != null);
-                    exceptions[i] = exception.LoaderExceptions;
-                }
+                    if (token.IsCancellationRequested)
+                        goto cancelled;
 
-                Stack<Type> stack = new Stack<Type>();
-                foreach (Type type in loadedTypes)
-                    if (root.IsAssignableFrom(type))
-                        stack.Push(type);
+#if UNITY_2020_1_OR_NEWER
+                    Progress.SetDescription(id, null);
+#endif
 
-                HashSet<KeyValuePair<Type, Type>> set = new HashSet<KeyValuePair<Type, Type>>();
-                // TODO: In .Net Standard 2.1 use .TryPop.
-                while (stack.Count > 0)
-                {
-                    Type result = stack.Pop();
-                    Type baseType = result.BaseType;
-                    if (root.IsAssignableFrom(baseType))
+                    derivedTypes = null;
+
+                    Type root = typeof(UnityObject);
+
+                    Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+#if UNITY_2020_1_OR_NEWER
+                    int total = 0;
+                    foreach (Assembly assembly in assemblies)
+                        total += assembly.GetTypes().Length;
+                    Progress.Report(id, 0, total);
+
+                    StrongBox<(int Current, bool HasErrors)> box = new StrongBox<(int Current, bool HasErrors)>();
+#endif
+                    // TODO: On .Net Standard 2.1 use initialCapacity.
+                    HashSet<KeyValuePair<Type, Type>> result = new HashSet<KeyValuePair<Type, Type>>();
+
+                    // By using multithreading we can speed up large workflows around a 60% from 5.5s to 3.5s.
+                    // However, we can't use a ConcurrentBag to stores keys because that slowdown the code in a factor of x3 (from 5.5s to 17.2s).
+
+                    Parallel.For(0, assemblies.Length, (int i) =>
                     {
-                        KeyValuePair<Type, Type> item = new KeyValuePair<Type, Type>(baseType, result);
-                        if (!set.Contains(item))
+                        Assembly assembly = assemblies[i];
+                        IEnumerable<Type> loadedTypes;
+                        try
                         {
-                            set.Add(item);
-                            stack.Push(baseType);
+                            loadedTypes = assembly.GetTypes();
                         }
-                    }
-                }
-                sets[i] = set;
-            });
+                        catch (ReflectionTypeLoadException exception)
+                        {
+                            loadedTypes = exception.Types.Where(e => e != null);
 
-            bool hasErrors = false;
-            for (int i = 0; i < exceptions.Length; i++)
-            {
-                Exception[] exceptions_ = exceptions[i];
-                Assembly assembly = assemblies[i];
-                if (exceptions_.Length > 0)
-                {
-                    if (!hasErrors)
-                    {
-                        hasErrors = true;
-                        Debug.LogError("While getting Types from loaded assemblies in Object Window the following exceptions occurred:");
-                    }
+                            lock (box)
+                            {
+                                if (!box.Value.HasErrors)
+                                {
+                                    box.Value.HasErrors = true;
+                                    Debug.LogError($"While getting Types from loaded assemblies in {nameof(ObjectWindow)} the following exceptions occurred:");
+                                }
+                            }
 
-                    foreach (Exception exception in exceptions_)
-                        Debug.LogError($"{assembly.FullName}: {exception.Message}.");
-                }
-            }
+                            foreach (Exception e in exception.LoaderExceptions)
+                                Debug.LogError($"{assembly.FullName}: {e.Message}.");
+                        }
 
-            if (sets.Length == 0)
-                derivedTypes = DERIVED_TYPES_EMPTY;
-            else
-            {
-                HashSet<KeyValuePair<Type, Type>> keys = sets[0];
+                        Stack<Type> stack = new Stack<Type>();
+                        // TODO: On .Net Standard 2.1 use initialCapacity.
+                        HashSet<KeyValuePair<Type, Type>> set = new HashSet<KeyValuePair<Type, Type>>();
+                        foreach (Type type in loadedTypes)
+                        {
+#if UNITY_2020_1_OR_NEWER
+                            Progress.Report(id, Interlocked.Increment(ref box.Value.Current), total);
+#endif
+                            if (root.IsAssignableFrom(type))
+                            {
+                                Type result = type;
 
-                for (int i = 1; i < sets.Length; i++)
-                    keys.UnionWith(sets[i]);
+                                while (true)
+                                {
+                                    Type baseType = result.BaseType;
+                                    if (root.IsAssignableFrom(baseType))
+                                    {
+                                        KeyValuePair<Type, Type> item = new KeyValuePair<Type, Type>(baseType, result);
+                                        if (!set.Contains(item))
+                                        {
+                                            set.Add(item);
+                                            stack.Push(baseType);
+                                        }
+                                    }
 
-                derivedTypes = keys.ToLookup(KEY_SELECTOR, ELEMENT_SELECTOR);
-            }
+                                    // TODO: In .Net Standard 2.1 use .TryPop.
+                                    if (stack.Count == 0)
+                                        break;
+                                    result = stack.Pop();
+                                }
+                            }
+                        }
+
+                        lock (result)
+                            result.UnionWith(set);
+                    });
+
+                    derivedTypes = result.ToLookup(KEY_SELECTOR, ELEMENT_SELECTOR);
+
+#if UNITY_2020_1_OR_NEWER
+                    Progress.Finish(id);
+                    return;
+                cancelled:
+                    Progress.Finish(id, Progress.Status.Canceled);
+#else
+                cancelled:;
+#endif
+                });
         }
 
         private static void CreateWindow(SerializedProperty property, MemberInfo memberInfo)
         {
-            if (derivedTypes is null)
-                InitializeDerivedTypes();
+            derivedTypesTask.EnsureExecute();
 
             ObjectWindow window = GetWindow<ObjectWindow>();
             window.titleContent = TITLE_CONTENT;
