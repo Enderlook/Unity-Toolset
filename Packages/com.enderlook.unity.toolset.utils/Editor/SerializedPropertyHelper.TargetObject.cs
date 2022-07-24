@@ -794,6 +794,7 @@ namespace Enderlook.Unity.Toolset.Utils
             }
         error:
             nodes_.Clear();
+            nodes = nodes_;
             return false;
         }
 
