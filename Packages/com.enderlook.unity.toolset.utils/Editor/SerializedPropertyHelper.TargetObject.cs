@@ -106,6 +106,8 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <returns>If <see langword="true"/> <paramref name="target"/> was found. Otherwise <paramref name="target"/> contains an undefined value.</returns>
         private static bool GetPropertyNodes(this SerializedProperty source, List<SerializedPropertyPathNode> nodes, int count, bool throwIfError)
         {
+            // https://github.com/lordofduct/spacepuppy-unity-framework-4.0/blob/master/Framework/com.spacepuppy.core/Editor/src/EditorHelper.cs
+
             if (source == null)
             {
                 if (throwIfError) Helper.ThrowArgumentNullException_Source();
@@ -305,7 +307,7 @@ namespace Enderlook.Unity.Toolset.Utils
                             break;
                         }
 
-                        PropertyInfo propertyInfo = type.GetProperty(name, bindingFlags);
+                        PropertyInfo propertyInfo = type.GetProperty(name, bindingFlags | BindingFlags.IgnoreCase);
                         if (!(propertyInfo is null))
                         {
                             target__ = propertyInfo.GetValue(target, null);
