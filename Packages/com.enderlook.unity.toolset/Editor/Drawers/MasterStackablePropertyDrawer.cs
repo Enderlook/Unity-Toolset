@@ -29,7 +29,7 @@ namespace Enderlook.Unity.Toolset.Drawers
         {
             task = BackgroundTask.Enqueue(
 #if UNITY_2020_1_OR_NEWER
-                token => Progress.Start($"Initialize {typeof(MasterStackablePropertyDrawer)}", "Enqueued process."),
+                token => Progress.Start($"Initialize {typeof(MasterStackablePropertyDrawer)}", "Enqueued process..."),
                 (id, token) =>
 #else
                 token =>

@@ -126,7 +126,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
 
             BackgroundTask.Enqueue(
 #if UNITY_2020_1_OR_NEWER
-                token => Progress.Start("Execute Post Compiling Checkings", "Ensure that Enderlook attributes are being used correctly."),
+                token => Progress.Start("Execute Post Compiling Checkings", "Enqueued process..."),
                 (id, token) =>
 #else
                 token =>
@@ -136,6 +136,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
                         goto cancelled;
 
 #if UNITY_2020_1_OR_NEWER
+                    Progress.SetDescription(id, "Ensure that Enderlook attributes are being used correctly.");
                     PostCompilingAssembliesHelper self = new PostCompilingAssembliesHelper(id, token);
                     int scanId = Progress.Start("Scan Assemblies", parentId: id);
                     int analysisId = Progress.Start("Execute Analysis", parentId: id);
