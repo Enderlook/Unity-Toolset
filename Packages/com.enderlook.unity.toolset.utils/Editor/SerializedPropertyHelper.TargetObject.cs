@@ -1594,24 +1594,23 @@ namespace Enderlook.Unity.Toolset.Utils
                         Type type__ = node.Object.GetType();
                         if (!type__.IsArrayOrList(out type_))
                         {
-                            bool found = false;
                             foreach (Type @interface in type__.GetInterfaces())
                             {
                                 if (@interface.IsGenericType && @interface.GetGenericTypeDefinition() == typeof(IEnumerable<>))
                                 {
                                     type_ = @interface.GenericTypeArguments[0];
-                                    found = true;
-                                    break;
-                                }
-                                else if (@interface == typeof(IEnumerable))
-                                {
-                                    type_ = typeof(object);
-                                    found = true;
+                                    goto outerBreak;
                                 }
                             }
-                            if (found is true)
+
+                            if (typeof(IEnumerable).IsAssignableFrom(type__))
+                            {
+                                type_ = typeof(object);
                                 break;
+                            }
+
                             Debug.Assert(false, "Impossible state.");
+                        outerBreak:;
                         }
                         break;
                     default:
