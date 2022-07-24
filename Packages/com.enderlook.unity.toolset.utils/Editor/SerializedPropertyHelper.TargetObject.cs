@@ -375,6 +375,12 @@ namespace Enderlook.Unity.Toolset.Utils
                         return (T)(object)source.objectReferenceValue;
                     case SerializedPropertyType.ExposedReference:
                         return (T)(object)source.exposedReferenceValue;
+#if UNITY_2019_3_OR_NEWER
+                    case SerializedPropertyType.ManagedReference:
+#if UNITY_2021_2_OR_NEWER
+                        return source.managedReferenceValue;
+#endif
+#endif
                     case SerializedPropertyType.Gradient:
                     case SerializedPropertyType.Generic:
                         return (T)source.GetTargetObject();
@@ -656,6 +662,12 @@ namespace Enderlook.Unity.Toolset.Utils
                         return (T)(object)source.objectReferenceValue;
                     case SerializedPropertyType.ExposedReference:
                         return (T)(object)source.exposedReferenceValue;
+#if UNITY_2019_3_OR_NEWER
+                    case SerializedPropertyType.ManagedReference:
+#if UNITY_2021_2_OR_NEWER
+                        return source.managedReferenceValue;
+#endif
+#endif
                     case SerializedPropertyType.Gradient:
                     case SerializedPropertyType.Generic:
                     default:
