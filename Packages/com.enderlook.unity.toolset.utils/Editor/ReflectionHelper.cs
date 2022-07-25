@@ -64,14 +64,25 @@ namespace Enderlook.Unity.Toolset.Utils
             {
                 if (type.GetGenericTypeDefinition() == typeof(List<>))
                     type = type.GetGenericArguments()[0];
+#if !UNITY_2020_1_OR_NEWER
                 else
                     return false;
+#endif
             }
             else
                 goto skip;
 
+#if UNITY_2020_1_OR_NEWER
+            if (type.IsArray)
+#else
             if (type.IsArray || type.IsGenericType)
+#endif
                 return false;
+
+#if UNITY_2020_1_OR_NEWER
+            if (type.IsGenericParameter)
+                return true;
+#endif
 
         skip:
 #if UNITY_2019_3_OR_NEWER
