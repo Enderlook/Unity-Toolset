@@ -10,11 +10,11 @@ namespace Enderlook.Unity.Toolset.Checking
     {
         private static readonly Dictionary<Type, Action<MethodInfo, string>> checkers = new Dictionary<Type, Action<MethodInfo, string>>();
 
-        [ExecuteWhenCheckAttribute(0)]
+        [ExecuteWhenCheck(0)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper")]
         private static void Reset() => checkers.Clear();
 
-        [ExecuteOnEachTypeWhenCheckAttribute(TypeFlags.IsNonEnum, 1)]
+        [ExecuteOnEachTypeWhenCheck(TypeFlags.IsNonEnum, 1)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper.")]
         private static void GetAttributesAndTypes(Type type)
         {
@@ -23,7 +23,7 @@ namespace Enderlook.Unity.Toolset.Checking
                 checkers.Add(type, new AttributeUsageMethodHelper(attribute).CheckAllowance);
         }
 
-        [ExecuteOnEachMethodOfEachTypeWhenCheckAttribute(2)]
+        [ExecuteOnEachMethodOfEachTypeWhenCheck(2)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper.")]
         private static void CheckMethods(MethodInfo methodInfo)
         {

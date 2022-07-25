@@ -25,7 +25,7 @@ namespace Enderlook.Unity.Toolset.Testing
             typesAndFieldAttributes.Clear();
         }
 
-        [ExecuteOnEachTypeWhenCheckAttribute(TypeFlags.IsNonEnum, 1)]
+        [ExecuteOnEachTypeWhenCheck(TypeFlags.IsNonEnum, 1)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper")]
         private static void GetTypes(Type type)
         {
@@ -40,7 +40,7 @@ namespace Enderlook.Unity.Toolset.Testing
             }
         }
 
-        [ExecuteOnEachFieldOfEachTypeWhenCheckAttribute(FieldSerialization.SerializableByUnity, 1)]
+        [ExecuteOnEachFieldOfEachTypeWhenCheck(FieldSerialization.SerializableByUnity, 1)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper")]
         private static void GetFields(FieldInfo fieldInfo)
         {
@@ -53,7 +53,7 @@ namespace Enderlook.Unity.Toolset.Testing
             }
         }
 
-        [ExecuteWhenCheckAttribute(2)]
+        [ExecuteWhenCheck(2)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper")]
         private static void CheckFields()
         {
