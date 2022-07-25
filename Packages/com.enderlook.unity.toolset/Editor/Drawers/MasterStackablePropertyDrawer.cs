@@ -102,34 +102,15 @@ namespace Enderlook.Unity.Toolset.Drawers
             if (!propertyType.IsArrayOrList(out propertyType))
                 propertyType = fieldType;
 
-            if (drawersMap.TryGetValue(propertyType, out (Type Drawer, bool UseForChildren) tuple) && !(tuple.Drawer is null))
-                WithoutAttribute(tuple);
-            else
-            {
-                Type type = propertyType;
-            start:
-                type = type.BaseType;
-                if (!(type is null))
-                {
-                    if (drawersMap.TryGetValue(type, out tuple))
-                    {
-                        if (!(tuple.Drawer is null) && tuple.UseForChildren)
-                        {
-                            drawersMap.Add(propertyType, (tuple.Drawer, true));
-                            WithoutAttribute(tuple);
-                        }
-                        else
-                            drawersMap.Add(propertyType, default);
-                    }
-                    else
-                        goto start;
-                }
-            }
+            Check(propertyType);
+
+            if (propertyType.IsGenericType)
+                Check(propertyType.GetGenericTypeDefinition());
 
             foreach (PropertyAttribute attribute in fieldInfo.GetCustomAttributes<PropertyAttribute>(true))
             {
                 Type attributeType = attribute.GetType();
-                if (drawersMap.TryGetValue(attributeType, out tuple) && !(tuple.Drawer is null))
+                if (drawersMap.TryGetValue(attributeType, out (Type Drawer, bool UseForChildren) tuple) && !(tuple.Drawer is null))
                     WithAttribute(attribute, tuple);
                 else
                 {
@@ -156,7 +137,7 @@ namespace Enderlook.Unity.Toolset.Drawers
             foreach (PropertyAttribute attribute in propertyType.GetCustomAttributes<PropertyAttribute>(true))
             {
                 Type attributeType = attribute.GetType();
-                if (drawersMap.TryGetValue(attributeType, out tuple) && !(tuple.Drawer is null))
+                if (drawersMap.TryGetValue(attributeType, out (Type Drawer, bool UseForChildren) tuple) && !(tuple.Drawer is null))
                     WithAttribute(attribute, tuple);
                 else
                 {
@@ -183,6 +164,33 @@ namespace Enderlook.Unity.Toolset.Drawers
             list.Sort(ORDER_SELECTOR);
             Drawers = list;
             return list;
+
+            void Check(Type propertyType_)
+            {
+                if (drawersMap.TryGetValue(propertyType_, out (Type Drawer, bool UseForChildren) tuple) && !(tuple.Drawer is null))
+                    WithoutAttribute(tuple);
+                else
+                {
+                    Type type = propertyType_;
+                start:
+                    type = type.BaseType;
+                    if (!(type is null))
+                    {
+                        if (drawersMap.TryGetValue(type, out tuple))
+                        {
+                            if (!(tuple.Drawer is null) && tuple.UseForChildren)
+                            {
+                                drawersMap.Add(propertyType_, (tuple.Drawer, true));
+                                WithoutAttribute(tuple);
+                            }
+                            else
+                                drawersMap.Add(propertyType_, default);
+                        }
+                        else
+                            goto start;
+                    }
+                }
+            }
 
             void WithAttribute(PropertyAttribute attribute, (Type Drawer, bool UseForChildren) tuple_)
             {
