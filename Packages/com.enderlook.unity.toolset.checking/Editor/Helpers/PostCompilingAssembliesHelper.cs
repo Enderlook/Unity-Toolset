@@ -62,6 +62,9 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
         [MenuItem(MENU_NAME_REFRESH, priority = 3)]
         private static void Refresh() => ExecuteAnalysis();
 
+        [MenuItem(MENU_NAME_REFRESH, true, priority = 3)]
+        private static bool CanRefresh() => checkMode != CHECK_DISABLED;
+
         private static void SetFeature(int mode, bool execute)
         {
             int oldValue = checkMode;
@@ -69,7 +72,6 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
             Menu.SetChecked(MENU_NAME_ALL, mode == CHECK_ENABLED_ALL);
             Menu.SetChecked(MENU_NAME_UNITY, mode == CHECK_ENABLED_UNITY);
             Menu.SetChecked(MENU_NAME_DISABLED, mode == CHECK_DISABLED);
-            Menu.SetChecked(MENU_NAME_REFRESH, mode != CHECK_DISABLED);
             EditorPrefs.SetInt(EDITOR_CONFIGURATION_NAME, mode);
             if (execute && oldValue != mode)
                 ExecuteAnalysis();
