@@ -32,11 +32,11 @@ namespace Enderlook.Unity.Toolset.Testing
             if (type.GetCustomAttribute<PropertyPopupAttribute>() is PropertyPopupAttribute attribute && !type.CheckIfShouldBeIgnored(typeof(PropertyPopupAttribute)))
             {
                 typesAndAttributes.Add(type, attribute);
-                FieldInfo fieldInfo = type.GetFieldExhaustive(attribute.ModeName, ExhaustiveBindingFlags.Instance);
+                FieldInfo fieldInfo = type.GetFieldExhaustive(attribute.ModeFieldName, ExhaustiveBindingFlags.Instance);
                 if (fieldInfo == null)
-                    Debug.LogError($"Type '{type}' has attribute '{nameof(PropertyPopupAttribute)}', but doesn't have a field named '{attribute.ModeName}' as '{nameof(PropertyPopupAttribute.ModeName)}' requires nor its bases classes have it.");
+                    Debug.LogError($"Type '{type}' has attribute '{nameof(PropertyPopupAttribute)}', but doesn't have a field named '{attribute.ModeFieldName}' as '{nameof(PropertyPopupAttribute.ModeFieldName)}' requires nor its bases classes have it.");
                 else if (!fieldInfo.CanBeSerializedByUnity() && !fieldInfo.CheckIfShouldBeIgnored(typeof(PropertyPopupAttribute)))
-                    Debug.LogError($"Type '{type}' has attribute '{nameof(PropertyPopupAttribute)}' which uses the field '{fieldInfo.Name}' declared in '{fieldInfo.DeclaringType}' as mode field, but it's no serializable by Unity.");
+                    Debug.LogError($"Type '{type}' has attribute '{nameof(PropertyPopupAttribute)}' which uses the field '{fieldInfo.Name}' declared in '{fieldInfo.DeclaringType}' as '{nameof(PropertyPopupAttribute.ModeFieldName)}', but it's not serializable by Unity.");
             }
         }
 

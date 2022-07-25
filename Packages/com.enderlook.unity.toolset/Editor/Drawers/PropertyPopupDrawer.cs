@@ -104,7 +104,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                 @lock.WriteBegin();
                 {
                     if (!allowedTypes.TryGetValue(classType, out propertyPopup))
-                        allowedTypes.Add(classType, propertyPopup = new PropertyPopup(propertyPopupAttribute.ModeName, modes));
+                        allowedTypes.Add(classType, propertyPopup = new PropertyPopup(propertyPopupAttribute.ModeFieldName, modes));
                 }
                 @lock.WriteEnd();
             }
