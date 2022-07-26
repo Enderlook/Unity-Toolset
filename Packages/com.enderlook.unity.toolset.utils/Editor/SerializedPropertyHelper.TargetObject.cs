@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,11 +22,11 @@ namespace Enderlook.Unity.Toolset.Utils
         private const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
         private static readonly Regex AssemblyNameRegex = new Regex("^(.*?),", RegexOptions.Compiled);
         private static readonly Regex ArrayRegex = new Regex(@"^(.*?)(?:\[])?$", RegexOptions.Compiled);
-        private static readonly Dictionary<string, Type> Types = new Dictionary<string, Type>();
         private static readonly Dictionary<Type, (MethodInfo GetCount, MethodInfo SetItems)> IListMethods = new Dictionary<Type, (MethodInfo GetCount, MethodInfo SetItems)>();
         private static ReadWriteLock IListItemsSetLock = new ReadWriteLock();
+        private static readonly Dictionary<string, Type> Types = new Dictionary<string, Type>();
+        private static ReadWriteLock TypesLock = new ReadWriteLock();
 
-        private static BackgroundTask task;
         private static List<SerializedPropertyPathNode> nodes;
         private static Type[] oneType;
         private static object[] twoObjects;
@@ -39,61 +40,11 @@ namespace Enderlook.Unity.Toolset.Utils
             }
             IListItemsSetLock.WriteEnd();
 
-            task = BackgroundTask.Enqueue(
-#if UNITY_2020_1_OR_NEWER
-                token => Progress.Start($"Initialize {typeof(SerializedPropertyHelper)}", "Enqueued process."),
-                (id, token) =>
-#else
-                token =>
-#endif
-                {
-                    if (token.IsCancellationRequested)
-                        goto cancelled;
-#if UNITY_2020_1_OR_NEWER
-                    Progress.SetDescription(id, null);
-#endif
-                    Types.Clear();
-
-                    Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
-#if UNITY_2020_1_OR_NEWER
-                    int total = 0;
-                    foreach (Assembly assembly in assemblies)
-                        total += assembly.GetTypes().Length;
-                    Progress.Report(id, 0, total);
-
-                    int current = 0;
-#endif
-                    foreach (Assembly assembly in assemblies)
-                    {
-                        foreach (Type type in assembly.GetTypes())
-                        {
-                            if (token.IsCancellationRequested)
-                                goto cancelled;
-
-#if UNITY_2020_1_OR_NEWER
-                            Progress.Report(id, current++, total);
-#endif
-
-                            if (type.IsValueType)
-                                continue;
-
-                            string assemblyName = AssemblyNameRegex.Match(type.Assembly.FullName).Groups[1].Value;
-                            string namespaceParentAndTypeName = type.FullName.Replace('+', '/');
-                            string name = $"{assemblyName} {namespaceParentAndTypeName}";
-                            Types.Add(name, type);
-                        }
-                    }
-
-#if UNITY_2020_1_OR_NEWER
-                    Progress.Finish(id);
-                    return;
-                cancelled:;
-                    Progress.Finish(id, Progress.Status.Canceled);
-#else
-                cancelled:;
-#endif
-                }
-            );
+            TypesLock.WriteBegin();
+            {
+                Types.Clear();
+            }
+            TypesLock.WriteEnd();
         }
 
         /// <summary>
@@ -1404,7 +1355,6 @@ namespace Enderlook.Unity.Toolset.Utils
         public static Type GetPropertyType(this SerializedProperty source)
         {
             // TODO: Some checks may be redundant or unnecesary.
-            string typeName = default;
             Type defaultType = default;
             Type type;
             switch (source.propertyType)
@@ -1533,12 +1483,47 @@ namespace Enderlook.Unity.Toolset.Utils
                     goto fallback;
 #if UNITY_2019_3_OR_NEWER
                 case SerializedPropertyType.ManagedReference:
-                    typeName = source.managedReferenceFieldTypename;
-                    defaultType = typeof(object);
-                    task.EnsureExecute();
-                    if (Types.TryGetValue(typeName, out type))
-                        goto done;
-                    goto fallback;
+                    string typeName = source.managedReferenceFieldTypename;
+
+                    bool found;
+                    TypesLock.ReadBegin();
+                    {
+                        found = Types.TryGetValue(typeName, out type);
+                    }
+                    TypesLock.ReadEnd();
+
+                    if (!found)
+                    {
+                        ReadOnlySpan<char> span = typeName.AsSpan();
+                        int index = typeName.IndexOf(' ');
+                        if (index == -1)
+                        {
+                            defaultType = typeof(object);
+                            goto fallback;
+                        }
+                        bool useArray = span.Length + 1 > 512 / sizeof(char);
+                        char[] resultArray = useArray ? ArrayPool<char>.Shared.Rent(span.Length + 1) : null;
+                        Span<char> result = useArray ? resultArray.AsSpan(span.Length + 1) : stackalloc char[span.Length + 1];
+                        span.Slice(index + 1).CopyTo(result);
+                        result[span.Length - index] = ' ';
+                        result[span.Length - index - 1] = ',';
+                        span.Slice(0, index).CopyTo(result.Slice(span.Length - index + 1));
+                        string reversedTypeName = span.ToString();
+                        type = Type.GetType(reversedTypeName);
+
+                        TypesLock.WriteBegin();
+                        {
+                            Types[typeName] = type;
+                        }
+                        TypesLock.WriteEnd();
+                    }
+
+                    if (type is null)
+                    {
+                        defaultType = typeof(object);
+                        goto fallback;
+                    }
+                    goto done;
 #endif
                 default:
                     defaultType = typeof(object);
