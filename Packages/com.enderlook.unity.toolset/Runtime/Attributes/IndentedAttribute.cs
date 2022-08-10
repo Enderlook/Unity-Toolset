@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Enderlook.Unity.Toolset.Attributes
 {
     /// <summary>
-    /// Add or remove indentation to the drew serialized property.
+    /// Add or remove indentation to the drawn serialized property.
     /// </summary>
     [AttributeUsageFieldMustBeSerializableByUnity]
     [AttributeUsage(AttributeTargets.Field)]
@@ -19,7 +19,7 @@ namespace Enderlook.Unity.Toolset.Attributes
         internal readonly int indentationOffset;
 
         /// <summary>
-        /// Add or remove indentation to the drew serialized property.
+        /// Add or remove indentation to the drawn serialized property.
         /// </summary>
         /// <param name="indentationOffset">Indentation to add. Negative values remove indentation.</param>
         public IndentedAttribute(int indentationOffset = 1) => this.indentationOffset = indentationOffset;

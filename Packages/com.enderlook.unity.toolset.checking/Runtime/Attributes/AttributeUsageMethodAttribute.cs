@@ -29,13 +29,13 @@ namespace Enderlook.Unity.Toolset.Checking
         internal readonly Type[] basicTypes;
 
         /// <summary>
-        /// Each time Unity compile script, they will be analyzed to check if the attribute is being used in proper methods.
+        /// Each time Unity compile scripts, they will be analyzed to check if the attribute is being used in proper methods.
         /// </summary>
         /// <param name="parameterNumber">Number of the parameter to check.<br/>
         /// Example:<br/>
         ///     • 0 -> Return type.<br/>
         ///     • 1 -> First method parameter.<br/>
-        ///     • 2 -> Second method parameter<br/>
+        ///     • 2 -> Second method parameter.<br/>
         ///     • 3 -> Third method parameter...</param>
         /// <param name="types">Data types allowed.<br/>
         /// If empty, any data type is allowed.<br/>
