@@ -6,6 +6,9 @@ using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Attributes
 {
+    /// <summary>
+    /// Draw a texture next to the drawn serialized property.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
     [AttributeUsageRequireDataType(typeof(Sprite), typeof(Texture2D), typeof(string), includeEnumerableTypes = true)]
     [AttributeUsageFieldMustBeSerializableByUnity]

@@ -7,6 +7,9 @@ using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Attributes
 {
+    /// <summary>
+    /// Conditionally determines the visibility of a drawn serialized property.
+    /// </summary>
     [AttributeUsageAccessibility(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)]
     [AttributeUsageFieldMustBeSerializableByUnity]
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = true, Inherited = true)]

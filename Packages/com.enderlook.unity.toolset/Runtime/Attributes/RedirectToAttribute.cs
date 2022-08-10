@@ -6,6 +6,9 @@ using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Attributes
 {
+    /// <summary>
+    /// Hide all the serialized members of the decorated serialized type except the one described in <see cref="RedirectFieldName"/>.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, Inherited = true)]
     [AttributeUsageFieldMustBeSerializableByUnity]
     public sealed class RedirectToAttribute : PropertyAttribute

@@ -2,6 +2,9 @@
 
 namespace Enderlook.Unity.Toolset.Checking
 {
+    /// <summary>
+    /// Determines that the owner of this attribute has an attribute that should not be inspected by the post compiling checker.
+    /// </summary>
     [AttributeUsage(AttributeTargets.All, AllowMultiple = false, Inherited = true)]
     public sealed class DoNotCheckAttribute : Attribute
     {

@@ -6,6 +6,9 @@ using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Attributes
 {
+    /// <summary>
+    /// Restrict the allowed types to the drawn serialized property.
+    /// </summary>
     [AttributeUsageRequireDataType(typeof(UnityEngine.Object), includeEnumerableTypes = true, typeFlags = TypeCasting.CheckSuperClassOrCanBeAssigned)]
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
     public sealed class RestrictTypeAttribute : PropertyAttribute

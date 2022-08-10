@@ -6,6 +6,9 @@ using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Attributes
 {
+    /// <summary>
+    /// Draw in scene a handle of the position represented by this serialized property.
+    /// </summary>
     [AttributeUsageRequireDataType(typeof(Vector2), typeof(Vector2Int), typeof(Vector3), typeof(Vector3), typeof(Vector4), typeof(Transform), includeEnumerableTypes = true)]
     [AttributeUsageFieldMustBeSerializableByUnity]
     [AttributeUsage(AttributeTargets.Field)]
@@ -28,6 +31,11 @@ namespace Enderlook.Unity.Toolset.Attributes
         internal readonly string reference;
 #endif
 
+        /// <summary>
+        /// Draw in scene a handle of the position represented by this serialized property.
+        /// </summary>
+        /// <param name="usePositionHandler">Whenever it should use a position handle instead of a free move handle to draw the point.</param>
+        /// <param name="reference">Reference used to show handler. If empty, <see cref="Transform"/> of the owner <see cref="GameObject"/> of this property will be used.</param>
         public DrawVectorRelativeToTransformAttribute(bool usePositionHandler = false, string reference = "")
         {
 #if UNITY_EDITOR
@@ -36,6 +44,12 @@ namespace Enderlook.Unity.Toolset.Attributes
 #endif
         }
 
+        /// <summary>
+        /// Draw in scene a handle of the position represented by this serialized property.
+        /// </summary>
+        /// <param name="usePositionHandler">Whenever it should use a position handle instead of a free move handle to draw the point.</param>
+        /// <param name="reference">Reference used to show handler. If empty, <see cref="Transform"/> of the owner <see cref="GameObject"/> of this property will be used.</param>
+        /// <param name="icon">Icon displayed in scene. If empty no icon will be displayed.</param>
         public DrawVectorRelativeToTransformAttribute(string icon, bool usePositionHandler = false, string reference = "")
         {
 #if UNITY_EDITOR

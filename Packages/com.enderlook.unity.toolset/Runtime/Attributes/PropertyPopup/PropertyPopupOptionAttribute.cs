@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Attributes
 {
+    /// <summary>
+    /// Determines that this serialized property is a valid property to display by the owner <see cref="PropertyPopupAttribute"/>.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
     public sealed class PropertyPopupOptionAttribute : PropertyAttribute
     {

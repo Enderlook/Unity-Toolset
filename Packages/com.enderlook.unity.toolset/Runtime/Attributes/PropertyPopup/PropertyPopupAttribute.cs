@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Attributes
 {
+    /// <summary>
+    /// Determines that this serialized type will display a single serialized property.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = true)]
     public sealed class PropertyPopupAttribute : PropertyAttribute
     {

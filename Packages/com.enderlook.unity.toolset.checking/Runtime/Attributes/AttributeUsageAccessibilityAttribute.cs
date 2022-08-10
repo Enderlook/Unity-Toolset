@@ -3,6 +3,9 @@ using System.Reflection;
 
 namespace Enderlook.Unity.Toolset.Checking
 {
+    /// <summary>
+    /// Determines that the onwer of this attribute can only be used to decorate methods that matches an speicifed <see cref="BindingFlags"/>.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Class, Inherited = true)]
     public sealed class AttributeUsageAccessibilityAttribute : Attribute
     {

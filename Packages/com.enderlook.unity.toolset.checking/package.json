@@ -1,6 +1,6 @@
 {
   "name": "com.enderlook.unity.toolset.checking",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "displayName": "Enderlook Unity Toolset Checking",
   "description": "Analizes assemblies to check if Enderlook attributes are used correctly.",
   "unity": "2019.2",

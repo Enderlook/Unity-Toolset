@@ -2,6 +2,9 @@
 
 namespace Enderlook.Unity.Toolset.Checking
 {
+    /// <summary>
+    /// Determines that the onwer of this attribute can only be used to decorate methods that matches a certain criteria.
+    /// </summary>
     [AttributeUsageRequireDataType(typeof(Attribute), typeFlags = TypeCasting.CheckSubclassTypes)]
     [AttributeUsage(AttributeTargets.Class, Inherited = true)]
     public sealed class AttributeUsageMethodAttribute : Attribute
