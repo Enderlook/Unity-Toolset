@@ -20,6 +20,11 @@ namespace Enderlook.Unity.Toolset.Attributes
         /// </summary>
         /// <param name="restriction">Values must implement, inherit or be castable to all this types.<br/>
         /// If a type is a class, it must inherit from <see cref="UnityEngine.Object"/>. Struct types are not allowed.</param>
-        public RestrictTypeAttribute(params Type[] restriction) => this.restriction = restriction;
+        public RestrictTypeAttribute(params Type[] restriction)
+        {
+#if UNITY_EDITOR
+            this.restriction = restriction;
+#endif
+        }
     }
 }
