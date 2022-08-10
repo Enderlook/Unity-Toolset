@@ -208,8 +208,6 @@ namespace Enderlook.Unity.Toolset.Utils
         /// Returns the first match.
         /// </summary>
         /// <param name="source">Initial <see cref="Type"/> used to get the field.</param>
-        /// <param name="name">Name of the field to get.</param>
-        /// <param name="includeStatics">Whenever it should include static fields.</param>
         /// <returns>The first field that matches the given name.</returns>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="source"/> or <paramref name="name"/> are <see langword="null"/>.</exception>
         public static FieldInfo[] GetFieldsExhaustive(this Type source, ExhaustiveBindingFlags bindingFlags)
@@ -331,18 +329,18 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <summary>
         /// Returns the result value of the first member of <paramref name="source"/> which:
         /// <list type="bullet">
-        ///     <item><description>If <see cref="FieldInfo"/>, its <see cref="FieldInfo.FieldType"/> must be of type <paramref name="memberType"/>.</description></item>
-        ///     <item><description>If <see cref="PropertyInfo"/>, its <see cref="PropertyInfo.PropertyType"/> must be of type <paramref name="memberType"/> and it must have a getter.</description></item>
-        ///     <item><description>If <see cref="MethodInfo"/>, its <see cref="MethodInfo.ReturnType"/> must be of type <paramref name="memberType"/> and apart from the <see langword="this"/> parameter (if instance method), all other parameters (if any) must be optional, has default value or has <see cref="ParamArrayAttribute"/> attribute.</description></item>
+        ///     <item><description>If <see cref="FieldInfo"/>, its <see cref="FieldInfo.FieldType"/> must be of type <typeparamref name="T"/>.</description></item>
+        ///     <item><description>If <see cref="PropertyInfo"/>, its <see cref="PropertyInfo.PropertyType"/> must be of type <typeparamref name="T"/> and it must have a getter.</description></item>
+        ///     <item><description>If <see cref="MethodInfo"/>, its <see cref="MethodInfo.ReturnType"/> must be of type <typeparamref name="T"/> and apart from the <see langword="this"/> parameter (if instance method), all other parameters (if any) must be optional, has default value or has <see cref="ParamArrayAttribute"/> attribute.</description></item>
         /// </list>
         /// This method looks recursively through the inheritance hierarchy of <paramref name="source"/> regardless of members accessibility.
         /// </summary>
         /// <param name="source">Type to look for <see cref="MemberInfo"/> and results.</param>
         /// <param name="name">Name of the <see cref="MemberInfo"/> looked for.</param>
-        /// <param name="resultType">Expected type of the field, property, or result type of the method.</param>
         /// <returns>Result value of first <see cref="MemberInfo"/> of <paramref name="source"/> in match the criteria.</returns>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/>, <paramref name="name"/> or <paramref name="resultType"/> are <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> or <paramref name="name"/> are <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">Thrown when <paramref name="name"/> is empty.</exception>
+        /// <exception cref="MatchingMemberNotFoundException">Thrown when no member was found that matches the criteria.</exception>
         public static T GetValueFromFirstMemberInfoThatMatchesResultTypeExhaustive<T>(this object source, string name, ExhaustiveBindingFlags bindingFlags)
         {
             if (source is null) Helper.ThrowArgumentNullException_Source();

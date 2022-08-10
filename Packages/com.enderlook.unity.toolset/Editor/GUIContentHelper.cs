@@ -70,7 +70,7 @@ namespace Enderlook.Unity.Toolset
         /// Produce a <see cref="GUIContent"/> with label of <paramref name="property"/>.
         /// </summary>
         /// <param name="property">Property to get its <see cref="GUIContent"/>.</param>
-        /// <returns><see cref="GUIContent"/> of <see cref="property"/>.</returns>
+        /// <returns><see cref="GUIContent"/> of <paramref name="property"/>.</returns>
         public static GUIContent GetGUIContent(this SerializedProperty property)
         {
             GUIContent content = new GUIContent(property.name, property.tooltip);
@@ -82,7 +82,7 @@ namespace Enderlook.Unity.Toolset
         /// Get the display name of <paramref name="property"/>.
         /// </summary>
         /// <param name="property">Property to get its <see cref="GUIContent"/>.</param>
-        /// <returns>Display name of <see cref="property"/>.</returns>
+        /// <returns>Display name of <paramref name="property"/>.</returns>
         public static string GetDisplayName(this SerializedProperty property)
         {
             GUIContent content = Interlocked.Exchange(ref staticContent, null) ?? new GUIContent();
@@ -98,7 +98,7 @@ namespace Enderlook.Unity.Toolset
         /// Get the tooltip of <paramref name="property"/>.
         /// </summary>
         /// <param name="property">Property to get its <see cref="GUIContent"/>.</param>
-        /// <returns>Tooltip of <see cref="property"/>.</returns>
+        /// <returns>Tooltip of <paramref name="property"/>.</returns>
         public static string GetTooltip(this SerializedProperty property)
         {
             if (property.GetMemberInfo().GetCustomAttribute<LabelAttribute>() is LabelAttribute attribute)
