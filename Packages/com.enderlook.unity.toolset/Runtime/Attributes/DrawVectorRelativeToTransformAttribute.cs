@@ -11,6 +11,7 @@ namespace Enderlook.Unity.Toolset.Attributes
     [AttributeUsage(AttributeTargets.Field)]
     public sealed class DrawVectorRelativeToTransformAttribute : Attribute
     {
+#if UNITY_EDITOR
         /// <summary>
         /// Whenever it should use <see cref="UnityEditor.Handles.PositionHandle(Vector3, Quaternion)"/> or <see cref="UnityEditor.Handles.FreeMoveHandle(Vector3, Quaternion, float, Vector3, UnityEditor.Handles.CapFunction)"/> to draw the handler.
         /// </summary>
@@ -25,18 +26,23 @@ namespace Enderlook.Unity.Toolset.Attributes
         /// Reference used to show handler. If empty, <see cref="Transform"/> of the <see cref="GameObject"/> will be used.
         /// </summary>
         internal readonly string reference;
+#endif
 
         public DrawVectorRelativeToTransformAttribute(bool usePositionHandler = false, string reference = "")
         {
+#if UNITY_EDITOR
             this.usePositionHandler = usePositionHandler;
             this.reference = reference;
+#endif
         }
 
         public DrawVectorRelativeToTransformAttribute(string icon, bool usePositionHandler = false, string reference = "")
         {
+#if UNITY_EDITOR
             this.usePositionHandler = usePositionHandler;
             this.icon = icon;
             this.reference = reference;
+#endif
         }
     }
 }

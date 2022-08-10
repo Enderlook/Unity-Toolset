@@ -11,6 +11,7 @@ namespace Enderlook.Unity.Toolset.Attributes
     [AttributeUsageFieldMustBeSerializableByUnity]
     public sealed class DrawTextureAttribute : PropertyAttribute
     {
+#if UNITY_EDITOR
         /// <summary>
         /// Whenever the texture will be drawn on the same line as the property or in a line bellow.
         /// </summary>
@@ -32,6 +33,7 @@ namespace Enderlook.Unity.Toolset.Attributes
         /// On -1, <see cref="height"/> is used.
         /// </summary>
         internal readonly float width;
+#endif
 
         /// <summary>
         /// Draw the texture next to the field in the inspector.
@@ -75,10 +77,12 @@ namespace Enderlook.Unity.Toolset.Attributes
         /// This is ignored if <paramref name="drawOnSameLine"/> is <see langword="true"/>.</param>
         public DrawTextureAttribute(float height, float width, bool drawOnSameLine = false, bool centered = false)
         {
+#if UNITY_EDITOR
             this.height = height;
             this.width = width;
             this.drawOnSameLine = drawOnSameLine;
             this.centered = centered;
+#endif
         }
     }
 }

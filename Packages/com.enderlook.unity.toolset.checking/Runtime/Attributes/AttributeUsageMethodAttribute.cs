@@ -6,6 +6,7 @@ namespace Enderlook.Unity.Toolset.Checking
     [AttributeUsage(AttributeTargets.Class, Inherited = true)]
     public sealed class AttributeUsageMethodAttribute : Attribute
     {
+#if UNITY_EDITOR
         /// <summary>
         /// Number of the parameter to check.<br/>
         /// Example:<br/>
@@ -15,6 +16,7 @@ namespace Enderlook.Unity.Toolset.Checking
         ///     • 3 -> Third method parameter...
         /// </summary>
         internal readonly int parameterNumber;
+#endif
 
         /// <summary>
         /// Determine the type of parameter. Use <see cref="ParameterMode.VoidOrNone"/> to specify that it should not exist.
@@ -26,7 +28,9 @@ namespace Enderlook.Unity.Toolset.Checking
         /// </summary>
         public TypeCasting checkingFlags;
 
+#if UNITY_EDITOR
         internal readonly Type[] basicTypes;
+#endif
 
         /// <summary>
         /// Each time Unity compile scripts, they will be analyzed to check if the attribute is being used in proper methods.
@@ -42,8 +46,10 @@ namespace Enderlook.Unity.Toolset.Checking
         /// To specify that a parameter should not exist, use <see cref="ParameterMode.VoidOrNone"/> in <see cref="parameterType"/>.</param>
         public AttributeUsageMethodAttribute(int parameterNumber, params Type[] types)
         {
+#if UNITY_EDITOR
             this.parameterNumber = parameterNumber;
             basicTypes = types;
+#endif
         }
     }
 }

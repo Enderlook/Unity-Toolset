@@ -15,6 +15,7 @@ namespace Enderlook.Unity.Toolset.Attributes
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
     public sealed class LabelAttribute : PropertyAttribute
     {
+#if UNITY_EDITOR
         internal readonly string DisplayNameOrGuiContent;
 
         internal readonly string Tooltip;
@@ -22,6 +23,7 @@ namespace Enderlook.Unity.Toolset.Attributes
         internal readonly LabelMode DisplayNameMode;
 
         internal readonly LabelMode TooltipMode;
+#endif
 
         /// <summary>
         /// Modifies the <see cref="GUIContent"/> associated with the <see cref="UnityEditor.SerializedProperty"/> of this field.
@@ -32,8 +34,10 @@ namespace Enderlook.Unity.Toolset.Attributes
         /// <param name="displayNameMode">Determines how <paramref name="displayName"/> is interpreted.</param>
         public LabelAttribute(string displayName, LabelMode displayNameMode = LabelMode.ByValue)
         {
+#if UNITY_EDITOR
             DisplayNameOrGuiContent = displayName;
             DisplayNameMode = displayNameMode;
+#endif
         }
 
         /// <summary>
@@ -46,9 +50,11 @@ namespace Enderlook.Unity.Toolset.Attributes
         /// <param name="tooltipMode">Determines how <paramref name="tooltip"/> is interpreted.</param>
         public LabelAttribute(string displayName, string tooltip, LabelMode tooltipMode = LabelMode.ByValue)
         {
+#if UNITY_EDITOR
             DisplayNameOrGuiContent = displayName;
             Tooltip = tooltip;
             TooltipMode = tooltipMode;
+#endif
         }
 
         /// <summary>
@@ -64,10 +70,12 @@ namespace Enderlook.Unity.Toolset.Attributes
         /// <param name="tooltipMode">Determines how <paramref name="tooltip"/> is interpreted.</param>
         public LabelAttribute(string displayName, LabelMode displayNameMode, string tooltip, LabelMode tooltipMode = LabelMode.ByValue)
         {
+#if UNITY_EDITOR
             DisplayNameOrGuiContent = displayName;
             DisplayNameMode = displayNameMode;
             Tooltip = tooltip;
             TooltipMode = tooltipMode;
+#endif
         }
     }
 }
