@@ -220,49 +220,31 @@ namespace Enderlook.Unity.Toolset.Utils
             if ((bindingFlags & ExhaustiveBindingFlags.Static) != 0)
                 flags |= BindingFlags.Static;
 
-            FieldInfo[] firsts = source.GetFields(flags | BindingFlags.FlattenHierarchy);
-            object[] tmp = null;
+            object[] tmp = ArrayPool<object>.Shared.Rent(16);
             int count = 0;
-            source = source.BaseType;
             while (!(source is null))
             {
                 FieldInfo[] current = source.GetFields(flags);
                 int currentLength = current.Length;
                 if (currentLength > 0)
                 {
-                    if (tmp is null)
+                    int newCount = count + currentLength;
+                    if (unchecked((uint)newCount >= (uint)tmp.Length))
                     {
-                        int firstLength = firsts.Length;
-                        ArrayPool<object> shared = ArrayPool<object>.Shared;
-                        tmp = shared.Rent(firstLength + currentLength);
-                        Array.Copy(firsts, tmp, firstLength);
-                        firsts = null;
-                        Array.Copy(current, 0, tmp, firstLength, tmp.Length);
-                        count = firstLength + tmp.Length;
+                        object[] newTmp = ArrayPool<object>.Shared.Rent(count + currentLength);
+                        Array.Copy(tmp, newTmp, count);
+                        Array.Clear(tmp, 0, count);
+                        ArrayPool<object>.Shared.Return(tmp);
+                        tmp = newTmp;
                     }
-                    else
-                    {
-                        int newCount = count + currentLength;
-                        if (unchecked((uint)newCount >= (uint)tmp.Length))
-                        {
-                            object[] newTmp = ArrayPool<object>.Shared.Rent(count + currentLength);
-                            Array.Copy(tmp, newTmp, count);
-                            Array.Clear(tmp, 0, count);
-                            ArrayPool<object>.Shared.Return(tmp);
-                            tmp = newTmp;
-                        }
-                        Array.Copy(current, 0, tmp, count, currentLength);
-                        count += currentLength;
-                    }
+                    Array.Copy(current, 0, tmp, count, currentLength);
+                    count += currentLength;
                 }
                 source = source.BaseType;
             }
 
-            if (!(firsts is null))
-                return firsts;
-
             FieldInfo[] result = new FieldInfo[count];
-            tmp.AsSpan(0, count).CopyTo(result);
+            Array.Copy(tmp, result, count);
             Array.Clear(tmp, 0, count);
             ArrayPool<object>.Shared.Return(tmp);
             return result;
