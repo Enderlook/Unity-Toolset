@@ -94,7 +94,7 @@ namespace Enderlook.Unity.Toolset.Drawers
         private static bool IsLargerThanOneLine(SerializedProperty optionProperty)
         {
             bool isExpanded = optionProperty.isExpanded;
-            GUIContent label = optionProperty.GetGUIContent();
+            GUIContent label = optionProperty.GetGUIContentNotThrow();
 
             optionProperty.isExpanded = false;
             float nonExpanded = EditorGUI.GetPropertyHeight(optionProperty, label, true);

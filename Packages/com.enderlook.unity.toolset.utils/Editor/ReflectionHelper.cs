@@ -319,37 +319,38 @@ namespace Enderlook.Unity.Toolset.Utils
         /// </summary>
         /// <param name="source">Type to look for <see cref="MemberInfo"/> and results.</param>
         /// <param name="name">Name of the <see cref="MemberInfo"/> looked for.</param>
-        /// <returns>Result value of first <see cref="MemberInfo"/> of <paramref name="source"/> in match the criteria.</returns>
+        /// <param name="result">If this method returns <see langword="true"/>, the value of first <see cref="MemberInfo"/> of <paramref name="source"/> in match the criteria.</param>
+        /// <returns><see langword="true"/> if a member was foudn that matches the criteria. Otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> or <paramref name="name"/> are <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">Thrown when <paramref name="name"/> is empty.</exception>
-        /// <exception cref="MatchingMemberNotFoundException">Thrown when no member was found that matches the criteria.</exception>
-        public static T GetValueFromFirstMemberInfoThatMatchesResultTypeExhaustive<T>(this object source, string name, ExhaustiveBindingFlags bindingFlags)
+        public static bool TryGetValueFromFirstMemberInfoThatMatchesResultTypeExhaustive<T>(this object source, string name, ExhaustiveBindingFlags bindingFlags, out T result)
         {
             if (source is null) Helper.ThrowArgumentNullException_Source();
             if (name is null) Helper.ThrowArgumentNullException_Name();
             if (name.Length == 0) Helper.ThrowArgumentException_NameCannotBeEmpty();
 
             MemberInfo memberInfo = GetFirstMemberInfoThatMatchesResultTypeExhaustive(source.GetType(), name, typeof(T), bindingFlags);
-            if (memberInfo is null)
-                Throw();
-
-            switch (memberInfo.MemberType)
+            switch (memberInfo?.MemberType)
             {
                 case MemberTypes.Field:
                     FieldInfo fieldInfo = (FieldInfo)memberInfo;
-                    return (T)fieldInfo.GetValue(fieldInfo.IsStatic ? null : source);
+                    result = (T)fieldInfo.GetValue(fieldInfo.IsStatic ? null : source);
+                    return true;
                 case MemberTypes.Property:
                     PropertyInfo propertyInfo = (PropertyInfo)memberInfo;
-                    return (T)propertyInfo.GetValue(propertyInfo.GetMethod.IsStatic ? null : source);
+                    result = (T)propertyInfo.GetValue(propertyInfo.GetMethod.IsStatic ? null : source);
+                    return true;
                 case MemberTypes.Method:
                     MethodInfo methodInfo = (MethodInfo)memberInfo;
-                    return (T)methodInfo.InvokeWithDefaultArguments(methodInfo.IsStatic ? null : source);
+                    result = (T)methodInfo.InvokeWithDefaultArguments(methodInfo.IsStatic ? null : source);
+                    return true;
+                case null:
+                    result = default;
+                    return false;
                 default:
                     Debug.Assert(false, "Impossible state.");
-                    return default;
+                    goto case null;
             }
-
-            void Throw() => throw new MatchingMemberNotFoundException(name, source.GetType(), typeof(T), bindingFlags);
         }
 
         /// <summary>

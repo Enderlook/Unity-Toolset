@@ -15,7 +15,7 @@ namespace Enderlook.Unity.Toolset.Drawers
             if (PropertyPopupDrawer.IsFieldOption(FieldInfo))
                 return;
 
-            GUIContentHelper.UseGUIContent((LabelAttribute)Attribute, property, ref label);
+            GUIContentHelper.UseGUIContent((LabelAttribute)Attribute, property, ref label, false);
         }
 
         protected internal override void BeforeOnGUI(ref Rect position, ref SerializedProperty property, ref GUIContent label, ref bool includeChildren, ref bool visible)
@@ -24,7 +24,7 @@ namespace Enderlook.Unity.Toolset.Drawers
             if (PropertyPopupDrawer.IsFieldOption(FieldInfo))
                 return;
 
-            GUIContentHelper.UseGUIContent((LabelAttribute)Attribute, property, ref label);
+            GUIContentHelper.UseGUIContent((LabelAttribute)Attribute, property, ref label, false);
         }
     }
 }
