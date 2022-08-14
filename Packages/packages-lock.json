@@ -13,7 +13,7 @@
       "source": "embedded",
       "dependencies": {
         "com.system.memory": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.system.memory#com.system.memory/v4.5.4",
-        "com.enderlook.unity.toolset.checking": "https://github.com/Enderlook/Unity-Toolset.git?path=Packages/com.enderlook.unity.toolset.checking#com.enderlook.unity.toolset.checking/v0.2.0",
+        "com.enderlook.unity.toolset.checking": "https://github.com/Enderlook/Unity-Toolset.git?path=Packages/com.enderlook.unity.toolset.checking#com.enderlook.unity.toolset.checking/v0.2.1",
         "com.enderlook.unity.toolset.utils": "https://github.com/Enderlook/Unity-Toolset.git?path=Packages/com.enderlook.unity.toolset.utils#com.enderlook.unity.toolset.utils/v0.6.0"
       }
     },
