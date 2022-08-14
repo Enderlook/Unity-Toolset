@@ -117,60 +117,75 @@ namespace Enderlook.Unity.Toolset.Drawers
                 {
                     case ConditionalMode.Single:
                     {
-                        if (first.type == typeof(bool))
-                            return first.expression;
-
                         Expression result = null;
-                        foreach ((string key, bool value) in TRY_BOOLEAN_NAMES)
+                        FieldInfo fieldInfo = null;
+
+                        if (first.type == typeof(bool))
                         {
-                            (Expression subExpression, Type subType, _) = GetValue(first.type, first.expression, key);
-                            if (subType == typeof(bool))
+                            result = first.expression;
+                            fieldInfo = first.field;
+                            goto next;
+                        }
+
+                        foreach ((string key, bool value) kvp in TRY_BOOLEAN_NAMES)
+                        {
+                            (Expression subExpression, Type subType, FieldInfo fieldInfo) tuple = GetValue(first.type, first.expression, kvp.key);
+                            if (tuple.subType == typeof(bool))
                             {
-                                result = value ? subExpression : Expression.Not(subExpression);
+                                result = kvp.value ? tuple.subExpression : Expression.Not(tuple.subExpression);
+                                fieldInfo = tuple.fieldInfo;
                                 goto next;
                             }
                         }
 
                         foreach (string name in TRY_NUMERIC_NAMES)
                         {
-                            (Expression subExpression, Type subType, _) = GetValue(first.type, first.expression, name);
-                            if (subType is null)
+                            (Expression subExpression, Type subType, FieldInfo fieldInfo) tuple = GetValue(first.type, first.expression, name);
+                            if (tuple.subType is null)
                                 continue;
                             for (int i = 0; i < NUMERIC_TYPES.Length; i++)
                             {
-                                if (NUMERIC_TYPES[i].key == subType)
+                                if (NUMERIC_TYPES[i].key == tuple.subType)
                                 {
-                                    result = Expression.GreaterThan(subExpression, NUMERIC_TYPES[i].value);
+                                    result = Expression.GreaterThan(tuple.subExpression, NUMERIC_TYPES[i].value);
+                                    fieldInfo = tuple.fieldInfo;
                                     goto next;
                                 }
                             }
                         }
 
-                        if (result is null)
+                        MethodInfo trueOperator = first.type.GetMethod("op_True");
+                        if (!(trueOperator is null) && trueOperator.IsStatic && trueOperator.ReturnType == typeof(bool))
                         {
-                            MethodInfo trueOperator = first.type.GetMethod("op_True");
-                            if (!(trueOperator is null) && trueOperator.IsStatic && trueOperator.ReturnType == typeof(bool))
-                            {
-                                ParameterInfo[] parameterInfos = trueOperator.GetParameters();
-                                if (parameterInfos.Length == 1 && parameterInfos[0].ParameterType.IsAssignableFrom(first.type))
-                                    result = Expression.IsTrue(first.expression);
-                            }
+                            ParameterInfo[] parameterInfos = trueOperator.GetParameters();
+                            if (parameterInfos.Length == 1 && parameterInfos[0].ParameterType.IsAssignableFrom(first.type))
+                                result = Expression.IsTrue(first.expression);
                         }
 
-                        next:
+                    next:
                         if (!first.type.IsValueType)
                         {
                             Expression notNull = Expression.NotEqual(first.expression, NULL_CONSTANT);
                             if (typeof(UnityEngine.Object).IsAssignableFrom(first.type))
                                 notNull = Expression.AndAlso(notNull, Expression.Not(Expression.Call(first.expression, OBJECT_EQUALS_METHOD_INFO, NULL_CONSTANT)));
-                            if (result is null)
-                                return notNull;
-                            return Expression.And(notNull, result);
+                            if (!(result is null))
+                                result = Expression.AndAlso(notNull, result);
+                            else
+                                result = notNull;
                         }
 
                         if (result is null)
-                            return DebugLogError($"Value of property {nameof(conditionalAttribute.FirstProperty)} in attribute {conditionalAttribute.GetType()} in field {member.Name} of type {member.ReflectedType.Name} and no other property nor compared object was specified.\n" +
-                                $"Valid types are {nameof(Boolean)}, reference types, types that can be casted to {nameof(Boolean)}, or any type with field, property (with Get method) or method with no mandatory parameters of name 'Length', 'Count', 'GetLength' or 'GetCount' that returns a numeric type or 'HasAny', 'IsEmpty', 'IsDefault' or 'IsDefaultOrEmpty' that returns {nameof(Boolean)}.");
+                            return DebugLogError($"Value of property '{nameof(conditionalAttribute.FirstProperty)}' in attribute' {conditionalAttribute.GetType()}' in field '{member.Name}' of type '{member.ReflectedType}' and no other property nor compared object was specified.\n" +
+                                $"Valid types are '{typeof(Boolean)}', reference types, types that can be casted to '{typeof(Boolean)}', or any type with field, property (with Get method) or method with no mandatory parameters of name 'Length', 'Count', 'GetLength' or 'GetCount' that returns a numeric type or 'HasAny', 'IsEmpty', 'IsDefault' or 'IsDefaultOrEmpty' that returns '{typeof(Boolean)}'.");
+
+                        IEnumerable<Attribute> enumeration = fieldInfo?.GetCustomAttributes();
+                        if (!(enumeration is null))
+                        {
+                            foreach (Attribute attribute in enumeration)
+                                if (attribute is IConditionalAttribute conditionalAttribute_)
+                                    result = Expression.And(GetExpression(first.field, conditionalAttribute_), result);
+                        }
+
                         return result;
                     }
                     case ConditionalMode.WithObject:
@@ -317,11 +332,21 @@ namespace Enderlook.Unity.Toolset.Drawers
                     expression = DebugLogError(exception.Message);
                 }
 
-                if (first.field?.GetCustomAttribute<ShowIfAttribute>() is ShowIfAttribute firstAttribute)
-                    expression = Expression.And(GetExpression(first.field, firstAttribute), expression);
+                IEnumerable<Attribute> enumeration = first.field?.GetCustomAttributes();
+                if (!(enumeration is null))
+                {
+                    foreach (Attribute attribute in enumeration)
+                        if (attribute is IConditionalAttribute conditionalAttribute)
+                            expression = Expression.And(GetExpression(first.field, conditionalAttribute), expression);
+                }
 
-                if (second.field?.GetCustomAttribute<ShowIfAttribute>() is ShowIfAttribute secondAttribute)
-                    expression = Expression.And(GetExpression(second.field, secondAttribute), expression);
+                enumeration = second.field?.GetCustomAttributes();
+                if (!(enumeration is null))
+                {
+                    foreach (Attribute attribute in enumeration)
+                        if (attribute is IConditionalAttribute conditionalAttribute)
+                            expression = Expression.And(GetExpression(second.field, conditionalAttribute), expression);
+                }
 
                 return expression;
 
