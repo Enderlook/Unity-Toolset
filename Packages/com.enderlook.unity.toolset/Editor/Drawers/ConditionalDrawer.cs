@@ -18,9 +18,7 @@ namespace Enderlook.Unity.Toolset.Drawers
     internal sealed class ConditionalHelper : StackablePropertyDrawer
     {
         private static readonly MethodInfo DEBUG_LOG_ERROR_METHOD_INFO = typeof(Debug).GetMethod(nameof(Debug.LogError), new Type[] { typeof(object) });
-        private static readonly MethodInfo STRING_IS_NULL_OR_EMPTY_METHOD_INFO = typeof(string).GetMethod(nameof(string.IsNullOrEmpty), new Type[] { typeof(string) });
         private static readonly MethodInfo OBJECT_EQUALS_METHOD_INFO = typeof(object).GetMethod("Equals", new Type[] { typeof(UnityEngine.Object) });
-        private static readonly PropertyInfo ARRAY_LENGTH_PROPERTY_INFO = typeof(Array).GetProperty(nameof(Array.Length));
         private static readonly ParameterExpression OBJECT_PARAMETER = Expression.Parameter(typeof(object));
         private static readonly Expression TRUE_CONSTANT = Expression.Constant(true);
         private static readonly Expression NULL_CONSTANT = Expression.Constant(null);
