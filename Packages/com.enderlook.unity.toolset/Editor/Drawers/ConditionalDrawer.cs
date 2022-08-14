@@ -107,11 +107,11 @@ namespace Enderlook.Unity.Toolset.Drawers
             Expression GetExpression(MemberInfo member, IConditionalAttribute conditionalAttribute)
             {
                 if (string.IsNullOrEmpty(conditionalAttribute.FirstProperty))
-                    return DebugLogError($"Value of property {nameof(conditionalAttribute.FirstProperty)} is null or empty in attribute {conditionalAttribute.GetType()} in field {member.Name} of type {member.ReflectedType.Name}.");
+                    return DebugLogError($"Value of property '{nameof(conditionalAttribute.FirstProperty)}' is null or empty in attribute '{conditionalAttribute.GetType()}' in field '{member.Name}' of type '{member.ReflectedType}'.");
 
-                (Expression expression, Type type, FieldInfo field) first = GetValue(originalType, convertedExpression, conditionalAttribute.FirstProperty);
+                (Expression expression, Type type, FieldInfo field) first = GetValue(member.ReflectedType, convertedExpression, conditionalAttribute.FirstProperty);
                 if (first == default)
-                    return DebugLogError($"No field, property (with Get method), or method with no mandatory parameters of name '{conditionalAttribute.FirstProperty}' in attribute {conditionalAttribute.GetType()} in field {member.Name} of type {member.ReflectedType.Name} was found in object of type {parent.GetType()}.");
+                    return DebugLogError($"No field, property (with Get method), or method with no mandatory parameters of name '{conditionalAttribute.FirstProperty}' for attribute '{conditionalAttribute.GetType()}' in field '{member.Name}' of type '{originalType}' was found in object of type '{member.ReflectedType}'.");
 
                 switch (conditionalAttribute.Mode)
                 {
@@ -183,7 +183,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                     {
                         (Expression expression, Type type, FieldInfo field) second = GetValue(originalType, convertedExpression, conditionalAttribute.SecondProperty);
                         if (second == default)
-                            return DebugLogError($"No field, property (with Get method), or method with no mandatory parameters of name '{conditionalAttribute.SecondProperty}' in attribute {conditionalAttribute.GetType()} in field {member.Name} of type {member.ReflectedType.Name} was found in object of type {parent.GetType()}.");
+                            return DebugLogError($"No field, property (with Get method), or method with no mandatory parameters of name '{conditionalAttribute.SecondProperty}' in attribute '{conditionalAttribute.GetType()}' in field '{member.Name}' of type '{member.ReflectedType}' was found in object of type '{parent.GetType()}'.");
                         return Compare(first, second, conditionalAttribute.Comparison);
                     }
                     default:
