@@ -29,7 +29,7 @@ namespace Enderlook.Unity.Toolset.Drawers
         {
             task = BackgroundTask.Enqueue(
 #if UNITY_2020_1_OR_NEWER
-                token => Progress.Start($"Initialize {typeof(MasterStackablePropertyDrawer)}", "Enqueued process..."),
+                _ => Progress.Start($"Initialize {typeof(MasterStackablePropertyDrawer)}", "Enqueued process..."),
                 (id, token) =>
 #else
                 token =>
@@ -280,8 +280,7 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         public override bool CanCacheInspectorGUI(SerializedProperty property)
         {
-            List<StackablePropertyDrawer> drawers = GetDrawers();
-            foreach (StackablePropertyDrawer drawer in drawers)
+            foreach (StackablePropertyDrawer drawer in GetDrawers())
                 if (!drawer.CanCacheInspectorGUI(property))
                     return false;
             return true;
