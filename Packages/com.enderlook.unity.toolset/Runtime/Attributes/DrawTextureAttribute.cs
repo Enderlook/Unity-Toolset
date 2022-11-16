@@ -16,14 +16,9 @@ namespace Enderlook.Unity.Toolset.Attributes
     {
 #if UNITY_EDITOR
         /// <summary>
-        /// Whenever the texture will be drawn on the same line as the property or in a line bellow.
+        /// Determines how the texture should be drawn.
         /// </summary>
-        internal readonly bool drawOnSameLine;
-
-        /// <summary>
-        /// Whenever the texture will be centered.
-        /// </summary>
-        internal readonly bool centered;
+        internal readonly DrawTextureMode mode;
 
         /// <summary>
         /// Height of the <see cref="Rect"/> used to show the texture.<br/>
@@ -41,50 +36,31 @@ namespace Enderlook.Unity.Toolset.Attributes
         /// <summary>
         /// Draw the texture next to the field in the inspector.
         /// </summary>
-        public DrawTextureAttribute() : this(-1, -1, true, false) { }
-
-        /// <summary>
-        /// Draw the texture next to the field in the inspector.
-        /// </summary>
-        /// <param name="drawOnSameLine">Whenever the texture will be drawn on the same line as the property or in a line bellow.</param>
-        public DrawTextureAttribute(bool drawOnSameLine = true) : this(-1, -1, drawOnSameLine, false) { }
-
-        /// <summary>
-        /// Draw the texture next to the field in the inspector.
-        /// </summary>
-        /// <param name="drawOnSameLine">Whenever the texture will be drawn on the same line as the property or in a line bellow.</param>
-        /// <param name="centered">Whenever the textre will be centered.<br/>
-        /// This is ignored if <paramref name="drawOnSameLine"/> is <see langword="true"/>.</param>
-        public DrawTextureAttribute(bool drawOnSameLine = true, bool centered = false) : this(-1, -1, drawOnSameLine, centered) { }
+        /// <param name="mode">Determines how the texture should be drawn.</param>
+        public DrawTextureAttribute(DrawTextureMode mode = DrawTextureMode.CurrentLine)
+        {
+#if UNITY_EDITOR
+            height = -1;
+            width = -1;
+            this.mode = mode;
+#endif
+        }
 
         /// <summary>
         /// Draw the texture below the field in the inspector.
         /// </summary>
         /// <param name="size">Size of the <see cref="Rect"/> used to show the texture.<br/>
-        /// On -1, the height of the property is used.</param>
-        /// <param name="drawOnSameLine">Whenever the texture will be drawn on the same line as the property or in a line bellow.</param>
-        /// <param name="centered">Whenever the textre will be centered.<br/>
+        /// On -1, the height of the property is used.<br/>
+        /// This determines the height of the texture. The width is changes automatically to maintain the correct aspect ratio.<br/>
+        /// Note that in order to upscale the texture, it requires read access that must be configured during the import of the texture.</param>
+        /// <param name="mode">Determines how the texture should be drawn.</param>
         /// This is ignored if <paramref name="drawOnSameLine"/> is <see langword="true"/>.</param>
-        public DrawTextureAttribute(float size, bool drawOnSameLine = false, bool centered = false) : this(size, size, drawOnSameLine, centered) { }
-
-        /// <summary>
-        /// Draw the texture of the field in the inspector.
-        /// </summary>
-        /// <param name="height">Height of the <see cref="Rect"/> used to show the texture.<br/>
-        /// On -1, the height of the property is used.</param>
-        /// <param name="width">Width of the <see cref="Rect"/> used to show the texture.<br/>
-        /// On -1, <paramref name="height"/> is used.</param>
-        /// <param name="drawOnSameLine">Whenever the texture will be drawn on the same line as the property or in a line bellow.<br/>
-        /// This is ignored if <see cref="hideMode"/> is <see cref="Hide.All"/>.</param>
-        /// <param name="centered">Whenever the textre will be centered.<br/>
-        /// This is ignored if <paramref name="drawOnSameLine"/> is <see langword="true"/>.</param>
-        public DrawTextureAttribute(float height, float width, bool drawOnSameLine = false, bool centered = false)
+        public DrawTextureAttribute(float size, DrawTextureMode mode = DrawTextureMode.CurrentLine)
         {
 #if UNITY_EDITOR
-            this.height = height;
-            this.width = width;
-            this.drawOnSameLine = drawOnSameLine;
-            this.centered = centered;
+            height = size;
+            width = size;
+            this.mode = mode;
 #endif
         }
     }
