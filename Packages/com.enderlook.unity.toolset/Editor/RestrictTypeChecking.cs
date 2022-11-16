@@ -78,7 +78,7 @@ namespace Enderlook.Unity.Toolset
             {
                 if (!type.IsAssignableFrom(resultType))
                 {
-                    errorMessage = $"Require values than can be casted to {type}. {resultType} can't.";
+                    errorMessage = $"Require values that can be casted to {type}. {resultType} can't.";
                     return false;
                 }
             }
