@@ -160,7 +160,7 @@ namespace Enderlook.Unity.Toolset.Utils
             }
             zeroArrayLock.ReadEnd();
 
-            if (value)
+            if (!value)
             {
                 zeroArrayLock.WriteBegin();
                 {
