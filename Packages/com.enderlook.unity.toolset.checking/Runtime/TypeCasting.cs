@@ -41,6 +41,6 @@ namespace Enderlook.Unity.Toolset.Checking
         /// <summary>
         /// <see cref="CheckIsAssignableTypes"/> or <see cref="CheckCanBeAssignedTypes"/>.
         /// </summary>
-        CheckSuperClassOrCanBeAssigned = CheckIsAssignableTypes | CheckCanBeAssignedTypes,
+        CheckSuperClassOrCanBeAssigned = CheckSuperClassTypes | CheckCanBeAssignedTypes,
     };
 }
