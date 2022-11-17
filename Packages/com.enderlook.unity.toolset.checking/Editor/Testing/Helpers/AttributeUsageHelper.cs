@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 using UnityEngine;
 
@@ -12,6 +13,9 @@ namespace Enderlook.Unity.Toolset.Checking
     /// </summary>
     internal static class AttributeUsageHelper
     {
+        private static Type[] type1;
+        private static StringBuilder stringBuilder;
+
         /// <summary>
         /// Produces a <see cref="HashSet{T}"/> with <paramref name="types"/>.
         /// </summary>
@@ -24,15 +28,20 @@ namespace Enderlook.Unity.Toolset.Checking
         {
             if (includeEnumerableTypes)
             {
+                Type[] array = Interlocked.Exchange(ref type1, null) ?? new Type[1];
+                ref Type slot = ref array[0];
                 // TODO: On .Net Standard 2.1 assign an initial capacity.
                 HashSet<Type> hashSet = new HashSet<Type>();
                 for (int i = 0; i < types.Length; i++)
                 {
                     Type type = types[i];
                     hashSet.Add(type);
-                    hashSet.Add(typeof(List<>).MakeGenericType(type));
+                    slot = type;
+                    hashSet.Add(typeof(List<>).MakeGenericType(array));
                     hashSet.Add(type.MakeArrayType());
                 }
+                slot = null;
+                type1 = array;
                 return hashSet;
             }
             else
@@ -49,20 +58,23 @@ namespace Enderlook.Unity.Toolset.Checking
         /// <remarks>Only use in Unity Editor.</remarks>
         internal static string GetTextTypes(IEnumerable<Type> types, TypeCasting checkingFlags, bool isBlackList = false)
         {
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder
+            StringBuilder builder = Interlocked.Exchange(ref stringBuilder, null) ?? new StringBuilder();
+            builder
                 .Append(isBlackList ? "doesn't" : "only")
                 .Append(" accept types of ")
                 .Append(string.Join(", ", types.Select(e => '\'' + e.Name + '\'')));
             if ((checkingFlags & TypeCasting.CheckSubclassTypes) != 0)
-                stringBuilder.Append(", their subclasses");
+                builder.Append(", their subclasses");
             if ((checkingFlags & TypeCasting.CheckSuperclassTypes) != 0)
-                stringBuilder.Append(", their superclasses");
+                builder.Append(", their superclasses");
             if ((checkingFlags & TypeCasting.CheckSuperclassTypes) != 0)
-                stringBuilder.Append(", types assignable to them");
+                builder.Append(", types assignable to them");
             if ((checkingFlags & TypeCasting.CheckCanBeAssignedTypes) != 0)
-                stringBuilder.Append(", types assignable from them");
-            return stringBuilder.ToString();
+                builder.Append(", types assignable from them");
+            string result = builder.ToString();
+            builder.Clear();
+            stringBuilder = builder;
+            return result;
         }
 
         /// <summary>
