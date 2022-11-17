@@ -247,11 +247,6 @@ namespace Enderlook.Unity.Toolset.Drawers
         protected internal override float GetPropertyHeight(SerializedProperty property, GUIContent label, bool includeChildren)
         {
             float height = EditorGUI.GetPropertyHeight(property, label);
-            return CalculateWithAditionalPropertyHeight(property, height, EditorGUIUtility.currentViewWidth);
-        }
-
-        private float CalculateWithAditionalPropertyHeight(SerializedProperty property, float height, float width)
-        {
             if (TryGetTexture(property, out Texture2D texture))
             {
                 DrawTextureAttribute drawTextureAttribute = (DrawTextureAttribute)Attribute;
@@ -266,7 +261,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                 }
             }
             else
-                height += GetPropertyTypeErrorMessage(property, width).height;
+                height += GetPropertyTypeErrorMessage(property, EditorGUIUtility.currentViewWidth).height;
             return height;
         }
     }
