@@ -162,6 +162,26 @@ namespace Enderlook.Unity.Toolset.Drawers
             }
 
             list.Sort(ORDER_SELECTOR);
+
+            int i = 0;
+            int count = list.Count;
+            for (; i < count; i++)
+            {
+                StackablePropertyDrawer drawer = list[i];
+                if (drawer.RequestMain)
+                {
+                    drawer.IsMain(true);
+                    main = drawer;
+                    break;
+                }
+            }
+            for (; i < count; i++)
+            {
+                StackablePropertyDrawer drawer = list[i];
+                if (drawer.RequestMain)
+                    drawer.IsMain(false);
+            }
+
             Drawers = list;
             return list;
 
@@ -197,16 +217,6 @@ namespace Enderlook.Unity.Toolset.Drawers
                 StackablePropertyDrawer drawer = (StackablePropertyDrawer)Activator.CreateInstance(tuple_.Drawer);
                 drawer.Attribute = attribute;
                 drawer.FieldInfo = fieldInfo;
-                if (drawer.RequestMain)
-                {
-                    if (main is null)
-                    {
-                        drawer.IsMain(true);
-                        main = drawer;
-                    }
-                    else
-                        drawer.IsMain(false);
-                }
                 list.Add(drawer);
             }
 
@@ -214,16 +224,6 @@ namespace Enderlook.Unity.Toolset.Drawers
             {
                 StackablePropertyDrawer drawer = (StackablePropertyDrawer)Activator.CreateInstance(tuple_.Drawer);
                 drawer.FieldInfo = fieldInfo;
-                if (drawer.RequestMain)
-                {
-                    if (main is null)
-                    {
-                        drawer.IsMain(true);
-                        main = drawer;
-                    }
-                    else
-                        drawer.IsMain(false);
-                }
                 list.Add(drawer);
             }
         }
