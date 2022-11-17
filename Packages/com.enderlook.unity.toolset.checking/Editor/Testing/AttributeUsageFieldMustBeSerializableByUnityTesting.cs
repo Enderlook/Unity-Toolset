@@ -11,7 +11,7 @@ namespace Enderlook.Unity.Toolset.Checking
 {
     internal static class AttributeUsageFieldMustBeSerializableByUnityTesting
     {
-        private static readonly HashSet<Type> types = new HashSet<Type>();
+        private static readonly Dictionary<Type, bool> types = new Dictionary<Type, bool>();
 
         [ExecuteWhenCheck(0)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper")]
@@ -23,7 +23,7 @@ namespace Enderlook.Unity.Toolset.Checking
         {
             if (type.IsSubclassOf(typeof(Attribute))
                 && type.GetCustomAttribute<AttributeUsageFieldMustBeSerializableByUnityAttribute>(true) is AttributeUsageFieldMustBeSerializableByUnityAttribute attribute)
-                types.Add(type);
+                types.Add(type, attribute.notSupportEnumerableFields);
         }
 
         [ExecuteOnEachFieldOfEachTypeWhenCheck(FieldSerialization.AnyField, 2)]
@@ -33,10 +33,10 @@ namespace Enderlook.Unity.Toolset.Checking
             foreach (Attribute attribute in fieldInfo.GetCustomAttributes())
             {
                 Type attributeType = attribute.GetType();
-                if (types.Contains(attributeType)
-                    && !fieldInfo.CanBeSerializedByUnity()
+                if (types.TryGetValue(attributeType, out bool notSupportEnumerableFields)
+                    && (!fieldInfo.CanBeSerializedByUnity() || (notSupportEnumerableFields && fieldInfo.FieldType.IsArrayOrList()))
                     && !fieldInfo.CheckIfShouldBeIgnored(attributeType))
-                    Debug.LogError($"The attribute '{attribute.GetType().Name}' can only be used in fields that can be serialized by Unity, but field '{fieldInfo.Name}' from class '{fieldInfo.DeclaringType.Name}' (type '{fieldInfo.FieldType}') can't be serialized.");
+                    Debug.LogError($"The attribute '{attribute.GetType().Name}' can only be used in fields that can be serialized by Unity{(notSupportEnumerableFields ? "and are not arrays nor lists" : "")}, but field '{fieldInfo.Name}' from class '{fieldInfo.DeclaringType.Name}' (type '{fieldInfo.FieldType}') don't match criteria.");
             }
         }
     }
