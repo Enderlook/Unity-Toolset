@@ -35,7 +35,7 @@ namespace Enderlook.Unity.Toolset.Utils
         }
 
         /// <summary>
-        /// Get all <see cref="SerializedProperty"/> that have the <typeparamref name="T"/> attribute and are in one of the <see cref="UnityEngine.MonoBehaviour"/> of the current(s) active(s) editor(s).
+        /// Get all <see cref="SerializedProperty"/> that have the <typeparamref name="T"/> attribute (or an attribute assignable to it) and are in one of the <see cref="UnityEngine.MonoBehaviour"/> of the current(s) active(s) editor(s).
         /// </summary>
         /// <typeparam name="T">Attribute type to look for.</typeparam>
         /// <param name="inherit">Whenever it should look for inherited attributes.</param>
@@ -54,7 +54,7 @@ namespace Enderlook.Unity.Toolset.Utils
                     if (!serializedProperty.TryGetMemberInfo(out MemberInfo memberInfo)) // Catch all properties with errors, such as Unity-related fields that aren't as (like those fields which starts with `m_`)
                         continue;
                     Attribute attribute = memberInfo.GetCustomAttribute(typeof(T), inherit);
-                    if (attribute?.GetType() == typeof(T))
+                    if (typeof(T).IsAssignableFrom(attribute?.GetType()))
                         yield return (serializedProperty, memberInfo, (T)attribute, editor);
                 }
             }
