@@ -12,7 +12,7 @@ using UnityEngine;
 namespace Enderlook.Unity.Toolset.Drawers
 {
     [InitializeOnLoad]
-    internal static class DrawVectorRelativeToTransformEditor 
+    internal static class DrawVectorRelativeToTransformEditor
     {
         private const string MENU_NAME = "Enderlook/Toolset/Enable Draw Vector Relative To Tranform";
 
@@ -171,30 +171,36 @@ namespace Enderlook.Unity.Toolset.Drawers
                     return serializedProperty.vector3Value + reference;
                 case SerializedPropertyType.Vector3Int:
                     return serializedProperty.vector3IntValue + ToVector3Int(reference);
+                case SerializedPropertyType.Vector4:
+                    return (Vector3)serializedProperty.vector4Value + reference;
                 default:
-                    Debug.LogError($"The attribute {nameof(DrawVectorRelativeToTransformAttribute)} is only allowed in types of {nameof(Vector2)}, {nameof(Vector2Int)}, {nameof(Vector3)} and {nameof(Vector3Int)}.");
+                    Debug.LogError($"The attribute {nameof(DrawVectorRelativeToTransformAttribute)} is only allowed in types of {nameof(Vector2)}, {nameof(Vector2Int)}, {nameof(Vector3)}, {nameof(Vector3Int)} and {nameof(Vector4)}.");
                     return Vector3.zero;
             }
         }
 
         private static void SetFromAbsolutePosition(SerializedProperty serializedProperty, Vector3 world, Vector3 reference)
         {
+            Vector3 value = world - reference;
             switch (serializedProperty.propertyType)
             {
                 case SerializedPropertyType.Vector2:
-                    serializedProperty.vector2Value = world - reference;
+                    serializedProperty.vector2Value = value;
                     break;
                 case SerializedPropertyType.Vector2Int:
-                    serializedProperty.vector2IntValue = ToVector2Int(world - reference);
+                    serializedProperty.vector2IntValue = ToVector2Int(value);
                     break;
                 case SerializedPropertyType.Vector3:
-                    serializedProperty.vector3Value = world - reference;
+                    serializedProperty.vector3Value = value;
                     break;
                 case SerializedPropertyType.Vector3Int:
-                    serializedProperty.vector3IntValue = ToVector3Int(world - reference);
+                    serializedProperty.vector3IntValue = ToVector3Int(value);
+                    break;
+                case SerializedPropertyType.Vector4:
+                    serializedProperty.vector4Value = new Vector4(value.x, value.y, value.z, serializedProperty.vector4Value.w);
                     break;
                 default:
-                    Debug.LogError($"The attribute {nameof(DrawVectorRelativeToTransformAttribute)} is only allowed in types of {nameof(Vector2)}, {nameof(Vector2Int)}, {nameof(Vector3)} and {nameof(Vector3Int)}.");
+                    Debug.LogError($"The attribute {nameof(DrawVectorRelativeToTransformAttribute)} is only allowed in types of {nameof(Vector2)}, {nameof(Vector2Int)}, {nameof(Vector3)}, {nameof(Vector3Int)} and {nameof(Vector4)}.");
                     break;
             }
         }
