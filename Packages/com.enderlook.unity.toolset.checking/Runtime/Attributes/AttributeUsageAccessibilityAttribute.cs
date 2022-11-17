@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Reflection;
 
+using UnityEngine;
+
 namespace Enderlook.Unity.Toolset.Checking
 {
     /// <summary>
@@ -23,5 +25,13 @@ namespace Enderlook.Unity.Toolset.Checking
             this.bindingFlags = bindingFlags;
 #endif
         }
+
+#if UNITY_EDITOR
+        internal void CheckAllowance(MemberInfo memberInfo, string attributeName)
+        {
+            if (memberInfo.ReflectedType.GetMember(memberInfo.Name, bindingFlags).Length == 0)
+                Debug.LogError($"According to {nameof(AttributeUsageAccessibilityAttribute)}, the attribute {attributeName} can only be applied in members with the following {nameof(BindingFlags)}: {bindingFlags}.");
+        }
+#endif
     }
 }
