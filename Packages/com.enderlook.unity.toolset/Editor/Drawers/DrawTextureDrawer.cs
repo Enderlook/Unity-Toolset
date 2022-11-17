@@ -180,7 +180,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                     if (texture == null)
                     {
                         Sprite sprite = Resources.Load<Sprite>(path);
-                        if (texture != null)
+                        if (sprite != null)
                             texture = sprite.texture;
                         else
                             break;
