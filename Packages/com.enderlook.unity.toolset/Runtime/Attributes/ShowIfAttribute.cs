@@ -11,7 +11,7 @@ namespace Enderlook.Unity.Toolset.Attributes
     /// Conditionally determines the visibility of a drawn serialized property.
     /// </summary>
     [AttributeUsageAccessibility(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)]
-    [AttributeUsageFieldMustBeSerializableByUnity]
+    [AttributeUsageFieldMustBeSerializableByUnity(true)]
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = true, Inherited = true)]
     public sealed class ShowIfAttribute : PropertyAttribute
 #if UNITY_EDITOR

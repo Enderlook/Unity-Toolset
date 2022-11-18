@@ -5,7 +5,7 @@ namespace Enderlook.Unity.Toolset.Checking
     /// <summary>
     /// Determines that the onwer of this attribute can only be used to decorate methods that matches a certain criteria.
     /// </summary>
-    [AttributeUsageRequireDataType(typeof(Attribute), typeFlags = TypeCasting.CheckSubclassTypes)]
+    [AttributeUsageRequireDataType(typeof(Attribute), typeFlags = TypeRelationship.IsSubclassOf)]
     [AttributeUsage(AttributeTargets.Class, Inherited = true)]
     public sealed class AttributeUsageMethodAttribute : Attribute
     {
@@ -29,7 +29,13 @@ namespace Enderlook.Unity.Toolset.Checking
         /// <summary>
         /// Additional checking rules.
         /// </summary>
-        public TypeCasting checkingFlags;
+        public TypeRelationship checkingFlags;
+
+        /// <summary>
+        /// If <see langword="true"/>, types will be forbidden types (blacklist).<br/>
+        /// If <see langword="false"/>, they will be the only allowed types (white list).
+        /// </summary>
+        public bool isBlackList;
 
 #if UNITY_EDITOR
         internal readonly Type[] basicTypes;

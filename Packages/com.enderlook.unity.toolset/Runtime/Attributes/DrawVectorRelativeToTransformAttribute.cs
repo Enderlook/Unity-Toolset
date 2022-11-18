@@ -9,7 +9,7 @@ namespace Enderlook.Unity.Toolset.Attributes
     /// <summary>
     /// Draw in scene a handle of the position represented by this serialized property.
     /// </summary>
-    [AttributeUsageRequireDataType(typeof(Vector2), typeof(Vector2Int), typeof(Vector3), typeof(Vector3), typeof(Vector4), typeof(Transform), includeEnumerableTypes = true)]
+    [AttributeUsageRequireDataType(typeof(Vector2), typeof(Vector2Int), typeof(Vector3), typeof(Vector3), typeof(Vector4), typeof(Transform), supportEnumerableFields = true)]
     [AttributeUsageFieldMustBeSerializableByUnity]
     [AttributeUsage(AttributeTargets.Field)]
     public sealed class DrawVectorRelativeToTransformAttribute : Attribute

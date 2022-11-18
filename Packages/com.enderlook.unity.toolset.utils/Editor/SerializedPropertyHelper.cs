@@ -2,6 +2,8 @@
 
 using UnityEditor;
 
+using UnityEngine;
+
 namespace Enderlook.Unity.Toolset.Utils
 {
     /// <summary>
@@ -37,6 +39,7 @@ namespace Enderlook.Unity.Toolset.Utils
             if (!source.EndsWith(">k__BackingField"))
                 return source;
 
+            Debug.Assert(source[0] == '<');
             ReadOnlySpan<char> span = source.AsSpan(1);
             return span.Slice(0, span.Length - ">k__BackingField".Length).ToString();
         }

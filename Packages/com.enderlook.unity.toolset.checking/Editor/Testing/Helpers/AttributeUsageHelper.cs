@@ -6,6 +6,8 @@ using System.Threading;
 
 using UnityEngine;
 
+using static UnityEditor.Experimental.GraphView.Port;
+
 namespace Enderlook.Unity.Toolset.Checking
 {
     /// <summary>
@@ -13,139 +15,159 @@ namespace Enderlook.Unity.Toolset.Checking
     /// </summary>
     internal static class AttributeUsageHelper
     {
-        private static Type[] type1;
-        private static StringBuilder stringBuilder;
-
-        /// <summary>
-        /// Produces a <see cref="HashSet{T}"/> with <paramref name="types"/>.
-        /// </summary>
-        /// <param name="types">Array of <see cref="Type"/> to use.</param>
-        /// <param name="includeEnumerableTypes">If <see langword="true"/>, it will also check for array o list versions of types.<br/>
-        /// Useful because Unity <see cref="PropertyDrawer"/> are draw on each element of an array or list <see cref="SerializedProperty"/></param>
-        /// <returns><see cref="HashSet{T}"/> with all types to check.</returns>
-        /// <remarks>Only use in Unity Editor.</remarks>
-        internal static HashSet<Type> GetHashsetTypes(Type[] types, bool includeEnumerableTypes = false)
-        {
-            if (includeEnumerableTypes)
-            {
-                Type[] array = Interlocked.Exchange(ref type1, null) ?? new Type[1];
-                ref Type slot = ref array[0];
-                // TODO: On .Net Standard 2.1 assign an initial capacity.
-                HashSet<Type> hashSet = new HashSet<Type>();
-                for (int i = 0; i < types.Length; i++)
-                {
-                    Type type = types[i];
-                    hashSet.Add(type);
-                    slot = type;
-                    hashSet.Add(typeof(List<>).MakeGenericType(array));
-                    hashSet.Add(type.MakeArrayType());
-                }
-                slot = null;
-                type1 = array;
-                return hashSet;
-            }
-            else
-                return new HashSet<Type>(types);
-        }
-
-        /// <summary>
-        /// Produce a <see cref="string"/> with all elements of <paramref name="types"/> and include specific text from <paramref name="checkingFlags"/>.
-        /// </summary>
-        /// <param name="types">Elements to include in the result.</param>
-        /// <param name="checkingFlags">Additional phrases.</param>
-        /// <param name="isBlackList">Whenever the result forbid instead of require the <paramref name="types"/>.</param>
-        /// <returns>A <see cref="string"/> with all elements.</returns>
-        /// <remarks>Only use in Unity Editor.</remarks>
-        internal static string GetTextTypes(IEnumerable<Type> types, TypeCasting checkingFlags, bool isBlackList = false)
-        {
-            StringBuilder builder = Interlocked.Exchange(ref stringBuilder, null) ?? new StringBuilder();
-            builder
-                .Append(isBlackList ? "doesn't" : "only")
-                .Append(" accept types of ")
-                .Append(string.Join(", ", types.Select(e => '\'' + e.Name + '\'')));
-            if ((checkingFlags & TypeCasting.CheckSubclassTypes) != 0)
-                builder.Append(", their subclasses");
-            if ((checkingFlags & TypeCasting.CheckSuperclassTypes) != 0)
-                builder.Append(", their superclasses");
-            if ((checkingFlags & TypeCasting.CheckSuperclassTypes) != 0)
-                builder.Append(", types assignable to them");
-            if ((checkingFlags & TypeCasting.CheckCanBeAssignedTypes) != 0)
-                builder.Append(", types assignable from them");
-            string result = builder.ToString();
-            builder.Clear();
-            stringBuilder = builder;
-            return result;
-        }
-
         /// <summary>
         /// Check if <paramref name="toCheckType"/> is in <paramref name="types"/> according to <paramref name="typeFlags"/> and <paramref name="isBlackList"/>.
-        /// If not found, it will log an exception in Unity.
         /// </summary>
-        /// <param name="attributeCheckerName">Name of the attribute checker.</param>
         /// <param name="types"><see cref="Type"/>s target.</param>
         /// <param name="typeFlags">Additional rules to between <paramref name="types"/> and <paramref name="toCheckType"/>.</param>
         /// <param name="isBlackList">If <see langword="true"/> <paramref name="toCheckType"/> must not be related with <paramref name="types"/>.</param>
-        /// <param name="allowedTypes">String version of <paramref name="types"/>.</param>
+        /// <param name="supportEnumerable">If <see langword="true"/>, it will also check the element type of field of array o list types.</param>
         /// <param name="toCheckType"><see cref="Type"/> to be checked.</param>
-        /// <param name="attributeName">Name of the current attribute which is being checked.</param>
-        /// <param name="toCheckName">Name of what is <paramref name="toCheckType"/> or where it was taken from (e.g: <c><see cref="System.Reflection.FieldInfo"/>.Name</c>.</param>
+        /// <returns>Whenever the criteria matches.</returns>
         /// <remarks>Only use in Unity Editor.</remarks>
-        internal static void CheckContains(string attributeCheckerName, HashSet<Type> types, TypeCasting typeFlags, bool isBlackList, string allowedTypes, Type toCheckType, string attributeName, string toCheckName)
+        internal static bool CheckContains(Type[] types, TypeRelationship typeFlags, bool isBlackList, bool supportEnumerable, Type toCheckType)
         {
-            bool contains = types.Contains(toCheckType);
+            if (types.Length == 0)
+                return true;
 
-            if (!contains)
+            Type oldToCheckType = toCheckType;
+            if (supportEnumerable)
             {
-                // Check if checkingFlags has the following flags
-                // We could use checkingFlags.HasFlag(flag), but it's ~10 times slower
-                if ((typeFlags & TypeCasting.CheckSubclassTypes) != 0)
+                if (oldToCheckType.IsArray)
+                    toCheckType = oldToCheckType.GetElementType();
+                else if (oldToCheckType.IsGenericType && oldToCheckType.GetGenericTypeDefinition() == typeof(List<>))
+                    toCheckType = oldToCheckType.GetGenericArguments()[0];
+            }
+
+            bool contains = false;
+
+            if ((typeFlags & TypeRelationship.IsEqual) != 0)
+            {
+                contains = types.Contains(toCheckType);
+                if (contains)
+                    goto end;
+            }
+
+            if ((typeFlags & TypeRelationship.IsAssignableTo) != 0)
+            {
+                foreach (Type type in types)
                 {
-                    foreach (Type type in types)
+                    if (toCheckType.IsAssignableFrom(type) && toCheckType != type)
                     {
-                        if (toCheckType.IsSubclassOf(type))
-                        {
-                            contains = true;
-                            break;
-                        }
+                        contains = true;
+                        goto end;
                     }
                 }
-                if ((typeFlags & TypeCasting.CheckSuperclassTypes) != 0 && !contains)
+            }
+            else if ((typeFlags & TypeRelationship.IsSubclassOf) != 0)
+            {
+                foreach (Type type in types)
                 {
-                    foreach (Type type in types)
+                    if (toCheckType.IsSubclassOf(type) && toCheckType != type)
                     {
-                        if (type.IsSubclassOf(toCheckType))
-                        {
-                            contains = true;
-                            break;
-                        }
+                        contains = true;
+                        goto end;
                     }
                 }
-                if ((typeFlags & TypeCasting.CheckCanBeAssignedTypes) != 0 && !contains)
+            }
+
+            if ((typeFlags & TypeRelationship.IsAssignableFrom) != 0)
+            {
+                foreach (Type type in types)
                 {
-                    foreach (Type type in types)
+                    if (type.IsAssignableFrom(toCheckType) && toCheckType != type)
                     {
-                        if (toCheckType.IsAssignableFrom(type))
-                        {
-                            contains = true;
-                            break;
-                        }
+                        contains = true;
+                        goto end;
                     }
                 }
-                if ((typeFlags & TypeCasting.CheckIsAssignableTypes) != 0 && !contains)
+            }
+            else
+            {
+                if ((typeFlags & TypeRelationship.IsSuperclassOf) != 0)
                 {
                     foreach (Type type in types)
                     {
-                        if (type.IsAssignableFrom(toCheckType))
+                        if (type.IsSubclassOf(toCheckType) && toCheckType != type)
                         {
                             contains = true;
-                            break;
+                            goto end;
                         }
                     }
                 }
             }
 
-            if (contains == isBlackList)
-                Debug.LogError($"According to '{attributeCheckerName}', '{attributeName}' '{allowedTypes}'. '{toCheckName}' is '{toCheckType.Name}' type.");
+        end:
+            return contains != isBlackList;
+        }
+
+        /// <summary>
+        /// Append a list of the supported types.
+        /// </summary>
+        /// <param name="builder">Where text will be appended.</param>
+        /// <param name="types"><see cref="Type"/>s target.</param>
+        /// <param name="typeFlags">Additional rules to between <paramref name="types"/> and <paramref name="toCheckType"/>.</param>
+        /// <param name="isBlackList">If <see langword="true"/> <paramref name="toCheckType"/> must not be related with <paramref name="types"/>.</param>
+        /// <param name="supportEnumerable">If <see langword="true"/>, it will also check the element type of field of array o list types.</param>
+        public static StringBuilder AppendSupportedTypes(StringBuilder builder, Type[] types, TypeRelationship typeFlags, bool isBlackList, bool supportEnumerable)
+        {
+            Debug.Assert(types.Length > 0);
+            StringBuilder Is() => builder.Append(isBlackList ? " isn't " : " is ");
+
+            bool match = false;
+            if ((typeFlags & TypeRelationship.IsSubclassOf) != 0)
+            {
+                match = true;
+                Is().Append("a subclass");
+            }
+            if ((typeFlags & TypeRelationship.IsSuperclassOf) != 0)
+            {
+                if (match)
+                    builder.Append(",");
+                match = true;
+                Is().Append(" a superclass");
+            }
+            if ((typeFlags & TypeRelationship.IsSuperclassOf) != 0)
+            {
+                if (match)
+                    builder.Append(",");
+                match = true;
+                Is().Append(" assignable to");
+            }
+            if ((typeFlags & TypeRelationship.IsAssignableTo) != 0)
+            {
+                if (match)
+                    builder.Append(",");
+                match = true;
+                Is().Append(" assignable from");
+            }
+            if ((typeFlags & TypeRelationship.IsEqual) != 0)
+            {
+                if (match)
+                    builder.Append(",");
+                Is().Append(" equal to");
+            }
+
+            builder.Append(" any of the following types: ");
+
+            foreach (Type type in types)
+                builder.Append(type).Append(", ");
+            builder.Length -= ", ".Length;
+
+            if (supportEnumerable)
+                builder.Append(". Or if they are arrays or lists, their element types matches previous criteria.");
+
+            return builder;
+        }
+
+        public static int GetMaximumRequiredCapacity(Type[] types)
+        {
+            // This values were got by concatenating the sum of the largest possible paths of appended constants in AppendSupportedTypes method.
+            int capacity = 321;
+            capacity += (types.Length * 2) - 2;
+            foreach (Type type in types)
+                capacity += type.ToString().Length;
+            return capacity;
         }
     }
 }

@@ -9,7 +9,7 @@ namespace Enderlook.Unity.Toolset.Attributes
     /// <summary>
     /// Restrict the allowed types to the drawn serialized property.
     /// </summary>
-    [AttributeUsageRequireDataType(typeof(UnityEngine.Object), includeEnumerableTypes = true, typeFlags = TypeCasting.CheckSuperClassOrCanBeAssigned)]
+    [AttributeUsageRequireDataType(typeof(UnityEngine.Object), supportEnumerableFields = true, typeFlags = TypeRelationship.IsEqualOrAssignableFrom)]
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
     public sealed class RestrictTypeAttribute : PropertyAttribute
     {
