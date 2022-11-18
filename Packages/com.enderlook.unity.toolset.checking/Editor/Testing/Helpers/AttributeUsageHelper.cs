@@ -118,37 +118,40 @@ namespace Enderlook.Unity.Toolset.Checking
             if ((typeFlags & TypeRelationship.IsSubclassOf) != 0)
             {
                 match = true;
-                Is().Append("a subclass");
+                Is().Append("a subclass of");
             }
             if ((typeFlags & TypeRelationship.IsSuperclassOf) != 0)
             {
                 if (match)
-                    builder.Append(",");
+                    builder.Append(", or");
                 match = true;
-                Is().Append(" a superclass");
+                Is().Append("a superclass of");
             }
             if ((typeFlags & TypeRelationship.IsSuperclassOf) != 0)
             {
                 if (match)
-                    builder.Append(",");
+                    builder.Append(", or");
                 match = true;
-                Is().Append(" assignable to");
+                Is().Append("assignable to");
             }
             if ((typeFlags & TypeRelationship.IsAssignableTo) != 0)
             {
                 if (match)
-                    builder.Append(",");
+                    builder.Append(", or");
                 match = true;
-                Is().Append(" assignable from");
+                Is().Append("assignable from");
             }
             if ((typeFlags & TypeRelationship.IsEqual) != 0)
             {
                 if (match)
-                    builder.Append(",");
-                Is().Append(" equal to");
+                    builder.Append(", or");
+                Is().Append("equal to");
             }
 
-            builder.Append(" any of the following types: ");
+            if (types.Length > 0)
+                builder.Append(" any of the following types: ");
+            else
+                builder.Append(" ");
 
             foreach (Type type in types)
                 builder.Append(type).Append(", ");
@@ -163,7 +166,7 @@ namespace Enderlook.Unity.Toolset.Checking
         public static int GetMaximumRequiredCapacity(Type[] types)
         {
             // This values were got by concatenating the sum of the largest possible paths of appended constants in AppendSupportedTypes method.
-            int capacity = 321;
+            int capacity = 235;
             capacity += (types.Length * 2) - 2;
             foreach (Type type in types)
                 capacity += type.ToString().Length;

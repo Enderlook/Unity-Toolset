@@ -41,18 +41,18 @@ namespace Enderlook.Unity.Toolset.Checking
                     && checkers.TryGetValue(attributeType, out (AttributeTargets targets, AttributeUsageRequireDataTypeAttribute attribute) tuple)
                     && (tuple.targets & checkIf) != 0
                     && !AttributeUsageHelper.CheckContains(
-                        tuple.attribute.basicTypes,
-                        tuple.attribute.typeFlags,
+                        tuple.attribute.types,
+                        tuple.attribute.typeRelationship,
                         tuple.attribute.isBlackList,
-                        tuple.attribute.supportEnumerableFields,
+                        tuple.attribute.supportEnumerables,
                         type
                     ))
                 {
-                    int capacity = 182 // This value was got by concatenating the sum of the largest path of appended constants in this method.
+                    int capacity = 181 // This value was got by concatenating the sum of the largest path of appended constants in this method.
                         + attributeType.Name.Length
                         + (memberInfoOrClass is MemberInfo memberInfo_ ? memberInfo_.Name.Length + memberInfo_.DeclaringType.ToString().Length : memberInfoOrClass.ToString().Length)
                         + type.ToString().Length
-                        + AttributeUsageHelper.GetMaximumRequiredCapacity(tuple.attribute.basicTypes);
+                        + AttributeUsageHelper.GetMaximumRequiredCapacity(tuple.attribute.types);
                     StringBuilder builder = Interlocked.Exchange(ref stringBuilder, null);
                     if (builder is null)
                         builder = new StringBuilder(capacity);
@@ -98,25 +98,25 @@ namespace Enderlook.Unity.Toolset.Checking
                         switch (memberInfo2.MemberType)
                         {
                             case MemberTypes.Field:
-                                builder.Append("fields whose type ");
+                                builder.Append("fields whose type");
                                 break;
                             case MemberTypes.Property:
-                                builder.Append("properties whose type ");
+                                builder.Append("properties whose type");
                                 break;
                             case MemberTypes.Method:
-                                builder.Append("method whose return's type ");
+                                builder.Append("method whose return's type");
                                 break;
                         }
                     }
                     else
-                        builder.Append("classes whose type ");
+                        builder.Append("classes whose type");
 
                     AttributeUsageHelper.AppendSupportedTypes(
                         builder,
-                        tuple.attribute.basicTypes,
-                        tuple.attribute.typeFlags,
+                        tuple.attribute.types,
+                        tuple.attribute.typeRelationship,
                         tuple.attribute.isBlackList,
-                        tuple.attribute.supportEnumerableFields
+                        tuple.attribute.supportEnumerables
                     );
 
                     builder

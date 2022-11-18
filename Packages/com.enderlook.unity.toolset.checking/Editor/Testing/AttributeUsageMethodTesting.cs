@@ -27,10 +27,10 @@ namespace Enderlook.Unity.Toolset.Checking
             if (type.IsSubclassOf(typeof(Attribute))
                 && type.GetCustomAttribute<AttributeUsageMethodAttribute>(true) is AttributeUsageMethodAttribute attribute)
             {
-                if (attribute.parameterNumber == 0 && attribute.parameterType != ParameterMode.Common && attribute.parameterType != ParameterMode.VoidOrNone)
-                    Debug.LogError($"Invalid configuration in attribute '{nameof(AttributeUsageMethodAttribute)}'. When '{nameof(attribute.parameterNumber)}' is 0, '{nameof(attribute.parameterType)}' must be {nameof(ParameterMode.Common)} or {nameof(ParameterMode.VoidOrNone)}. Found {attribute.parameterType}.");
-                if (attribute.parameterType != ParameterMode.Common && attribute.parameterType != ParameterMode.In && attribute.parameterType != ParameterMode.Ref && attribute.parameterType != ParameterMode.Out)
-                    Debug.LogError($"Invalid configuration in attribute '{nameof(AttributeUsageMethodAttribute)}'. '{nameof(attribute.parameterType)}' must have a valid value of enum {nameof(ParameterMode)}. Found {attribute.parameterType}.");
+                if (attribute.parameterIndex == -1)
+                    Debug.LogError($"Invalid configuration in attribute '{nameof(AttributeUsageMethodAttribute)}'. When '{nameof(attribute.parameterIndex)}' can't be negative.");
+                if (attribute.parameterModifier != ParameterModifier.None && attribute.parameterModifier != ParameterModifier.In && attribute.parameterModifier != ParameterModifier.Ref && attribute.parameterModifier != ParameterModifier.Out)
+                    Debug.LogError($"Invalid configuration in attribute '{nameof(AttributeUsageMethodAttribute)}'. '{nameof(attribute.parameterModifier)}' must have a valid value of enum {nameof(ParameterModifier)}. Found {attribute.parameterModifier}.");
                 checkers.Add(type, attribute);
             }
         }
@@ -48,13 +48,13 @@ namespace Enderlook.Unity.Toolset.Checking
                 {
                     StringBuilder GetBuilder()
                     {
-                        // This values were got by concatenating the sum of the largest possible paths of appended constants in outer method.
+                        // This values were got by concatenating the sum of the largest possible paths of appended constants in the outer method.
 
-                        int minCapacity = 147;
-                        int minCapacity1 = attributeType.Name.Length + methodInfo.Name.Length + methodInfo.DeclaringType.ToString().Length;
-                        int minCapacity2 = 1 + methodInfo.ReturnType.ToString().Length;
-                        int minCapacity3 = 6 + 10 /* Maximum digits that can take array.Length to display it */ + Math.Max((int)Math.Ceiling(Math.Log10(attribute.parameterNumber - 1)), 1);
-                        minCapacity += Math.Max(Math.Max(minCapacity1, minCapacity2), minCapacity3);
+                        int minCapacity = 86 + attributeType.Name.Length + methodInfo.Name.Length + methodInfo.DeclaringType.ToString().Length;
+                        if (!(attribute.parameterIndex is null))
+                            minCapacity += 62 + (attribute.types is null ? 0 : AttributeUsageHelper.GetMaximumRequiredCapacity(attribute.types)) + methodInfo.ReturnType.ToString().Length;
+                        else
+                            minCapacity += 85;
 
                         StringBuilder builder = Interlocked.Exchange(ref stringBuilder, null);
                         if (builder is null)
@@ -76,48 +76,32 @@ namespace Enderlook.Unity.Toolset.Checking
                         string result = builder.ToString();
                         builder.Clear();
                         stringBuilder = builder;
-                        Debug.LogError(builder);
+                        Debug.LogError(result);
                     }
 
-                    if (attribute.parameterNumber == 0)
+                    if (!(attribute.parameterIndex is int parameterIndex))
                     {
                         // Check return type.
-                        Type returnType = methodInfo.ReturnType;
 
-                        if (attribute.parameterType == ParameterMode.VoidOrNone)
-                        {
-                            if (returnType == typeof(void))
-                            {
-                                Log(GetBuilder()
-                                    .Append(" the return type must be ")
-                                    .Append(typeof(void))
-                                    .Append(". Return type is '")
-                                    .Append(returnType)
-                                    .Append("' type."));
-                            }
-                        }
-                        else if (attribute.parameterType == ParameterMode.Common)
-                        {
-                            if (!AttributeUsageHelper.CheckContains(
-                                attribute.basicTypes,
-                                attribute.checkingFlags,
+                        if (!AttributeUsageHelper.CheckContains(
+                                attribute.types,
+                                attribute.typeRelationship,
                                 attribute.isBlackList,
                                 false,
-                                returnType
+                                methodInfo.ReturnType
                             ))
-                            {
-                                Log(AttributeUsageHelper
-                                    .AppendSupportedTypes(
-                                        GetBuilder()
-                                            .Append(" the return type is only valid if it "),
-                                        attribute.basicTypes,
-                                        attribute.checkingFlags,
-                                        attribute.isBlackList,
-                                        false)
-                                    .Append(". Return type is '")
-                                    .Append(returnType)
-                                    .Append("' type."));
-                            }
+                        {
+                            Log(AttributeUsageHelper
+                                .AppendSupportedTypes(
+                                    GetBuilder()
+                                        .Append(" the return type is only valid if it "),
+                                    attribute.types,
+                                    attribute.typeRelationship,
+                                    attribute.isBlackList,
+                                    false)
+                                .Append(". Return type is '")
+                                .Append(methodInfo.ReturnType)
+                                .Append("' type."));
                         }
                     }
                     else
@@ -125,14 +109,14 @@ namespace Enderlook.Unity.Toolset.Checking
                         // Check a parameter.
                         ParameterInfo[] parameterInfos = methodInfo.GetParameters();
 
-                        if (attribute.parameterNumber - 1 >= parameterInfos.Length)
+                        if (attribute.parameterIndex >= parameterInfos.Length)
                         {
                             // Parameter doesn't exist, check if was on purpose.
-                            if (attribute.parameterType != ParameterMode.VoidOrNone)
+                            if (attribute.types != null)
                             {
                                 StringBuilder builder = GetBuilder()
                                     .Append(" the parameter at index ")
-                                    .Append(attribute.parameterNumber - 1)
+                                    .Append(attribute.parameterIndex)
                                     .Append(" was expected. But method have ")
                                     .Append(parameterInfos.Length)
                                     .Append(" parameter");
@@ -141,18 +125,18 @@ namespace Enderlook.Unity.Toolset.Checking
                                 else
                                     builder.Append('.');
                                 Log(builder);
-                                continue;
                             }
+                            continue;
                         }
 
-                        ParameterInfo parameterInfo = parameterInfos[attribute.parameterNumber - 1];
+                        ParameterInfo parameterInfo = parameterInfos[parameterIndex];
 
                         // Check if should exist.
-                        if (attribute.parameterType == ParameterMode.VoidOrNone)
+                        if (attribute.types is null)
                         {
                             Log(GetBuilder()
                                 .Append(" has more parameters than allowed. The parameter at index ")
-                                .Append(attribute.parameterNumber - 1)
+                                .Append(attribute.parameterIndex - 1)
                                 .Append(" named ")
                                 .Append(parameterInfo.Name)
                                 .Append(" was not expected."));
@@ -160,39 +144,39 @@ namespace Enderlook.Unity.Toolset.Checking
                         }
 
                         // Get parameter keyword.
-                        ParameterMode mode = ParameterMode.Common;
+                        ParameterModifier mode = ParameterModifier.None;
                         if (parameterInfo.ParameterType.IsByRef)
                         {
                             // Both `out` and `ref` has IsByRef = true, so we must check IsOut in order to split them.
                             // https://stackoverflow.com/a/38110036 from https://stackoverflow.com/questions/1551761/ref-parameters-and-reflection.
-                            mode = parameterInfo.IsOut ? ParameterMode.Out : ParameterMode.Ref;
+                            mode = parameterInfo.IsOut ? ParameterModifier.Out : ParameterModifier.Ref;
                         }
                         else if (parameterInfo.IsIn)
-                            mode = ParameterMode.In;
+                            mode = ParameterModifier.In;
 
                         // Check parameter keyword.
-                        if (attribute.parameterType != mode)
+                        if (attribute.parameterModifier != mode)
                         {
                             string expected = null;
-                            if (attribute.parameterType == ParameterMode.Out)
+                            if (attribute.parameterModifier == ParameterModifier.Out)
                                 expected = "'out'";
-                            else if (attribute.parameterType == ParameterMode.Ref)
+                            else if (attribute.parameterModifier == ParameterModifier.Ref)
                                 expected = "'ref'";
-                            else if (attribute.parameterType == ParameterMode.In)
+                            else if (attribute.parameterModifier == ParameterModifier.In)
                                 expected = "'in'";
-                            else if (attribute.parameterType == ParameterMode.Common)
+                            else if (attribute.parameterModifier == ParameterModifier.None)
                                 expected = "no";
                             else
                                 goto invalidParameterType;
 
                             string found = null;
-                            if (mode == ParameterMode.Out)
+                            if (mode == ParameterModifier.Out)
                                 found = "'out'";
-                            else if (mode == ParameterMode.Ref)
+                            else if (mode == ParameterModifier.Ref)
                                 found = "'ref'";
-                            else if (mode == ParameterMode.In)
+                            else if (mode == ParameterModifier.In)
                                 found = "'in'";
-                            else if (mode == ParameterMode.Common)
+                            else if (mode == ParameterModifier.None)
                                 found = "no";
                             else
                                 System.Diagnostics.Debug.Fail("Impossible State.");
@@ -201,7 +185,7 @@ namespace Enderlook.Unity.Toolset.Checking
                             {
                                 Log(GetBuilder()
                                     .Append(" the parameter at index ")
-                                    .Append(attribute.parameterNumber - 1)
+                                    .Append(attribute.parameterIndex)
                                     .Append(" named ")
                                     .Append(parameterInfo.Name)
                                     .Append(" has ")
@@ -215,8 +199,8 @@ namespace Enderlook.Unity.Toolset.Checking
                         }
 
                         if (AttributeUsageHelper.CheckContains(
-                            attribute.basicTypes,
-                            attribute.checkingFlags,
+                            attribute.types,
+                            attribute.typeRelationship,
                             attribute.isBlackList,
                             false,
                             parameterInfo.ParameterType
@@ -225,12 +209,12 @@ namespace Enderlook.Unity.Toolset.Checking
                             Log(AttributeUsageHelper.AppendSupportedTypes(
                                 GetBuilder()
                                     .Append(" the parameter at index ")
-                                    .Append(attribute.parameterNumber - 1)
+                                    .Append(attribute.parameterIndex)
                                     .Append(" named ")
                                     .Append(parameterInfo.Name)
                                     .Append(" expected to be of a type that "),
-                                attribute.basicTypes,
-                                attribute.checkingFlags,
+                                attribute.types,
+                                attribute.typeRelationship,
                                 attribute.isBlackList,
                                 false
                             ));

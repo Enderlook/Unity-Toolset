@@ -8,7 +8,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling.Attributes
     /// The method to decorate must have the signature DoSomething(<see cref="Type"/>).
     /// </summary>
     [AttributeUsageAccessibility(BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public)]
-    [AttributeUsageMethod(1, typeof(Type))]
+    [AttributeUsageMethod(0, typeof(Type))]
     [AttributeUsage(AttributeTargets.Method, Inherited = true)]
     public sealed class ExecuteOnEachTypeWhenCheckAttribute : BaseExecuteWhenCheckAttribute
     {

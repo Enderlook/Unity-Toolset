@@ -7,7 +7,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling.Attributes
     /// The method to decorate must have the signature DoSomething().
     /// </summary>
     [AttributeUsageAccessibility(BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public)]
-    [AttributeUsageMethod(1, parameterType = ParameterMode.VoidOrNone)]
+    [AttributeUsageMethod(0, null)]
     public sealed class ExecuteWhenCheckAttribute : BaseExecuteWhenCheckAttribute
     {
         /// <summary>

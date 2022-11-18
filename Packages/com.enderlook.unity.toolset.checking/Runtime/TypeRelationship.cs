@@ -12,31 +12,31 @@ namespace Enderlook.Unity.Toolset.Checking
         /// Must be exact type.<br/>
         /// <c>this == other</c>.
         /// </summary>
-        IsEqual = 0,
+        IsEqual = 1 << 0,
 
         /// <summary>
         /// Must be subclass of but not exact type.<br/>
         /// <c>this != other && this.IsSubclassOf(other)</c>.
         /// </summary>
-        IsSubclassOf = 1 << 0,
+        IsSubclassOf = 1 << 1,
 
         /// <summary>
         /// Must be superclass of but not exact type.<br/>
         /// <c>this != other && other.IsSubclassOf(this)</c>.
         /// </summary>
-        IsSuperclassOf = 1 << 1,
+        IsSuperclassOf = 1 << 2,
 
         /// <summary>
         /// Must be assignable from it but not exact type.<br/>
         /// <c>this != other && this.IsAssignableFrom(other)</c>.
         /// </summary>
-        IsAssignableFrom = 1 << 2 | IsSuperclassOf,
+        IsAssignableFrom = 1 << 3 | IsSuperclassOf,
 
         /// <summary>
         /// Must be assignable to but not exact type.<br/>
         /// <c>this != other && other.IsAssignableFrom(this)</c>.
         /// </summary>
-        IsAssignableTo = 1 << 3 | IsSubclassOf,
+        IsAssignableTo = 1 << 4 | IsSubclassOf,
 
         /// <summary>
         /// Must be subclass of.<br/>

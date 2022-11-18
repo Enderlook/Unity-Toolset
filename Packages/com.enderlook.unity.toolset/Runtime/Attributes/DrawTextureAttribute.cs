@@ -10,7 +10,7 @@ namespace Enderlook.Unity.Toolset.Attributes
     /// Draw a texture next to the drawn serialized property.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
-    [AttributeUsageRequireDataType(typeof(Sprite), typeof(Texture2D), typeof(string), supportEnumerableFields = true)]
+    [AttributeUsageRequireDataType(true, typeof(Sprite), typeof(Texture2D), typeof(string))]
     [AttributeUsageFieldMustBeSerializableByUnity]
     public sealed class DrawTextureAttribute : PropertyAttribute
     {
