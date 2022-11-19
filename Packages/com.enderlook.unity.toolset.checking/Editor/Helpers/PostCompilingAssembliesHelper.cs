@@ -128,7 +128,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
 
             BackgroundTask.Enqueue(
 #if UNITY_2020_1_OR_NEWER
-                token => Progress.Start("Execute Post Compiling Checkings", "Enqueued process..."),
+                _ => Progress.Start("Execute Post Compiling Checkings", "Enqueued process..."),
                 (id, token) =>
 #else
                 token =>
@@ -149,11 +149,11 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
 #if UNITY_2020_1_OR_NEWER
                     self.ScanAssemblies(scanId, assemblies);
 #else
-                    self.ScanAssemblies( assemblies);
+                    self.ScanAssemblies(assemblies);
 #endif
 
                     if (token.IsCancellationRequested)
-                {
+                    {
 #if UNITY_2020_1_OR_NEWER
                         Progress.Finish(scanId, Progress.Status.Canceled);
 #endif
@@ -226,7 +226,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
                 Assembly assembly = assemblies[i];
 
                 if (assembly.IsDefined(typeof(DoNotInspectAttribute)))
-            {
+                {
 #if UNITY_2020_1_OR_NEWER
                     Progress.Report(id, Interlocked.Add(ref current, assembly.GetTypes().Length), total);
 #endif
