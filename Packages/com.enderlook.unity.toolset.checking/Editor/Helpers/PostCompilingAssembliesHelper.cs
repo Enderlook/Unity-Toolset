@@ -140,7 +140,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
 #if UNITY_2020_1_OR_NEWER
                     Progress.SetDescription(id, "Ensure that Enderlook attributes are being used correctly.");
                     PostCompilingAssembliesHelper self = new PostCompilingAssembliesHelper(id, token);
-                    int scanId = Progress.Start("Scan Assemblies", parentId: id);
+                    int scanId = Progress.Start("Process Assemblies", parentId: id);
                     int analysisId = Progress.Start("Execute Analysis", parentId: id);
 #else
                     PostCompilingAssembliesHelper self = new PostCompilingAssembliesHelper(token);
@@ -205,7 +205,10 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
 
                 total += assembly.GetTypes().Length;
             }
-            Progress.Report(id, 0, total);
+            Progress.Report(id, 0, 2);
+
+            int currentId = Progress.Start("Scan Assemblies", parentId: id);
+            Progress.Report(currentId, 0, total);
 #endif
 
             // Sharing collections and using Interlocked.Exchange as synchronization per collection decreases perfomances by 23%.
@@ -228,7 +231,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
                 if (assembly.IsDefined(typeof(DoNotInspectAttribute)))
                 {
 #if UNITY_2020_1_OR_NEWER
-                    Progress.Report(id, Interlocked.Add(ref current, assembly.GetTypes().Length), total);
+                    Progress.Report(currentId, Interlocked.Add(ref current, assembly.GetTypes().Length), total);
 #endif
                     return;
                 }
@@ -239,7 +242,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
                         return;
 
 #if UNITY_2020_1_OR_NEWER
-                    Progress.Report(id, Interlocked.Increment(ref current), total);
+                    Progress.Report(currentId, Interlocked.Increment(ref current), total);
 #endif
 
                     if (classType.IsDefined(typeof(DoNotInspectAttribute)))
@@ -288,8 +291,18 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
                 }
             });
 
+#if UNITY_2020_1_OR_NEWER
+            Progress.Finish(currentId, token.IsCancellationRequested ? Progress.Status.Canceled : Progress.Status.Succeeded);
+            Progress.Report(id, 1, 2);
+#endif
+
             if (token.IsCancellationRequested)
                 goto end;
+
+#if UNITY_2020_1_OR_NEWER
+            currentId = Progress.Start("Merge Scans", parentId: id);
+            Progress.Report(currentId, 0, containers.Length);
+#endif
 
             int enumTypesCount = 0;
             int nonEnumTypesCount = 0;
@@ -322,6 +335,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
             bag.propertyInfos.Capacity = propertyInfosCount;
             bag.methodInfos.Capacity = methodInfosCount;
 
+            // NOTE: Each nested loop could be executed in parallel from other nested loops.
             for (int i = 0; i < containers.Length; i++)
             {
                 if (token.IsCancellationRequested)
@@ -353,7 +367,16 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
                 bag.fieldInfosSerializableByUnity.AddRange(c.fieldInfosSerializableByUnity);
                 bag.propertyInfos.AddRange(c.propertyInfos);
                 bag.methodInfos.AddRange(c.methodInfos);
+
+#if UNITY_2020_1_OR_NEWER
+                Progress.Report(currentId, i, containers.Length);
+#endif
             }
+
+#if UNITY_2020_1_OR_NEWER
+            Progress.Finish(currentId, token.IsCancellationRequested ? Progress.Status.Canceled : Progress.Status.Succeeded);
+            Progress.Report(id, 2, 2);
+#endif
 
         end:;
 #if UNITY_2020_1_OR_NEWER
@@ -521,8 +544,8 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
 
 #if UNITY_2020_1_OR_NEWER
             Progress.Report(id, 0, total);
+            current = 0;
 #endif
-
             int order = 0;
             Action[] actions = new Action[]
             {
@@ -545,9 +568,6 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
                 }
             };
 
-#if UNITY_2020_1_OR_NEWER
-            current = 0;
-#endif
             foreach (int loop in orderedKeys)
             {
                 if (token.IsCancellationRequested)
@@ -561,6 +581,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
         end:
             order = 0;
 #if UNITY_2020_1_OR_NEWER
+            Progress.Finish(id, token.IsCancellationRequested ? Progress.Status.Canceled : Progress.Status.Succeeded);
             current = 0;
 #endif
 
