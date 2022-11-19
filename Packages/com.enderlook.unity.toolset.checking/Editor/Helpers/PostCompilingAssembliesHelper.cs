@@ -92,14 +92,22 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
         {
             // TODO: Check if lazy initialization improves perfomance.
 
-            public readonly Dictionary<int, Action<Type>> executeOnEachTypeLessEnums = new Dictionary<int, Action<Type>>();
-            public readonly Dictionary<int, Action<Type>> executeOnEachTypeEnum = new Dictionary<int, Action<Type>>();
-            public readonly Dictionary<int, Action<MemberInfo>> executeOnEachMemberOfTypes = new Dictionary<int, Action<MemberInfo>>();
-            public readonly Dictionary<int, Action<FieldInfo>> executeOnEachSerializableByUnityFieldOfTypes = new Dictionary<int, Action<FieldInfo>>();
-            public readonly Dictionary<int, Action<FieldInfo>> executeOnEachNonSerializableByUnityFieldOfTypes = new Dictionary<int, Action<FieldInfo>>();
-            public readonly Dictionary<int, Action<PropertyInfo>> executeOnEachPropertyOfTypes = new Dictionary<int, Action<PropertyInfo>>();
-            public readonly Dictionary<int, Action<MethodInfo>> executeOnEachMethodOfTypes = new Dictionary<int, Action<MethodInfo>>();
-            public readonly Dictionary<int, Action> executeOnce = new Dictionary<int, Action>();
+            // object is Action<Type>
+            public Dictionary<int, object> executeOnEachTypeLessEnums = new Dictionary<int, object>();
+            // object is Action<Type>
+            public Dictionary<int, object> executeOnEachTypeEnum = new Dictionary<int, object>();
+            // object is Action<MemberInfo>
+            public Dictionary<int, object> executeOnEachMemberOfTypes = new Dictionary<int, object>();
+            // object is Action<FieldInfo>
+            public Dictionary<int, object> executeOnEachSerializableByUnityFieldOfTypes = new Dictionary<int, object>();
+            // object is Action<FieldInfo>
+            public Dictionary<int, object> executeOnEachNonSerializableByUnityFieldOfTypes = new Dictionary<int, object>();
+            // object is Action<PropertyInfo>
+            public Dictionary<int, object> executeOnEachPropertyOfTypes = new Dictionary<int, object>();
+            // object is Action<MethodInfo>
+            public Dictionary<int, object> executeOnEachMethodOfTypes = new Dictionary<int, object>();
+            // object is Action
+            public Dictionary<int, object> executeOnce = new Dictionary<int, object>();
 
             public readonly List<Type> enumTypes = new List<Type>();
             public readonly List<Type> nonEnumTypes = new List<Type>();
@@ -343,22 +351,22 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
 
                 Container c = containers[i];
 
-                foreach (KeyValuePair<int, Action<Type>> kvp in c.executeOnEachTypeLessEnums)
-                    SubscribeConcurrent(bag.executeOnEachTypeLessEnums, kvp.Value, kvp.Key);
-                foreach (KeyValuePair<int, Action<Type>> kvp in c.executeOnEachTypeEnum)
-                    SubscribeConcurrent(bag.executeOnEachTypeEnum, kvp.Value, kvp.Key);
-                foreach (KeyValuePair<int, Action<MemberInfo>> kvp in c.executeOnEachMemberOfTypes)
-                    SubscribeConcurrent(bag.executeOnEachMemberOfTypes, kvp.Value, kvp.Key);
-                foreach (KeyValuePair<int, Action<FieldInfo>> kvp in c.executeOnEachSerializableByUnityFieldOfTypes)
-                    SubscribeConcurrent(bag.executeOnEachSerializableByUnityFieldOfTypes, kvp.Value, kvp.Key);
-                foreach (KeyValuePair<int, Action<FieldInfo>> kvp in c.executeOnEachNonSerializableByUnityFieldOfTypes)
-                    SubscribeConcurrent(bag.executeOnEachNonSerializableByUnityFieldOfTypes, kvp.Value, kvp.Key);
-                foreach (KeyValuePair<int, Action<PropertyInfo>> kvp in c.executeOnEachPropertyOfTypes)
-                    SubscribeConcurrent(bag.executeOnEachPropertyOfTypes, kvp.Value, kvp.Key);
-                foreach (KeyValuePair<int, Action<MethodInfo>> kvp in c.executeOnEachMethodOfTypes)
-                    SubscribeConcurrent(bag.executeOnEachMethodOfTypes, kvp.Value, kvp.Key);
-                foreach (KeyValuePair<int, Action> kvp in c.executeOnce)
-                    SubscribeConcurrent(bag.executeOnce, kvp.Value, kvp.Key);
+                foreach (KeyValuePair<int, object> kvp in c.executeOnEachTypeLessEnums)
+                    SubscribeConcurrent<Action<Type>>(bag.executeOnEachTypeLessEnums, kvp.Value, kvp.Key);
+                foreach (KeyValuePair<int, object> kvp in c.executeOnEachTypeEnum)
+                    SubscribeConcurrent<Action<Type>>(bag.executeOnEachTypeEnum, kvp.Value, kvp.Key);
+                foreach (KeyValuePair<int, object> kvp in c.executeOnEachMemberOfTypes)
+                    SubscribeConcurrent<Action<MemberInfo>>(bag.executeOnEachMemberOfTypes, kvp.Value, kvp.Key);
+                foreach (KeyValuePair<int, object> kvp in c.executeOnEachSerializableByUnityFieldOfTypes)
+                    SubscribeConcurrent<Action<FieldInfo>>(bag.executeOnEachSerializableByUnityFieldOfTypes, kvp.Value, kvp.Key);
+                foreach (KeyValuePair<int, object> kvp in c.executeOnEachNonSerializableByUnityFieldOfTypes)
+                    SubscribeConcurrent<Action<FieldInfo>>(bag.executeOnEachNonSerializableByUnityFieldOfTypes, kvp.Value, kvp.Key);
+                foreach (KeyValuePair<int, object> kvp in c.executeOnEachPropertyOfTypes)
+                    SubscribeConcurrent<Action<PropertyInfo>>(bag.executeOnEachPropertyOfTypes, kvp.Value, kvp.Key);
+                foreach (KeyValuePair<int, object> kvp in c.executeOnEachMethodOfTypes)
+                    SubscribeConcurrent<Action<MethodInfo>>(bag.executeOnEachMethodOfTypes, kvp.Value, kvp.Key);
+                foreach (KeyValuePair<int, object> kvp in c.executeOnce)
+                    SubscribeConcurrent<Action>(bag.executeOnce, kvp.Value, kvp.Key);
 
                 bag.enumTypes.AddRange(c.enumTypes);
                 bag.nonEnumTypes.AddRange(c.nonEnumTypes);
@@ -371,6 +379,29 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
 #if UNITY_2020_1_OR_NEWER
                 Progress.Report(currentId, i, containers.Length);
 #endif
+            }
+
+            Dictionary<int, object> dict = new Dictionary<int, object>(bag.executeOnEachTypeLessEnums.Count);
+            Replace<Action<Type>>(ref dict, ref bag.executeOnEachTypeLessEnums);
+            Replace<Action<Type>>(ref dict, ref bag.executeOnEachTypeEnum);
+            Replace<Action<MemberInfo>>(ref dict, ref bag.executeOnEachMemberOfTypes);
+            Replace<Action<FieldInfo>>(ref dict, ref bag.executeOnEachSerializableByUnityFieldOfTypes);
+            Replace<Action<FieldInfo>>(ref dict, ref bag.executeOnEachNonSerializableByUnityFieldOfTypes);
+            Replace<Action<PropertyInfo>>(ref dict, ref bag.executeOnEachPropertyOfTypes);
+            Replace<Action<MethodInfo>>(ref dict, ref bag.executeOnEachMethodOfTypes);
+            Replace<Action>(ref dict, ref bag.executeOnce);
+
+            void Replace<T>(ref Dictionary<int, object> dict, ref Dictionary<int, object> source)
+                where T : Delegate
+            {
+                // TODO: On .Net Standard 2.1 we can use .EnsureCapacity() to avoid reallocations.
+                foreach (KeyValuePair<int, object> kvp in source)
+                {
+                    Debug.Assert(kvp.Value is List<T>);
+                    dict[kvp.Key] = Delegate.Combine(Unsafe.As<List<T>>(kvp.Value).ToArray());
+                }
+                (dict, source) = (source, dict);
+                dict.Clear();
             }
 
 #if UNITY_2020_1_OR_NEWER
@@ -558,9 +589,10 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
                 () => ExecuteLoop(bag.executeOnEachMethodOfTypes, bag.methodInfos),
                 () =>
                 {
-                    if (bag.executeOnce.TryGetValue(order, out Action action))
+                    if (bag.executeOnce.TryGetValue(order, out object action))
                     {
-                        action();
+                        Debug.Assert(action is Action);
+                        Unsafe.As<Action>(action)();
 #if UNITY_2020_1_OR_NEWER
                         Progress.Report(id, Interlocked.Increment(ref current), total);
 #endif
@@ -585,19 +617,20 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
             current = 0;
 #endif
 
-            void ExecuteLoop<T>(Dictionary<int, Action<T>> callbacks, List<T> values)
+            void ExecuteLoop<T>(Dictionary<int, object> callbacks, List<T> values)
             {
-                if (callbacks.TryGetValue(order, out Action<T> action))
+                if (callbacks.TryGetValue(order, out object action))
                 {
                     if (token.IsCancellationRequested)
                         return;
 
+                    Debug.Assert(action is Action<T>);
                     foreach (T element in values)
                     {
                         if (token.IsCancellationRequested)
                             return;
 
-                        action(element);
+                        Unsafe.As<Action<T>>(action)(element);
 
 #if UNITY_2020_1_OR_NEWER
                         Progress.Report(id, Interlocked.Increment(ref current), total);
@@ -608,11 +641,28 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void SubscribeConcurrent<T>(Dictionary<int, T> dictionary, T action, int order)
+        private static void SubscribeConcurrent<T>(Dictionary<int, object> dictionary, T action, int order)
             where T : Delegate
         {
-            if (dictionary.TryGetValue(order, out T value))
-                dictionary[order] = (T)Delegate.Combine(value, action);
+            if (dictionary.TryGetValue(order, out object list))
+            {
+                Debug.Assert(list is List<T>);
+                Unsafe.As<List<T>>(list).Add(action);
+            }
+            else
+                dictionary.Add(order, new List<T>() { action });
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void SubscribeConcurrent<T>(Dictionary<int, object> dictionary, object action, int order)
+            where T : Delegate
+        {
+            Debug.Assert(action is List<T>);
+            if (dictionary.TryGetValue(order, out object list))
+            {
+                Debug.Assert(list is List<T>);
+                Unsafe.As<List<T>>(list).AddRange(Unsafe.As<List<T>>(action));
+            }
             else
                 dictionary.Add(order, action);
         }
