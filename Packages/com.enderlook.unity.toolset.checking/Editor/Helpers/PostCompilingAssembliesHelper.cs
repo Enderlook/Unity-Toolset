@@ -27,7 +27,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
         private const string MENU_NAME_ALL = MENU_NAME + "Entire AppDomain";
         private static int checkMode;
 
-        private const int CHECK_DISABLED = 0; 
+        private const int CHECK_DISABLED = 0;
         private const int CHECK_ENABLED_UNITY = 1;
         private const int CHECK_ENABLED_ALL = 2;
 
