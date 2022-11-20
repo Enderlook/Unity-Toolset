@@ -17,7 +17,7 @@ namespace Enderlook.Unity.Toolset.Utils
     {
         private static readonly Type[] UNITY_BUILT_IN_SUPPORTED_TYPES = new Type[]
         {
-            typeof(Vector2), typeof(Vector3), typeof(Vector4),
+            typeof(Vector2), typeof(Vector2Int), typeof(Vector3), typeof(Vector3Int), typeof(Vector4),
             typeof(Rect), typeof(Quaternion), typeof(Matrix4x4),
             typeof(Color), typeof(Color32), typeof(LayerMask),
             typeof(AnimationCurve), typeof(Gradient), typeof(RectOffset), typeof(GUIStyle),
