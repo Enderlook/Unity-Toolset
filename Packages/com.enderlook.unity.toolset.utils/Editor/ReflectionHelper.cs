@@ -89,7 +89,7 @@ namespace Enderlook.Unity.Toolset.Utils
             if (!isSerializedByReference)
             {
 #endif
-                if (type.IsPrimitive || type.IsSubclassOf(typeof(UnityObject))
+                if (type.IsPrimitive || typeof(UnityObject).IsAssignableFrom(type)
                     || (type.IsValueType && UNITY_BUILT_IN_SUPPORTED_TYPES.Contains(type)))
                     return true;
 
@@ -107,7 +107,7 @@ namespace Enderlook.Unity.Toolset.Utils
             }
             else
             {
-                if (type.IsPrimitive || type.IsValueType || type.IsSubclassOf(typeof(UnityObject)))
+                if (type.IsPrimitive || type.IsValueType || typeof(UnityObject).IsAssignableFrom(type))
                     return false;
 
                 return true;
@@ -131,8 +131,8 @@ namespace Enderlook.Unity.Toolset.Utils
                 // SerializeReference don't support Animation fields on specific cases:
                 // https://docs.unity3d.com/ScriptReference/SerializeReference.html
                 || (serializeReference && fieldInfo.FieldType == typeof(Animation)
-                    && (fieldInfo.DeclaringType.IsSubclassOf(typeof(ScriptableObject))
-                        || fieldInfo.DeclaringType.IsSubclassOf(typeof(UnityEditor.AssetImporters.ScriptedImporter)))))
+                    && (typeof(ScriptableObject).IsAssignableFrom(fieldInfo.DeclaringType)
+                        || typeof(UnityEditor.AssetImporters.ScriptedImporter).IsAssignableFrom(fieldInfo.DeclaringType))))
                 return false;
             return fieldInfo.FieldType.CanBeSerializedByUnity(serializeReference);
 #else
