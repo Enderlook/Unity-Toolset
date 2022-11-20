@@ -1,21 +1,16 @@
 ﻿using Enderlook.Unity.Toolset.Checking.PostCompiling.Attributes;
+using Enderlook.Unity.Toolset.Utils;
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading;
-
-using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Checking
 {
     internal static class AttributeUsageRequireDataTypeTesting
     {
         private static readonly Dictionary<Type, (AttributeTargets targets, AttributeUsageRequireDataTypeAttribute attribute)> checkers = new Dictionary<Type, (AttributeTargets targets, AttributeUsageRequireDataTypeAttribute attribute)>();
-
-        private static StringBuilder stringBuilder;
 
         [ExecuteWhenCheck(0)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper")]
@@ -53,11 +48,7 @@ namespace Enderlook.Unity.Toolset.Checking
                         + (memberInfoOrClass is MemberInfo memberInfo_ ? memberInfo_.Name.Length + memberInfo_.DeclaringType.ToString().Length : memberInfoOrClass.ToString().Length)
                         + type.ToString().Length
                         + AttributeUsageHelper.GetMaximumRequiredCapacity(tuple.attribute.types);
-                    StringBuilder builder = Interlocked.Exchange(ref stringBuilder, null);
-                    if (builder is null)
-                        builder = new StringBuilder(capacity);
-                    else
-                        builder.EnsureCapacity(capacity);
+                    LogBuilder builder = LogBuilder.GetLogger(capacity);
 
                     builder
                         .Append($"According to attribute '{nameof(AttributeUsageRequireDataTypeAttribute)}', the attribute '")
@@ -122,13 +113,8 @@ namespace Enderlook.Unity.Toolset.Checking
                     builder
                         .Append(" Type is '")
                         .Append(type)
-                        .Append("'.");
-
-                    string result = builder.ToString();
-                    builder.Clear();
-                    stringBuilder = builder;
-
-                    Debug.LogError(result);
+                        .Append("'.")
+                        .LogError();
                 }
             }
         }

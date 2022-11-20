@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Enderlook.Unity.Toolset.Utils;
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -109,10 +111,10 @@ namespace Enderlook.Unity.Toolset.Checking
         /// <param name="typeFlags">Additional rules to between <paramref name="types"/> and <paramref name="toCheckType"/>.</param>
         /// <param name="isBlackList">If <see langword="true"/> <paramref name="toCheckType"/> must not be related with <paramref name="types"/>.</param>
         /// <param name="supportEnumerable">If <see langword="true"/>, it will also check the element type of field of array o list types.</param>
-        public static StringBuilder AppendSupportedTypes(StringBuilder builder, Type[] types, TypeRelationship typeFlags, bool isBlackList, bool supportEnumerable)
+        public static LogBuilder AppendSupportedTypes(LogBuilder builder, Type[] types, TypeRelationship typeFlags, bool isBlackList, bool supportEnumerable)
         {
             Debug.Assert(types.Length > 0);
-            StringBuilder Is() => builder.Append(isBlackList ? " isn't " : " is ");
+            LogBuilder Is() => builder.Append(isBlackList ? " isn't " : " is ");
 
             bool match = false;
             if ((typeFlags & TypeRelationship.IsSubclassOf) != 0)
@@ -155,7 +157,7 @@ namespace Enderlook.Unity.Toolset.Checking
 
             foreach (Type type in types)
                 builder.Append(type).Append(", ");
-            builder.Length -= ", ".Length;
+            builder.RemoveLast(", ".Length);
 
             if (supportEnumerable)
                 builder.Append(". Or if they are arrays or lists, their element types matches previous criteria.");

@@ -1,4 +1,5 @@
 ﻿using Enderlook.Unity.Toolset.Checking.PostCompiling.Attributes;
+using Enderlook.Unity.Toolset.Utils;
 
 using System;
 using System.Collections.Generic;
@@ -13,8 +14,6 @@ namespace Enderlook.Unity.Toolset.Checking
     internal static class AttributeUsageMethodTesting
     {
         private static readonly Dictionary<Type, AttributeUsageMethodAttribute> checkers = new Dictionary<Type, AttributeUsageMethodAttribute>();
-
-        private static StringBuilder stringBuilder;
 
         [ExecuteWhenCheck(0)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by PostCompilingAssembliesHelper")]
@@ -46,7 +45,7 @@ namespace Enderlook.Unity.Toolset.Checking
                 if (checkers.TryGetValue(attributeType, out AttributeUsageMethodAttribute attribute)
                     && !methodInfo.CheckIfShouldBeIgnored(attributeType))
                 {
-                    StringBuilder GetBuilder()
+                    LogBuilder GetBuilder()
                     {
                         // This values were got by concatenating the sum of the largest possible paths of appended constants in the outer method.
 
@@ -56,27 +55,13 @@ namespace Enderlook.Unity.Toolset.Checking
                         else
                             minCapacity += 85;
 
-                        StringBuilder builder = Interlocked.Exchange(ref stringBuilder, null);
-                        if (builder is null)
-                            builder = new StringBuilder(minCapacity);
-                        else
-                            builder.EnsureCapacity(minCapacity);
-
-                        return builder
+                        return LogBuilder.GetLogger(minCapacity)
                             .Append("According to attribute '" + nameof(AttributeUsageMethodAttribute) + "', the attribute '")
                             .Append(attributeType.Name)
                             .Append("' on method ")
                             .Append(methodInfo.Name)
                             .Append(" in")
                             .Append(methodInfo.DeclaringType);
-                    }
-
-                    void Log(StringBuilder builder)
-                    {
-                        string result = builder.ToString();
-                        builder.Clear();
-                        stringBuilder = builder;
-                        Debug.LogError(result);
                     }
 
                     if (!(attribute.parameterIndex is int parameterIndex))
@@ -91,7 +76,7 @@ namespace Enderlook.Unity.Toolset.Checking
                                 methodInfo.ReturnType
                             ))
                         {
-                            Log(AttributeUsageHelper
+                            AttributeUsageHelper
                                 .AppendSupportedTypes(
                                     GetBuilder()
                                         .Append(" the return type is only valid if it "),
@@ -101,7 +86,8 @@ namespace Enderlook.Unity.Toolset.Checking
                                     false)
                                 .Append(". Return type is '")
                                 .Append(methodInfo.ReturnType)
-                                .Append("' type."));
+                                .Append("' type.")
+                                .LogError();
                         }
                     }
                     else
@@ -114,7 +100,7 @@ namespace Enderlook.Unity.Toolset.Checking
                             // Parameter doesn't exist, check if was on purpose.
                             if (attribute.types != null)
                             {
-                                StringBuilder builder = GetBuilder()
+                                LogBuilder builder = GetBuilder()
                                     .Append(" the parameter at index ")
                                     .Append(attribute.parameterIndex)
                                     .Append(" was expected. But method have ")
@@ -124,7 +110,7 @@ namespace Enderlook.Unity.Toolset.Checking
                                     builder.Append("s.");
                                 else
                                     builder.Append('.');
-                                Log(builder);
+                                builder.LogError();
                             }
                             continue;
                         }
@@ -134,12 +120,13 @@ namespace Enderlook.Unity.Toolset.Checking
                         // Check if should exist.
                         if (attribute.types is null)
                         {
-                            Log(GetBuilder()
+                            GetBuilder()
                                 .Append(" has more parameters than allowed. The parameter at index ")
                                 .Append(attribute.parameterIndex - 1)
                                 .Append(" named ")
                                 .Append(parameterInfo.Name)
-                                .Append(" was not expected."));
+                                .Append(" was not expected.")
+                                .LogError();
                             continue;
                         }
 
@@ -183,7 +170,7 @@ namespace Enderlook.Unity.Toolset.Checking
 
                             if (!(found is null))
                             {
-                                Log(GetBuilder()
+                                GetBuilder()
                                     .Append(" the parameter at index ")
                                     .Append(attribute.parameterIndex)
                                     .Append(" named ")
@@ -192,7 +179,8 @@ namespace Enderlook.Unity.Toolset.Checking
                                     .Append(found)
                                     .Append("keyword. Expected ")
                                     .Append(expected)
-                                    .Append("keyword"));
+                                    .Append("keyword")
+                                    .LogError();
                                 continue;
                             }
                         invalidParameterType:;
@@ -206,7 +194,7 @@ namespace Enderlook.Unity.Toolset.Checking
                             parameterInfo.ParameterType
                            ))
                         {
-                            Log(AttributeUsageHelper.AppendSupportedTypes(
+                            AttributeUsageHelper.AppendSupportedTypes(
                                 GetBuilder()
                                     .Append(" the parameter at index ")
                                     .Append(attribute.parameterIndex)
@@ -217,7 +205,7 @@ namespace Enderlook.Unity.Toolset.Checking
                                 attribute.typeRelationship,
                                 attribute.isBlackList,
                                 false
-                            ));
+                            ).LogError();
                         }
                     }
                 }
