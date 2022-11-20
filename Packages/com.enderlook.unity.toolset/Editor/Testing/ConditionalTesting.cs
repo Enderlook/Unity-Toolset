@@ -60,7 +60,7 @@ namespace Enderlook.Unity.Toolset.Testing
                     Type firstType = GetType(kvp.Key, firstProperty);
                     if (firstType is null)
                     {
-                        Debug.LogError($"No field, property (with Get method), or method with no mandatory parameters of name '{attribute.FirstProperty}' in attribute '{attribute.GetType()}' in field '{field.Name}' of type '{field.ReflectedType.Name}' was found.");
+                        Debug.LogError($"No field, property (with Get method), or method with no mandatory parameters of name '{attribute.FirstProperty}' for attribute '{attribute.GetType()}' in field '{field.Name}' of type '{field.ReflectedType.Name}' was found.");
                         continue;
                     }
 
