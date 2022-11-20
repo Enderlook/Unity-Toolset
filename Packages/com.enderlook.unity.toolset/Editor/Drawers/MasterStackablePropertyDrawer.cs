@@ -172,6 +172,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                 {
                     drawer.IsMain(true);
                     main = drawer;
+                    i++;
                     break;
                 }
             }
