@@ -14,11 +14,11 @@ namespace Enderlook.Unity.Toolset.Drawers
     [InitializeOnLoad]
     internal static class DrawVectorRelativeToTransformEditor
     {
-        private const string MENU_NAME = "Enderlook/Toolset/Enable Draw Vector Relative To Tranform";
+        private const string MENU_NAME = "Enderlook/Toolset/Enable Draw Vector Relative To Transform";
 
         private static readonly Handles.CapFunction HANDLE_CAP = Handles.SphereHandleCap;
 
-        private static readonly string VECTOR_TYPES = $"{nameof(Vector3)}, {nameof(Vector3Int)}, {nameof(Vector2)}, {nameof(Vector2Int)}, {nameof(Vector4)}";
+        private static readonly string TYPES_RESTRICTED = $" doesn't have a type assignable to: {typeof(Vector2)}, {typeof(Vector2Int)}, {typeof(Vector3)}, {typeof(Vector3Int)}, {typeof(Vector4)}, {typeof(GameObject)}, {typeof(Transform)} or {typeof(Component)}.";
 
         private static readonly char[] SPLIT_BY_BRACKET = new char[] { '[' };
         private static readonly char[] SPLIT_BY_DOT = new char[] { '.' };
@@ -66,38 +66,32 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         private const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
 
-        private static Vector3 GetPositionByTransform(SerializedObject serializedObject) => ((Component)serializedObject.targetObject).transform.position;
-
-        private static void DisplayErrorReference(string name) => throw new Exception($"The serialized property reference {name} isn't neither {VECTOR_TYPES} nor {nameof(Transform)}.");
-
-        private static Vector3 GetVector3ValueOf(SerializedProperty serializedProperty)
+        private static LogBuilder GetLogger(SerializedProperty serializedProperty)
         {
-            switch (serializedProperty.propertyType)
-            {
-                case SerializedPropertyType.Vector3:
-                    return serializedProperty.vector3Value;
-                case SerializedPropertyType.Vector3Int:
-                    return serializedProperty.vector3IntValue;
-                case SerializedPropertyType.Vector2:
-                    return serializedProperty.vector2Value;
-                case SerializedPropertyType.Vector2Int:
-                    return (Vector2)serializedProperty.vector2IntValue;
-                case SerializedPropertyType.Vector4:
-                    return serializedProperty.vector4Value;
-                case SerializedPropertyType.ObjectReference:
-                    if (serializedProperty.objectReferenceValue is Transform transform)
-                        return transform.position;
-                    else if (serializedProperty.GetPropertyType() == typeof(Transform))
-                        return Vector3.zero;
-                    DisplayErrorReference(serializedProperty.name);
-                    break;
-                default:
-                    DisplayErrorReference(serializedProperty.name);
-                    break;
-            }
-            Debug.LogError("Impossible State");
-            return default;
+            string propertyName = serializedProperty.name;
+            string propertyPath = serializedProperty.propertyPath;
+            string targetObjectName = serializedProperty.serializedObject.targetObject.name;
+            // This value was got by concatenating the sum of the largest possible path of appended constants that can happen in methods of this class.
+            int minCapacity = 360 + propertyName.Length + propertyPath.Length + targetObjectName.Length;
+            return LogBuilder.GetLogger(minCapacity)
+                .Append($"Invalid use {nameof(DrawVectorRelativeToTransformAttribute)} ")
+                .Append(" on serialized property '")
+                .Append(serializedProperty.name)
+                .Append("' at path '")
+                .Append(serializedProperty.propertyPath)
+                .Append("' on object at name '")
+                .Append(serializedProperty.serializedObject.targetObject.name)
+                .Append("':");
         }
+
+        private static bool IsValidType(Type type) => type != typeof(Vector2)
+            && type != typeof(Vector2Int)
+            && type != typeof(Vector3)
+            && type != typeof(Vector3Int)
+            && type != typeof(Vector4)
+            && type != typeof(GameObject)
+            && typeof(Transform).IsAssignableFrom(type)
+            && typeof(Component).IsAssignableFrom(type);
 
         private static Vector3 CastToVector3(object source, Type sourceType)
         {
@@ -120,7 +114,8 @@ namespace Enderlook.Unity.Toolset.Drawers
             SerializedObject serializedObject = serializedProperty.serializedObject;
 
             if (string.IsNullOrEmpty(referenceName))
-                return GetPositionByTransform(serializedObject);
+                // Get position from transform of current monobehaviour.
+                return ((Component)serializedObject.targetObject).transform.position;
 
             SerializedProperty referenceProperty = serializedObject.FindProperty(referenceName);
             if (referenceProperty == null)
@@ -135,31 +130,95 @@ namespace Enderlook.Unity.Toolset.Drawers
                     if (propertyInfo == null)
                     {
                         MethodInfo methodInfo = type.GetMethod(referenceName, bindingFlags);
-                        if (methodInfo != null)
+                        if (methodInfo != null && methodInfo.HasNoMandatoryParameters(out object[] parameters))
                         {
-                            if (methodInfo.HasNoMandatoryParameters(out object[] parameters))
-                                // Get reference by method
-                                return CastToVector3(methodInfo.Invoke(targetObject, parameters), methodInfo.ReturnType);
-                            else
-                                Debug.LogError($"Found method {methodInfo.Name} on {type.Name} based on reference name {referenceName} in {serializedObject.targetObject.name} requested by property {serializedProperty.propertyPath}.");
+                            // Get reference by method.
+                            Type methodReturnType = methodInfo.ReturnType;
+                            if (!IsValidType(methodReturnType))
+                                return InvalidType("return type of method", methodInfo.Name, methodReturnType);
+
+                            return CastToVector3(methodInfo.Invoke(targetObject, parameters), methodReturnType);
                         }
-                        // If everything fails, use zero
-                        return Vector3.zero;
+                        else
+                        {
+                            GetLogger(serializedProperty)
+                                .Append(" no field, property (with Get method), or method with no mandatory parameters of name '")
+                                .Append(referenceName)
+                                .Append("' was found in serialized object.")
+                                .LogError();
+                            return Vector2.zero;
+                        }
                     }
                     else
-                        // Get reference by property
-                        return CastToVector3(propertyInfo.GetValue(targetObject), propertyInfo.PropertyType);
+                    {
+                        // Get reference by property.
+
+                        Type propertyType = propertyInfo.PropertyType;
+                        if (!IsValidType(propertyType))
+                            return InvalidType("property", propertyInfo.Name, propertyType);
+
+                        return CastToVector3(propertyInfo.GetValue(targetObject), propertyType);
+                    }
                 }
                 else
-                    // Get reference by field
-                    return CastToVector3(fieldInfo.GetValue(targetObject), fieldInfo.FieldType);
+                {
+                    // Get reference by field.
+
+                    Type fieldType = fieldInfo.FieldType;
+                    if (!IsValidType(fieldType))
+                        return InvalidType("field", fieldInfo.Name, fieldType);
+
+                    return CastToVector3(fieldInfo.GetValue(targetObject), fieldType);
+                }
             }
             else
-                // Get reference by serialized field
-                return GetVector3ValueOf(referenceProperty);
+            {
+                // Get reference by serialized field.
+                switch (referenceProperty.propertyType)
+                {
+                    case SerializedPropertyType.Vector3:
+                        return referenceProperty.vector3Value;
+                    case SerializedPropertyType.Vector3Int:
+                        return referenceProperty.vector3IntValue;
+                    case SerializedPropertyType.Vector2:
+                        return referenceProperty.vector2Value;
+                    case SerializedPropertyType.Vector2Int:
+                        return (Vector2)referenceProperty.vector2IntValue;
+                    case SerializedPropertyType.Vector4:
+                        return referenceProperty.vector4Value;
+                    case SerializedPropertyType.ObjectReference:
+                        object reference = referenceProperty.objectReferenceValue;
+                        if (reference is Transform transform)
+                            return transform.position;
+                        if (reference is GameObject gameObject)
+                            return gameObject.transform.position;
+                        if (reference is Component component)
+                            return component.transform.position;
+                        Type type = referenceProperty.GetPropertyType();
+                        if (typeof(Transform).IsAssignableFrom(type) || typeof(Component).IsAssignableFrom(type) || type == typeof(GameObject))
+                            return Vector2.zero;
+                        goto default;
+                    default:
+                        return InvalidType("serialized property", referenceProperty.name, referenceProperty.GetPropertyType());
+                }
+            }
+
+            Vector3 InvalidType(string member, string name, Type type)
+            {
+                GetLogger(serializedProperty)
+                    .Append(member)
+                    .Append(" named ")
+                    .Append(name)
+                    .Append(TYPES_RESTRICTED)
+                    .Append(" Is of type ")
+                    .Append(type)
+                    .Append('.')
+                    .LogError();
+                return Vector2.zero;
+            }
         }
 
-        private static Vector3 ToAbsolutePosition(SerializedProperty serializedProperty, Vector3 reference)
+        private static Vector3? ToAbsolutePosition(SerializedProperty serializedProperty, Vector3 reference)
         {
             switch (serializedProperty.propertyType)
             {
@@ -173,9 +232,27 @@ namespace Enderlook.Unity.Toolset.Drawers
                     return serializedProperty.vector3IntValue + ToVector3Int(reference);
                 case SerializedPropertyType.Vector4:
                     return (Vector3)serializedProperty.vector4Value + reference;
+                case SerializedPropertyType.ObjectReference:
+                    object referenceObject = serializedProperty.objectReferenceValue;
+                    if (referenceObject is Transform transform)
+                        return transform.position + reference;
+                    if (referenceObject is GameObject gameObject)
+                        return gameObject.transform.position + reference;
+                    if (referenceObject is Component component)
+                        return component.transform.position + reference;
+                    Type type = serializedProperty.GetPropertyType();
+                    if (typeof(Transform).IsAssignableFrom(type) || typeof(Component).IsAssignableFrom(type) || type == typeof(GameObject))
+                        return null;
+                    goto default;
                 default:
-                    Debug.LogError($"The attribute {nameof(DrawVectorRelativeToTransformAttribute)} is only allowed in types of {nameof(Vector2)}, {nameof(Vector2Int)}, {nameof(Vector3)}, {nameof(Vector3Int)} and {nameof(Vector4)}.");
-                    return Vector3.zero;
+                    GetLogger(serializedProperty)
+                        .Append(" property")
+                        .Append(TYPES_RESTRICTED)
+                        .Append(". Is of type '")
+                        .Append(serializedProperty.GetPropertyType())
+                        .Append('.')
+                        .LogError();
+                    return null;
             }
         }
 
@@ -199,33 +276,56 @@ namespace Enderlook.Unity.Toolset.Drawers
                 case SerializedPropertyType.Vector4:
                     serializedProperty.vector4Value = new Vector4(value.x, value.y, value.z, serializedProperty.vector4Value.w);
                     break;
+                case SerializedPropertyType.ObjectReference:
+                    object referenceObject = serializedProperty.objectReferenceValue;
+                    if (referenceObject is Transform transform)
+                        transform.position = value;
+                    if (referenceObject is GameObject gameObject)
+                        gameObject.transform.position = value;
+                    if (referenceObject is Component component)
+                        component.transform.position = value;
+#if DEBUG
+                    Type type = serializedProperty.GetPropertyType();
+                    if (typeof(Transform).IsAssignableFrom(type) || typeof(Component).IsAssignableFrom(type) || type == typeof(GameObject))
+                        break;
+                    goto default;
+#else
+                    break;
+#endif
                 default:
-                    Debug.LogError($"The attribute {nameof(DrawVectorRelativeToTransformAttribute)} is only allowed in types of {nameof(Vector2)}, {nameof(Vector2Int)}, {nameof(Vector3)}, {nameof(Vector3Int)} and {nameof(Vector4)}.");
+                    System.Diagnostics.Debug.Fail("Already checked before.");
                     break;
             }
         }
 
         private static void RenderSingleSerializedProperty(SerializedProperty serializedProperty, DrawVectorRelativeToTransformAttribute drawVectorRelativeToTransform, Vector3 reference, MemberInfo memberInfo)
         {
-            Vector3 absolutePosition = ToAbsolutePosition(serializedProperty, reference);
-            absolutePosition = DrawHandle(absolutePosition, drawVectorRelativeToTransform.usePositionHandler);
-            SetFromAbsolutePosition(serializedProperty, absolutePosition, reference);
-
-            if (!string.IsNullOrEmpty(drawVectorRelativeToTransform.icon))
+            Vector3? absolutePosition_ = ToAbsolutePosition(serializedProperty, reference);
+            if (absolutePosition_ is Vector3 absolutePosition)
             {
-                Texture2D texture = (Texture2D)EditorGUIUtility.Load(drawVectorRelativeToTransform.icon);
-                if (texture == null)
-                    texture = AssetDatabase.LoadAssetAtPath<Texture2D>(drawVectorRelativeToTransform.icon);
-                if (texture == null)
-                    texture = Resources.Load<Texture2D>(drawVectorRelativeToTransform.icon);
+                absolutePosition = DrawHandle(absolutePosition, drawVectorRelativeToTransform.usePositionHandler);
+                SetFromAbsolutePosition(serializedProperty, absolutePosition, reference);
 
-                if (texture == null)
-                    Debug.LogError($"The Texture '{drawVectorRelativeToTransform.icon}' used by '{serializedProperty.propertyPath}' could not be found.");
-                else
-                    Handles.Label(absolutePosition, texture);
+                if (!string.IsNullOrEmpty(drawVectorRelativeToTransform.icon))
+                {
+                    Texture2D texture = (Texture2D)EditorGUIUtility.Load(drawVectorRelativeToTransform.icon);
+                    if (texture == null)
+                        texture = AssetDatabase.LoadAssetAtPath<Texture2D>(drawVectorRelativeToTransform.icon);
+                    if (texture == null)
+                        texture = Resources.Load<Texture2D>(drawVectorRelativeToTransform.icon);
+
+                    if (texture == null)
+                        GetLogger(serializedProperty)
+                            .Append("the texture '")
+                            .Append(drawVectorRelativeToTransform.icon)
+                            .Append("' could not be found.")
+                            .LogError();
+                    else
+                        Handles.Label(absolutePosition, texture);
+                }
+
+                CheckForSelection(absolutePosition, serializedProperty, drawVectorRelativeToTransform, memberInfo);
             }
-
-            CheckForSelection(absolutePosition, serializedProperty, drawVectorRelativeToTransform, memberInfo);
         }
 
         private static void CheckForSelection(Vector3 position, SerializedProperty serializedProperty, DrawVectorRelativeToTransformAttribute drawVectorRelativeToTransform, MemberInfo memberInfo)
@@ -299,7 +399,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                         string number = rawNumber.Substring(0, rawNumber.Length - 1);
                         string[] prefixes = parts[parts.Length - 2].Split(SPLIT_BY_DOT);
                         string prefix = prefixes[prefixes.Length - 1];
-                        propertyName = $"{ObjectNames.NicifyVariableName(prefix)}[{number}]"; 
+                        propertyName = $"{ObjectNames.NicifyVariableName(prefix)}[{number}]";
                     }
                     else
                         propertyName = selected.serializedProperty.displayName;
@@ -308,9 +408,14 @@ namespace Enderlook.Unity.Toolset.Drawers
                     EditorGUILayout.PropertyField(selected.serializedProperty, RELATIVE_POSITION_CONTENT);
 
                     Vector3 reference = GetReference(selected.serializedProperty, selected.drawVectorRelativeToTransform.reference);
-                    Vector3 absolutePosition = ToAbsolutePosition(selected.serializedProperty, reference);
-                    absolutePosition = EditorGUILayout.Vector3Field(ABSOLUTE_POSITION_CONTENT, absolutePosition);
-                    SetFromAbsolutePosition(selected.serializedProperty, absolutePosition, reference);
+                    Vector3? absolutePosition_ = ToAbsolutePosition(selected.serializedProperty, reference);
+                    if (absolutePosition_ is Vector3 absolutePosition)
+                    {
+                        absolutePosition = EditorGUILayout.Vector3Field(ABSOLUTE_POSITION_CONTENT, absolutePosition);
+                        SetFromAbsolutePosition(selected.serializedProperty, absolutePosition, reference);
+                    }
+                    else
+                        EditorGUILayout.HelpBox($"Property {selected.serializedProperty.name} {TYPES_RESTRICTED}", MessageType.Error);
 
                     EditorGUI.BeginDisabledGroup(true);
                     EditorGUILayout.Vector3Field(REFERENCE_POSITION_CONTENT, reference);

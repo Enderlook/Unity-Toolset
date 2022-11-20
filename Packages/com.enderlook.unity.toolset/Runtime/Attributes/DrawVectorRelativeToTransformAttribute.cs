@@ -9,7 +9,7 @@ namespace Enderlook.Unity.Toolset.Attributes
     /// <summary>
     /// Draw in scene a handle of the position represented by this serialized property.
     /// </summary>
-    [AttributeUsageRequireDataType(true, typeof(Vector2), typeof(Vector2Int), typeof(Vector3), typeof(Vector3), typeof(Vector4), typeof(Transform))]
+    [AttributeUsageRequireDataType(true, typeof(Vector2), typeof(Vector2Int), typeof(Vector3), typeof(Vector3Int), typeof(Vector4), typeof(Component), typeof(GameObject), typeof(Transform))]
     [AttributeUsageFieldMustBeSerializableByUnity]
     [AttributeUsage(AttributeTargets.Field)]
     public sealed class DrawVectorRelativeToTransformAttribute : Attribute
@@ -47,8 +47,8 @@ namespace Enderlook.Unity.Toolset.Attributes
         /// <summary>
         /// Draw in scene a handle of the position represented by this serialized property.
         /// </summary>
-        /// <param name="usePositionHandler">Whenever it should use a position handle instead of a free move handle to draw the point.</param>
         /// <param name="icon">Icon displayed in scene. If empty no icon will be displayed.</param>
+        /// <param name="usePositionHandler">Whenever it should use a position handle instead of a free move handle to draw the point.</param>
         /// <param name="reference">Reference used to show handler. If empty, <see cref="Transform"/> of the owner <see cref="GameObject"/> of this property will be used.</param>
         public DrawVectorRelativeToTransformAttribute(string icon, bool usePositionHandler = false, string reference = "")
         {
