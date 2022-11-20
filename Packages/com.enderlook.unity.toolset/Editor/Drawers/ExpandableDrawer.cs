@@ -254,11 +254,12 @@ namespace Enderlook.Unity.Toolset.Drawers
                 EditorGUI.EndDisabledGroup();
             }
 
+            float previousHeigth = EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
             while (field.NextVisible(false))
             {
-                fieldRect.y += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
+                fieldRect.y += previousHeigth;
                 float totalHeight = EditorGUI.GetPropertyHeight(field, true);
-                fieldRect.height = totalHeight;
+                fieldRect.height = previousHeigth = totalHeight;
 
                 try
                 {
