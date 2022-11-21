@@ -55,12 +55,16 @@ namespace Enderlook.Unity.Toolset.Drawers
         };
 
         private static readonly Dictionary<(Type type, MemberInfo memberInfo), Func<object, bool>> members = new Dictionary<(Type type, MemberInfo memberInfo), Func<object, bool>>();
+        private static ReadWriteLock membersLock = new ReadWriteLock();
 
         [DidReloadScripts]
         private static void Reset()
         {
-            lock (members)
+            membersLock.WriteBegin();
+            {
                 members.Clear();
+            }
+            membersLock.WriteEnd();
         }
 
         private bool off;
@@ -97,23 +101,36 @@ namespace Enderlook.Unity.Toolset.Drawers
             object parent = property.GetParentTargetObject();
             Type originalType = parent.GetType();
 
+            bool found;
             Func<object, bool> func;
-            lock (members)
+            membersLock.ReadBegin();
             {
-                if (members.TryGetValue((originalType, memberInfo), out func))
-                    goto end;
+                found = members.TryGetValue((originalType, memberInfo), out func);
             }
+            membersLock.ReadEnd();
+            if (found)
+                goto end;
 
             Expression convertedExpression = Expression.Convert(OBJECT_PARAMETER, originalType);
             Expression body = GetExpression(memberInfo, (IConditionalAttribute)Attribute);
             func = Expression.Lambda<Func<object, bool>>(body, OBJECT_PARAMETER).Compile();
 
-            lock (members)
+            Func<object, bool> func2;
+            membersLock.ReadBegin();
             {
-                if (members.TryGetValue((originalType, memberInfo), out Func<object, bool> func2))
-                    func = func2;
-                else
+                found = members.TryGetValue((originalType, memberInfo), out func2);
+            }
+            membersLock.ReadEnd();
+
+            if (found)
+                func = func2;
+            else
+            {
+                membersLock.WriteBegin();
+                {
                     members.Add((originalType, memberInfo), func);
+                }
+                membersLock.WriteEnd();
             }
 
             end:

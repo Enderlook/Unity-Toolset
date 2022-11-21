@@ -31,20 +31,58 @@ namespace Enderlook.Unity.Toolset.Drawers
         private readonly PropertyPopupOption[] modes;
         private readonly string[] popupOptions;
 
-        private static class Container
+        private static class Comparers
         {
             // This must be stored in a separated class because `Reset` method is called when script reloads,
             // which executes the static constructor of the class, and that initialized the static field `popupStyle`
             // but GUI functions (`GUIStyle` and `GUI.skin`) can can only be called from inside OnGUI method,
             // which results in an exception thrown.
 
-            public static readonly Dictionary<Type, IEqualityComparer> comparers = new Dictionary<Type, IEqualityComparer>();
+            private static readonly Dictionary<Type, IEqualityComparer> comparers = new Dictionary<Type, IEqualityComparer>();
+            private static ReadWriteLock @lock = new ReadWriteLock();
 
             [DidReloadScripts]
             private static void Reset()
             {
-                lock (comparers)
+                @lock.WriteBegin();
+                {
                     comparers.Clear();
+                }
+                @lock.WriteEnd();
+            }
+
+            public static IEqualityComparer Get(Type type)
+            {
+                IEqualityComparer comparer;
+                bool found;
+                @lock.ReadBegin();
+                {
+                    found = comparers.TryGetValue(type, out comparer);
+                }
+                @lock.ReadEnd();
+                if (!found)
+                    comparer = Create(type);
+                return comparer;
+
+                static IEqualityComparer Create(Type type)
+                {
+                    Type[] array = Interlocked.Exchange(ref tmpType, null) ?? new Type[1];
+                    ref Type slot = ref array[0];
+                    slot = type;
+                    Type comparerType = typeof(EqualityComparer<>).MakeGenericType(slot);
+                    slot = null;
+                    tmpType = array;
+                    IEqualityComparer comparer = (IEqualityComparer)comparerType
+                        .GetProperty(nameof(EqualityComparer<object>.Default))
+                        .GetValue(null);
+                    @lock.WriteBegin();
+                    {
+                        if (!comparers.ContainsKey(type))
+                            comparers.Add(type, comparer);
+                    }
+                    @lock.WriteEnd();
+                    return comparer;
+                }
             }
         }
 
@@ -137,13 +175,7 @@ namespace Enderlook.Unity.Toolset.Drawers
         {
             object value = mode.GetValue();
 
-            IEqualityComparer comparer;
-            lock (Container.comparers)
-            {
-                Type type = mode.GetPropertyType();
-                if (!Container.comparers.TryGetValue(type, out comparer))
-                    comparer = Create(type);
-            }
+            IEqualityComparer comparer = Comparers.Get(mode.GetPropertyType());
 
             for (int modeIndex = 0; modeIndex < modes.Length; modeIndex++)
                 if (comparer.Equals(modes[modeIndex].Target, value))
@@ -151,21 +183,6 @@ namespace Enderlook.Unity.Toolset.Drawers
 
             Debug.LogError(string.Format(NOT_FOUND_OPTION, mode.propertyPath, value));
             return -1;
-
-            static IEqualityComparer Create(Type type)
-            {
-                Type[] array = Interlocked.Exchange(ref tmpType, null) ?? new Type[1];
-                ref Type slot = ref array[0];
-                slot = type;
-                Type comparerType = typeof(EqualityComparer<>).MakeGenericType(slot);
-                slot = null;
-                tmpType = array;
-                IEqualityComparer comparer = (IEqualityComparer)comparerType
-                    .GetProperty(nameof(EqualityComparer<object>.Default))
-                    .GetValue(null);
-                Container.comparers.Add(type, comparer);
-                return comparer;
-            }
         }
 
         /// <summary>
