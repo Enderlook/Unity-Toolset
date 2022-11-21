@@ -355,6 +355,13 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <summary>
         /// Get the value of <paramref name="source"/>.
         /// </summary>
+        /// <param name="source"><see cref="SerializedProperty"/> whose value will be get.</param>
+        /// <returns>Value of target object.</returns>
+        public static object GetValue(this SerializedProperty source) => source.GetValue<object>();
+
+        /// <summary>
+        /// Get the value of <paramref name="source"/>.
+        /// </summary>
         /// <typeparam name="T">Type of value in the property.</typeparam>
         /// <param name="source"><see cref="SerializedProperty"/> whose value will be get.</param>
         /// <returns>Value of target object.</returns>
