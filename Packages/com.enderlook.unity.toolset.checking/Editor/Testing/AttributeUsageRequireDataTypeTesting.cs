@@ -43,12 +43,14 @@ namespace Enderlook.Unity.Toolset.Checking
                         type
                     ))
                 {
-                    int capacity = 181 // This value was got by concatenating the sum of the largest path of appended constants in this method.
+                    // This value was got by concatenating the sum of the largest possible path of appended constants that can happen in methods of this class,
+                    // and an approximate length of variables.
+                    int minCapacity = 181 + 40
                         + attributeType.Name.Length
                         + (memberInfoOrClass is MemberInfo memberInfo_ ? memberInfo_.Name.Length + memberInfo_.DeclaringType.ToString().Length : memberInfoOrClass.ToString().Length)
                         + type.ToString().Length
                         + AttributeUsageHelper.GetMaximumRequiredCapacity(tuple.attribute.types);
-                    LogBuilder builder = LogBuilder.GetLogger(capacity);
+                    LogBuilder builder = LogBuilder.GetLogger(minCapacity);
 
                     builder
                         .Append($"According to attribute '{nameof(AttributeUsageRequireDataTypeAttribute)}', the attribute '")

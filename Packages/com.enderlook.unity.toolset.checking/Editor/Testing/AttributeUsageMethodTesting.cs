@@ -47,9 +47,13 @@ namespace Enderlook.Unity.Toolset.Checking
                 {
                     LogBuilder GetBuilder()
                     {
-                        // This values were got by concatenating the sum of the largest possible paths of appended constants in the outer method.
+                        // This values were got by concatenating the sum of the largest possible paths of appended constants in the outer method,
+                        // and an approximate length of variables.
 
-                        int minCapacity = 86 + attributeType.Name.Length + methodInfo.Name.Length + methodInfo.DeclaringType.ToString().Length;
+                        string attributeName = attributeType.Name;
+                        string methodName = methodInfo.Name;
+                        string ownerType = methodInfo.DeclaringType.ToString();
+                        int minCapacity = 86 + 20 + attributeName.Length + methodName.Length + ownerType.Length;
                         if (!(attribute.parameterIndex is null))
                             minCapacity += 62 + (attribute.types is null ? 0 : AttributeUsageHelper.GetMaximumRequiredCapacity(attribute.types)) + methodInfo.ReturnType.ToString().Length;
                         else
@@ -57,11 +61,11 @@ namespace Enderlook.Unity.Toolset.Checking
 
                         return LogBuilder.GetLogger(minCapacity)
                             .Append("According to attribute '" + nameof(AttributeUsageMethodAttribute) + "', the attribute '")
-                            .Append(attributeType.Name)
+                            .Append(attributeName)
                             .Append("' on method ")
-                            .Append(methodInfo.Name)
+                            .Append(methodName)
                             .Append(" in")
-                            .Append(methodInfo.DeclaringType);
+                            .Append(ownerType);
                     }
 
                     if (!(attribute.parameterIndex is int parameterIndex))

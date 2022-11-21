@@ -71,16 +71,17 @@ namespace Enderlook.Unity.Toolset.Drawers
             string propertyName = serializedProperty.name;
             string propertyPath = serializedProperty.propertyPath;
             string targetObjectName = serializedProperty.serializedObject.targetObject.name;
-            // This value was got by concatenating the sum of the largest possible path of appended constants that can happen in methods of this class.
-            int minCapacity = 360 + propertyName.Length + propertyPath.Length + targetObjectName.Length;
+            // This value was got by concatenating the sum of the largest possible path of appended constants that can happen in methods of this class,
+            // and an approximate length of variables.
+            int minCapacity = 360 + 80 + propertyName.Length + propertyPath.Length + targetObjectName.Length;
             return LogBuilder.GetLogger(minCapacity)
                 .Append($"Invalid use {nameof(DrawVectorRelativeToTransformAttribute)} ")
                 .Append(" on serialized property '")
-                .Append(serializedProperty.name)
+                .Append(propertyName)
                 .Append("' at path '")
-                .Append(serializedProperty.propertyPath)
+                .Append(propertyPath)
                 .Append("' on object at name '")
-                .Append(serializedProperty.serializedObject.targetObject.name)
+                .Append(targetObjectName)
                 .Append("':");
         }
 
