@@ -14,17 +14,17 @@ namespace Enderlook.Unity.Toolset.Attributes
         /// <summary>
         /// Name of field used to determine which property must be used.
         /// </summary>
-        internal readonly string ModeFieldName;
+        internal readonly string ModeReferenceName;
 #endif
 
         /// <summary>
         /// Enable property popup on the class which is being decorated.
         /// </summary>
-        /// <param name="modeFieldName">Name of field used to determine which property must be used.</param>
-        public PropertyPopupAttribute(string modeFieldName)
+        /// <param name="modeName">Name of field or property used to determine which property must be used.</param>
+        public PropertyPopupAttribute(string modeName)
         {
 #if UNITY_EDITOR
-            ModeFieldName = modeFieldName;
+            ModeReferenceName = modeName;
 #endif
         }
     }

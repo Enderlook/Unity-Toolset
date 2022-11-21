@@ -1,14 +1,18 @@
-﻿using Enderlook.Unity.Toolset.Utils;
+﻿using Enderlook.Unity.Toolset.Attributes;
+using Enderlook.Unity.Toolset.Utils;
 
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading;
 
 using UnityEditor;
 using UnityEditor.Callbacks;
 
 using UnityEngine;
+
+using UnityObject = UnityEngine.Object;
 
 namespace Enderlook.Unity.Toolset.Drawers
 {
@@ -17,7 +21,11 @@ namespace Enderlook.Unity.Toolset.Drawers
     /// </summary>
     internal sealed class PropertyPopup
     {
-        private const string NOT_FOUND_OPTION = "Not found an option which satisfy {0} ({1}).";
+        private const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+        private const int NAME_NOT_FOUND = -1;
+        private const int VALUE_NOT_FOUND = -2;
+        private const string NOT_FOUND_OPTION = "Not found an option which satisfy {0}.{1} ({2}).";
+        private const string NOT_FOUND_NAME = "Not found serialized property, field or property (with get and set method) named {0}.";
 
         private static readonly GUIStyle popupStyle = new GUIStyle(GUI.skin.GetStyle("PaneOptions"))
         {
@@ -100,6 +108,25 @@ namespace Enderlook.Unity.Toolset.Drawers
                 popupOptions[i] = modes[i].DisplayName;
         }
 
+        private static LogBuilder GetLogger(SerializedProperty serializedProperty)
+        {
+            string propertyName = serializedProperty.name;
+            string propertyPath = serializedProperty.propertyPath;
+            string targetObjectName = serializedProperty.serializedObject.targetObject.name;
+            // This value was got by concatenating the sum of the largest possible path of appended constants that can happen in methods of this class,
+            // and an approximate length of variables.
+            int minCapacity = 178 + 40 + propertyName.Length + propertyPath.Length + targetObjectName.Length + propertyPath.Length;
+            return LogBuilder.GetLogger(minCapacity)
+                .Append($"Invalid use {nameof(PropertyPopupAttribute)} ")
+                .Append(" on serialized property '")
+                .Append(propertyName)
+                .Append("' at path '")
+                .Append(propertyPath)
+                .Append("' on object at name '")
+                .Append(targetObjectName)
+                .Append("':");
+        }
+
         /// <summary>
         /// Draw the field in the given place.
         /// </summary>
@@ -108,7 +135,7 @@ namespace Enderlook.Unity.Toolset.Drawers
         /// <param name="label">Label to show in inspector.</param>
         public void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            (SerializedProperty mode, int popupIndex) = GetModeAndIndex(property);
+            (int index, object value) tuple = GetIndex(property);
 
             // Show field label
             Rect newPosition = EditorGUI.PrefixLabel(position, label);
@@ -123,26 +150,31 @@ namespace Enderlook.Unity.Toolset.Drawers
 
             newPosition.xMin += buttonRect.width;
 
-            int newUsagePopupIndex = EditorGUI.Popup(buttonRect, popupIndex, popupOptions, popupStyle);
-            if (newUsagePopupIndex != popupIndex)
+            int newUsagePopupIndex = EditorGUI.Popup(buttonRect, tuple.index, popupOptions, popupStyle);
+            if (newUsagePopupIndex != tuple.index)
             {
                 object value = modes[newUsagePopupIndex].Target;
-                mode.SetValue(value);
-                mode.serializedObject.ApplyModifiedProperties();
+                Set(property, value);
             }
 
-            if (newUsagePopupIndex != -1)
+            switch (newUsagePopupIndex)
             {
-                PropertyPopupOption propertyPopupOption = modes[newUsagePopupIndex];
+                case NAME_NOT_FOUND:
+                    EditorGUI.HelpBox(newPosition, string.Format(NOT_FOUND_NAME, modeProperty), MessageType.Error);
+                    break;
+                case VALUE_NOT_FOUND:
+                    EditorGUI.HelpBox(newPosition, string.Format(NOT_FOUND_OPTION, property.propertyPath, modeProperty, tuple.value), MessageType.Error);
+                    break;
+                default:
+                    PropertyPopupOption propertyPopupOption = modes[newUsagePopupIndex];
 
-                SerializedProperty optionProperty = property.FindPropertyRelative(propertyPopupOption.PropertyName);
-                if (IsLargerThanOneLine(optionProperty))
-                    EditorGUI.PropertyField(position, optionProperty, GUIContent.none, true);
-                else
-                    EditorGUI.PropertyField(newPosition, optionProperty, GUIContent.none, true);
+                    SerializedProperty optionProperty = property.FindPropertyRelative(propertyPopupOption.PropertyName);
+                    if (IsLargerThanOneLine(optionProperty))
+                        EditorGUI.PropertyField(position, optionProperty, GUIContent.none, true);
+                    else
+                        EditorGUI.PropertyField(newPosition, optionProperty, GUIContent.none, true);
+                    break;
             }
-            else
-                EditorGUI.HelpBox(newPosition, string.Format(NOT_FOUND_OPTION, mode.propertyPath, mode.GetValue()), MessageType.Error);
         }
 
         private static bool IsLargerThanOneLine(SerializedProperty optionProperty)
@@ -159,30 +191,71 @@ namespace Enderlook.Unity.Toolset.Drawers
             return nonExpanded != expanded;
         }
 
-        private (SerializedProperty mode, int index) GetModeAndIndex(SerializedProperty property)
+        private (int index, object value) GetIndex(SerializedProperty serializedProperty)
         {
-            // Get current mode
-            SerializedProperty mode = property.FindPropertyRelative(modeProperty);
-            if (mode is null)
-                Throw();
-            int popupIndex = GetPopupIndex(mode);
-            return (mode, popupIndex);
+            (Type type, object value) tuple = Get(serializedProperty);
+            if (tuple.type is null)
+                return (NAME_NOT_FOUND, default);
 
-            void Throw() => throw new ArgumentNullException(nameof(mode), $"Can't find propety {mode.name} at path {mode.propertyPath} in {property.name}.");
-        }
-
-        private int GetPopupIndex(SerializedProperty mode)
-        {
-            object value = mode.GetValue();
-
-            IEqualityComparer comparer = Comparers.Get(mode.GetPropertyType());
+            IEqualityComparer comparer = Comparers.Get(tuple.type);
 
             for (int modeIndex = 0; modeIndex < modes.Length; modeIndex++)
-                if (comparer.Equals(modes[modeIndex].Target, value))
-                    return modeIndex;
+                if (comparer.Equals(modes[modeIndex].Target, tuple.value))
+                    return (modeIndex, tuple.value);
 
-            Debug.LogError(string.Format(NOT_FOUND_OPTION, mode.propertyPath, value));
-            return -1;
+            return (VALUE_NOT_FOUND, tuple.value);
+        }
+
+        private (Type type, object value) Get(SerializedProperty serializedProperty)
+        {
+            string modeProperty = this.modeProperty;
+            if (string.IsNullOrEmpty(modeProperty))
+                goto notFound;
+
+            SerializedProperty mode = serializedProperty.FindPropertyRelative(modeProperty);
+            if (!(mode is null))
+                return (mode.GetPropertyType(), mode.GetValue());
+
+            UnityObject targetObject = serializedProperty.serializedObject.targetObject;
+            Type targetObjectType = targetObject.GetType();
+
+            FieldInfo fieldInfo = targetObjectType.GetField(modeProperty, bindingFlags);
+            if (!(fieldInfo is null))
+                return (fieldInfo.FieldType, fieldInfo.GetValue(targetObject));
+
+            PropertyInfo propertyInfo = targetObjectType.GetProperty(modeProperty, bindingFlags);
+            if (!(propertyInfo is null) && propertyInfo.CanRead && propertyInfo.CanWrite)
+                return (propertyInfo.PropertyType, propertyInfo.GetValue(targetObject));
+
+        notFound:
+            return default;
+        }
+
+        private void Set(SerializedProperty serializedProperty, object value)
+        {
+            string modeProperty = this.modeProperty;
+            if (!string.IsNullOrEmpty(modeProperty))
+            {
+                SerializedProperty mode = serializedProperty.FindPropertyRelative(modeProperty);
+                if (!(mode is null))
+                    mode.SetValue(value);
+                else
+                {
+                    UnityObject targetObject = serializedProperty.serializedObject.targetObject;
+                    Type targetObjectType = targetObject.GetType();
+
+                    FieldInfo fieldInfo = targetObjectType.GetField(modeProperty, bindingFlags);
+                    if (!(fieldInfo is null))
+                        fieldInfo.SetValue(targetObject, value);
+                    else
+                    {
+                        PropertyInfo propertyInfo = targetObjectType.GetProperty(modeProperty, bindingFlags);
+                        if (!(propertyInfo is null))
+                            propertyInfo.SetValue(targetObject, value);
+                    }
+                }
+                serializedProperty.serializedObject.ApplyModifiedProperties();
+            }
         }
 
         /// <summary>
@@ -193,24 +266,58 @@ namespace Enderlook.Unity.Toolset.Drawers
         /// <returns>Property height.</returns>
         public float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            SerializedProperty mode = property.FindPropertyRelative(modeProperty);
-            int popupIndex = GetPopupIndex(mode);
-            return popupIndex == -1 ? NotFound() : GetPropertyHeight();
+            (int index, object value) = GetIndex(property);
+            switch (index)
+            {
+                case NAME_NOT_FOUND:
+                    return NotFoundName();
+                case VALUE_NOT_FOUND:
+                    return NotFoundValue();
+                default:
+                    return GetPropertyHeight();
+            }
 
-            float NotFound()
+            float NotFoundName()
             {
                 GUIContent guiContent = Interlocked.Exchange(ref tmpContent, null) ?? new GUIContent();
-                guiContent.text = string.Format(NOT_FOUND_OPTION, mode.propertyPath, mode.GetValue());
+                guiContent.text = string.Format(NOT_FOUND_NAME, modeProperty);
                 float width = EditorGUIUtility.currentViewWidth - EditorGUIUtility.labelWidth - popupStyle.fixedWidth - popupStyle.margin.right;
                 float height = GUI.skin.box.CalcHeight(guiContent, width);
                 guiContent.text = null;
                 tmpContent = guiContent;
+                GetLogger(property)
+                    .Append(" not found serialized property, field or property (with get and set method) named ")
+                    .Append(property.propertyPath)
+                    .Append('.')
+                    .Append(modeProperty)
+                    .Append('.')
+                    .LogError();
+                return height;
+            }
+
+            float NotFoundValue()
+            {
+                GUIContent guiContent = Interlocked.Exchange(ref tmpContent, null) ?? new GUIContent();
+                guiContent.text = string.Format(NOT_FOUND_OPTION, property.propertyPath, modeProperty, value);
+                float width = EditorGUIUtility.currentViewWidth - EditorGUIUtility.labelWidth - popupStyle.fixedWidth - popupStyle.margin.right;
+                float height = GUI.skin.box.CalcHeight(guiContent, width);
+                guiContent.text = null;
+                tmpContent = guiContent;
+                GetLogger(property)
+                    .Append(" not found any option which satisfy ")
+                    .Append(property.propertyPath)
+                    .Append('.')
+                    .Append(modeProperty)
+                    .Append(" (")
+                    .Append(value)
+                    .Append(").")
+                    .LogError();
                 return height;
             }
 
             float GetPropertyHeight()
             {
-                PropertyPopupOption propertyPopupOption = modes[popupIndex];
+                PropertyPopupOption propertyPopupOption = modes[index];
                 SerializedProperty choosenProperty = property.FindPropertyRelative(propertyPopupOption.PropertyName);
                 float height = EditorGUI.GetPropertyHeight(property, label, false);
                 if (IsLargerThanOneLine(choosenProperty) && choosenProperty.isExpanded)

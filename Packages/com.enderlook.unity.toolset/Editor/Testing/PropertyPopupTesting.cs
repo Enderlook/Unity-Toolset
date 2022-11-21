@@ -32,11 +32,15 @@ namespace Enderlook.Unity.Toolset.Testing
             if (type.GetCustomAttribute<PropertyPopupAttribute>() is PropertyPopupAttribute attribute && !type.CheckIfShouldBeIgnored(typeof(PropertyPopupAttribute)))
             {
                 typesAndAttributes.Add(type, attribute);
-                FieldInfo fieldInfo = type.GetFieldExhaustive(attribute.ModeFieldName, ExhaustiveBindingFlags.Instance);
-                if (fieldInfo == null)
-                    Debug.LogError($"Type '{type}' has attribute '{nameof(PropertyPopupAttribute)}', but doesn't have a field named '{attribute.ModeFieldName}' as '{nameof(PropertyPopupAttribute.ModeFieldName)}' requires nor its bases classes have it.");
+                FieldInfo fieldInfo = type.GetFieldExhaustive(attribute.ModeReferenceName, ExhaustiveBindingFlags.Instance);
+                if (fieldInfo is null)
+                {
+                    PropertyInfo propertyInfo = type.GetProperty(attribute.ModeReferenceName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                    if (propertyInfo is null || !propertyInfo.CanRead || !propertyInfo.CanWrite)
+                        Debug.LogError($"Type '{type}' has attribute '{nameof(PropertyPopupAttribute)}', but doesn't have a field nor property (with get and set method) named '{attribute.ModeReferenceName}' as '{nameof(PropertyPopupAttribute.ModeReferenceName)}' requires nor its bases classes have it.");
+                }
                 else if (!fieldInfo.CanBeSerializedByUnity() && !fieldInfo.CheckIfShouldBeIgnored(typeof(PropertyPopupAttribute)))
-                    Debug.LogError($"Type '{type}' has attribute '{nameof(PropertyPopupAttribute)}' which uses the field '{fieldInfo.Name}' declared in '{fieldInfo.DeclaringType}' as '{nameof(PropertyPopupAttribute.ModeFieldName)}', but it's not serializable by Unity.");
+                    Debug.LogError($"Type '{type}' has attribute '{nameof(PropertyPopupAttribute)}' which uses the field '{fieldInfo.Name}' declared in '{fieldInfo.DeclaringType}' as '{nameof(PropertyPopupAttribute.ModeReferenceName)}', but it's not serializable by Unity.");
             }
         }
 
