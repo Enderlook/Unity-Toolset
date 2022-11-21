@@ -1,10 +1,12 @@
 ﻿using Enderlook.Unity.Toolset.Utils;
 
 using System;
-using System.Reflection;
+using System.Collections;
+using System.Collections.Generic;
 using System.Threading;
 
 using UnityEditor;
+using UnityEditor.Callbacks;
 
 using UnityEngine;
 
@@ -23,10 +25,28 @@ namespace Enderlook.Unity.Toolset.Drawers
         };
 
         private static GUIContent tmpContent;
+        private static Type[] tmpType;
 
         private readonly string modeProperty;
         private readonly PropertyPopupOption[] modes;
         private readonly string[] popupOptions;
+
+        private static class Container
+        {
+            // This must be stored in a separated class because `Reset` method is called when script reloads,
+            // which executes the static constructor of the class, and that initialized the static field `popupStyle`
+            // but GUI functions (`GUIStyle` and `GUI.skin`) can can only be called from inside OnGUI method,
+            // which results in an exception thrown.
+
+            public static readonly Dictionary<Type, IEqualityComparer> comparers = new Dictionary<Type, IEqualityComparer>();
+
+            [DidReloadScripts]
+            private static void Reset()
+            {
+                lock (comparers)
+                    comparers.Clear();
+            }
+        }
 
         /// <summary>
         /// Determie the posible options for the popup.
@@ -84,7 +104,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                     EditorGUI.PropertyField(newPosition, optionProperty, GUIContent.none, true);
             }
             else
-                EditorGUI.HelpBox(newPosition, string.Format(NOT_FOUND_OPTION, mode.propertyPath, GetValue(mode)), MessageType.Error);
+                EditorGUI.HelpBox(newPosition, string.Format(NOT_FOUND_OPTION, mode.propertyPath, mode.GetValue()), MessageType.Error);
         }
 
         private static bool IsLargerThanOneLine(SerializedProperty optionProperty)
@@ -115,27 +135,37 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         private int GetPopupIndex(SerializedProperty mode)
         {
-            object value = GetValue(mode);
+            object value = mode.GetValue();
+
+            IEqualityComparer comparer;
+            lock (Container.comparers)
+            {
+                Type type = mode.GetPropertyType();
+                if (!Container.comparers.TryGetValue(type, out comparer))
+                    comparer = Create(type);
+            }
 
             for (int modeIndex = 0; modeIndex < modes.Length; modeIndex++)
-                if (modes[modeIndex].Target.Equals(value))
+                if (comparer.Equals(modes[modeIndex].Target, value))
                     return modeIndex;
 
             Debug.LogError(string.Format(NOT_FOUND_OPTION, mode.propertyPath, value));
             return -1;
-        }
 
-        private static object GetValue(SerializedProperty mode)
-        {
-            if (mode.TryGetTargetObject(out object value))
+            static IEqualityComparer Create(Type type)
             {
-                // We give special treat with enums
-                Type type = value.GetType();
-                if (type.IsEnum)
-                    value = Convert.ChangeType(value, Enum.GetUnderlyingType(type));
-                return value;
+                Type[] array = Interlocked.Exchange(ref tmpType, null) ?? new Type[1];
+                ref Type slot = ref array[0];
+                slot = type;
+                Type comparerType = typeof(EqualityComparer<>).MakeGenericType(slot);
+                slot = null;
+                tmpType = array;
+                IEqualityComparer comparer = (IEqualityComparer)comparerType
+                    .GetProperty(nameof(EqualityComparer<object>.Default))
+                    .GetValue(null);
+                Container.comparers.Add(type, comparer);
+                return comparer;
             }
-            return null;
         }
 
         /// <summary>
