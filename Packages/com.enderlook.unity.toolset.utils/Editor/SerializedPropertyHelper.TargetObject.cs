@@ -862,12 +862,8 @@ namespace Enderlook.Unity.Toolset.Utils
                             Debug.Assert(false, "Impossible state.");
                             break;
                     }
-                    nodes_.Clear();
-                    nodes = nodes_;
                     return true;
                 error_:
-                    nodes_.Clear();
-                    nodes = nodes_;
                     return false;
                 }
             }
