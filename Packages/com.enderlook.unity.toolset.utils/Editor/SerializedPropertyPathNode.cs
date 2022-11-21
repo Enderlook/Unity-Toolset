@@ -1,7 +1,9 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics;
+using System.Reflection;
 
 namespace Enderlook.Unity.Toolset.Utils
 {
+    [DebuggerDisplay("Obj: {Object} Member: {MemberInfo} ({Index}) Path: {path}")]
     internal struct SerializedPropertyPathNode
     {
         public object Object;

@@ -367,7 +367,7 @@ namespace Enderlook.Unity.Toolset.Utils
                 return FromReferenceType();
             if (typeof(T).IsPrimitive)
                 return FromPrimitiveType();
-            if (typeof(Enum).IsAssignableFrom(typeof(T)) && source.propertyType == SerializedPropertyType.Enum)
+            if (typeof(T).IsEnum && source.propertyType == SerializedPropertyType.Enum)
                 return FromEnum();
             return FromValueType();
 
@@ -379,8 +379,6 @@ namespace Enderlook.Unity.Toolset.Utils
                         return (T)(object)source.animationCurveValue;
                     case SerializedPropertyType.String:
                         return (T)(object)source.stringValue;
-                    case SerializedPropertyType.Enum:
-                        return FromEnum();
                     case SerializedPropertyType.ObjectReference:
                         return (T)(object)source.objectReferenceValue;
                     case SerializedPropertyType.ExposedReference:
@@ -557,7 +555,7 @@ namespace Enderlook.Unity.Toolset.Utils
 
             T FromEnum()
             {
-                if (typeof(T) == typeof(Enum))
+                if (!typeof(T).IsEnum)
                     goto fallback;
 
                 Type underlyingType = Enum.GetUnderlyingType(typeof(T));
@@ -904,7 +902,7 @@ namespace Enderlook.Unity.Toolset.Utils
                 FromReferenceType();
             else if (typeof(T).IsPrimitive)
                 FromPrimitiveType();
-            else if (typeof(Enum).IsAssignableFrom(typeof(T)) && source.propertyType == SerializedPropertyType.Enum)
+            else if (typeof(T).IsEnum && source.propertyType == SerializedPropertyType.Enum)
                 FromEnum();
             else
                 FromValueType();
@@ -1126,18 +1124,17 @@ namespace Enderlook.Unity.Toolset.Utils
             void FromEnum()
             {
                 Type underlyingType;
-                if (typeof(T) == typeof(Enum))
-                {
-                    if (!typeof(T).IsValueType && !((object)newValue is null))
-                        underlyingType = newValue.GetType();
-                    else
-                    {
-                        source.intValue = default;
-                        return;
-                    }
-                }
-                else
+                if (typeof(T).IsEnum)
                     underlyingType = Enum.GetUnderlyingType(typeof(T));
+                else if (typeof(T).IsValueType)
+                    underlyingType = typeof(T);
+                else if (!(newValue is null))
+                    underlyingType = newValue.GetType();
+                else
+                {
+                    source.SetTargetObject(newValue, false);
+                    return;
+                }
 
                 if (underlyingType == typeof(int))
                     source.intValue = (int)(object)newValue;
@@ -1161,8 +1158,8 @@ namespace Enderlook.Unity.Toolset.Utils
                     source.floatValue = (char)(object)newValue;
                 else if (underlyingType == typeof(double))
                     source.doubleValue = (char)(object)newValue;
-
-                source.SetTargetObject(newValue, false);
+                else
+                    source.SetTargetObject(newValue, false);
             }
 
             void Fallback()
