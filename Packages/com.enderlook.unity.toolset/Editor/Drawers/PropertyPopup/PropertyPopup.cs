@@ -139,7 +139,7 @@ namespace Enderlook.Unity.Toolset.Drawers
         }
 
         /// <summary>
-        /// Get the height of the drawed property
+        /// Get the height of the drawed property.
         /// </summary>
         /// <param name="property">Property used to draw the field.</param>
         /// <param name="label">Label to show in inspector.</param>
