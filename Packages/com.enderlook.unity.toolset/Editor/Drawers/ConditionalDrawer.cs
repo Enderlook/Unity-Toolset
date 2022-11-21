@@ -57,7 +57,11 @@ namespace Enderlook.Unity.Toolset.Drawers
         private static readonly Dictionary<(Type type, MemberInfo memberInfo), Func<object, bool>> members = new Dictionary<(Type type, MemberInfo memberInfo), Func<object, bool>>();
 
         [DidReloadScripts]
-        private static void Reset() => members.Clear();
+        private static void Reset()
+        {
+            lock (members)
+                members.Clear();
+        }
 
         private bool off;
 
@@ -93,13 +97,24 @@ namespace Enderlook.Unity.Toolset.Drawers
             object parent = property.GetParentTargetObject();
             Type originalType = parent.GetType();
 
-            if (members.TryGetValue((originalType, memberInfo), out Func<object, bool> func))
-                goto end;
+            Func<object, bool> func;
+            lock (members)
+            {
+                if (members.TryGetValue((originalType, memberInfo), out func))
+                    goto end;
+            }
 
             Expression convertedExpression = Expression.Convert(OBJECT_PARAMETER, originalType);
             Expression body = GetExpression(memberInfo, (IConditionalAttribute)Attribute);
             func = Expression.Lambda<Func<object, bool>>(body, OBJECT_PARAMETER).Compile();
-            members.Add((originalType, memberInfo), func);
+
+            lock (members)
+            {
+                if (members.TryGetValue((originalType, memberInfo), out Func<object, bool> func2))
+                    func = func2;
+                else
+                    members.Add((originalType, memberInfo), func);
+            }
 
             end:
             return func(parent);
