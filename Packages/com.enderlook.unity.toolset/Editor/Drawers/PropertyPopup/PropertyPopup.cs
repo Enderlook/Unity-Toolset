@@ -2,6 +2,7 @@
 
 using System;
 using System.Reflection;
+using System.Threading;
 
 using UnityEditor;
 
@@ -20,6 +21,8 @@ namespace Enderlook.Unity.Toolset.Drawers
         {
             imagePosition = ImagePosition.ImageOnly
         };
+
+        private static GUIContent tmpContent;
 
         private readonly string modeProperty;
         private readonly PropertyPopupOption[] modes;
@@ -65,15 +68,8 @@ namespace Enderlook.Unity.Toolset.Drawers
             int newUsagePopupIndex = EditorGUI.Popup(buttonRect, popupIndex, popupOptions, popupStyle);
             if (newUsagePopupIndex != popupIndex)
             {
-                object parent = mode.GetParentTargetObject();
                 object value = modes[newUsagePopupIndex].Target;
-                // TODO: The cast should be removed.
-                FieldInfo fieldInfo = (FieldInfo)mode.GetMemberInfo();
-                Type fieldType = fieldInfo.FieldType;
-                if (fieldType.IsEnum)
-                    fieldInfo.SetValue(parent, Enum.ToObject(fieldType, value));
-                else
-                    fieldInfo.SetValue(parent, value);
+                mode.SetValue(value);
                 mode.serializedObject.ApplyModifiedProperties();
             }
 
@@ -88,7 +84,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                     EditorGUI.PropertyField(newPosition, optionProperty, GUIContent.none, true);
             }
             else
-                EditorGUI.HelpBox(position, string.Format(NOT_FOUND_OPTION, mode.propertyPath, GetValue(mode)), MessageType.Error);
+                EditorGUI.HelpBox(newPosition, string.Format(NOT_FOUND_OPTION, mode.propertyPath, GetValue(mode)), MessageType.Error);
         }
 
         private static bool IsLargerThanOneLine(SerializedProperty optionProperty)
@@ -150,18 +146,30 @@ namespace Enderlook.Unity.Toolset.Drawers
         /// <returns>Property height.</returns>
         public float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            int popupIndex = GetPopupIndex(property.FindPropertyRelative(modeProperty));
-            return GetPropertyHeight(property, label, popupIndex);
-        }
+            SerializedProperty mode = property.FindPropertyRelative(modeProperty);
+            int popupIndex = GetPopupIndex(mode);
+            return popupIndex == -1 ? NotFound() : GetPropertyHeight();
 
-        private float GetPropertyHeight(SerializedProperty property, GUIContent label, int popupIndex)
-        {
-            PropertyPopupOption propertyPopupOption = modes[popupIndex];
-            SerializedProperty choosenProperty = property.FindPropertyRelative(propertyPopupOption.PropertyName);
-            float height = EditorGUI.GetPropertyHeight(property, label, false);
-            if (IsLargerThanOneLine(choosenProperty) && choosenProperty.isExpanded)
-                height += EditorGUI.GetPropertyHeight(choosenProperty, choosenProperty.GetGUIContent(), true);
-            return height;
+            float NotFound()
+            {
+                GUIContent guiContent = Interlocked.Exchange(ref tmpContent, null) ?? new GUIContent();
+                guiContent.text = string.Format(NOT_FOUND_OPTION, mode.propertyPath, mode.GetValue());
+                float width = EditorGUIUtility.currentViewWidth - EditorGUIUtility.labelWidth - popupStyle.fixedWidth - popupStyle.margin.right;
+                float height = GUI.skin.box.CalcHeight(guiContent, width);
+                guiContent.text = null;
+                tmpContent = guiContent;
+                return height;
+            }
+
+            float GetPropertyHeight()
+            {
+                PropertyPopupOption propertyPopupOption = modes[popupIndex];
+                SerializedProperty choosenProperty = property.FindPropertyRelative(propertyPopupOption.PropertyName);
+                float height = EditorGUI.GetPropertyHeight(property, label, false);
+                if (IsLargerThanOneLine(choosenProperty) && choosenProperty.isExpanded)
+                    height += EditorGUI.GetPropertyHeight(choosenProperty, choosenProperty.GetGUIContent(), true);
+                return height;
+            }
         }
     }
 }
