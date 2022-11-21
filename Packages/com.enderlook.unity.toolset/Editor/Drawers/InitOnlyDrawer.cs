@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Drawers
 {
-    [CustomStackablePropertyDrawer(typeof(InitializationFieldAttribute))]
+    [CustomStackablePropertyDrawer(typeof(InitOnlyAttribute))]
     internal sealed class InitializationFieldDrawer : StackablePropertyDrawer
     {
         protected internal override void BeforeOnGUI(ref Rect position, ref SerializedProperty property, ref GUIContent label, ref bool includeChildren, ref bool visible)
