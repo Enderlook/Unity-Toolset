@@ -1,8 +1,10 @@
-﻿using UnityEditor;
+﻿using Enderlook.Unity.Toolset.Utils;
+
+using UnityEditor;
 
 using UnityObject = UnityEngine.Object;
 
-namespace Enderlook.Unity.Toolset.Utils
+namespace Enderlook.Unity.Toolset
 {
     internal static class UnityObjectContextMenu
     {
