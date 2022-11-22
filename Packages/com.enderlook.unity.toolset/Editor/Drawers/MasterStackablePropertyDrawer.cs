@@ -242,7 +242,13 @@ namespace Enderlook.Unity.Toolset.Drawers
             if (visible)
             {
                 if (main is null)
-                    EditorGUI.PropertyField(position, property, label, includeChildren);
+                {
+                    if (property.propertyType == SerializedPropertyType.Vector4)
+                        // Fixes bug that makes Vector4 display with 4 lines instead of showing all fields in a single line.
+                        property.vector4Value = EditorGUI.Vector4Field(position, label, property.vector4Value);
+                    else
+                        EditorGUI.PropertyField(position, property, label, includeChildren);
+                }
                 else
                     main.OnGUI(position, property, label, includeChildren);
             }
@@ -265,7 +271,13 @@ namespace Enderlook.Unity.Toolset.Drawers
             if (visible)
             {
                 if (main is null)
-                    height = EditorGUI.GetPropertyHeight(property, label, includeChildren);
+                {
+                    if (property.propertyType == SerializedPropertyType.Vector4)
+                        // Fixes bug that makes Vector4 display with 4 lines instead of showing all fields in a single line.
+                        height = EditorGUIUtility.singleLineHeight * (EditorGUIUtility.wideMode ? 1 : 2);
+                    else
+                        height = EditorGUI.GetPropertyHeight(property, label, includeChildren);
+                }
                 else
                     height = main.GetPropertyHeight(property, label, includeChildren);
             }
