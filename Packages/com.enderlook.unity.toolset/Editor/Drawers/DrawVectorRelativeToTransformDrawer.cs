@@ -37,6 +37,8 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         private static bool enableFeature;
 
+        private static Vector3 scrollPosition;
+
         static DrawVectorRelativeToTransformEditor()
         {
             SceneView.duringSceneGui += RenderSceneGUI;
@@ -307,7 +309,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                 absolutePosition = DrawHandle(absolutePosition, drawVectorRelativeToTransform.usePositionHandler);
                 SetFromAbsolutePosition(serializedProperty, absolutePosition, reference);
 
-                if (!string.IsNullOrEmpty(drawVectorRelativeToTransform.icon))
+                if (!showButton && !string.IsNullOrEmpty(drawVectorRelativeToTransform.icon))
                 {
                     Texture2D texture = (Texture2D)EditorGUIUtility.Load(drawVectorRelativeToTransform.icon);
                     if (texture == null)
@@ -350,7 +352,10 @@ namespace Enderlook.Unity.Toolset.Drawers
             if (Event.current != null)
             {
                 if (Event.current.type == EventType.KeyDown && Event.current.control)
+                {
                     showButton = true;
+                    scrollPosition = Vector3.zero;
+                }
                 else if (Event.current.type == EventType.KeyUp)
                     showButton = false;
             }
@@ -379,15 +384,16 @@ namespace Enderlook.Unity.Toolset.Drawers
         {
             if (!(selected.serializedProperty is null))
             {
+                Handles.BeginGUI();
+                Rect screenRect = new Rect(0, 0, 300, (EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing) * 10 + (EditorGUIUtility.standardVerticalSpacing * 2));
+                GUILayout.BeginArea(screenRect);
+                if (Event.current.type == EventType.Repaint)
+                    GUI.skin.box.Draw(screenRect, GUIContent.none, false, true, true, false);
+                EditorGUI.BeginChangeCheck();
+                scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
+
                 try
                 {
-                    Handles.BeginGUI();
-                    Rect screenRect = new Rect(0, 0, 300, 175);
-                    GUILayout.BeginArea(screenRect);
-                    if (Event.current.type == EventType.Repaint)
-                        GUI.skin.box.Draw(screenRect, GUIContent.none, false, true, true, false);
-                    EditorGUI.BeginChangeCheck();
-
                     EditorGUILayout.LabelField(OBJECT_CONTENT, new GUIContent(selected.serializedProperty.serializedObject.targetObject.name));
 
                     EditorGUILayout.LabelField(PATH_CONTENT, new GUIContent($"{selected.memberInfo.DeclaringType.Name}.{selected.serializedProperty.propertyPath.Replace(".Array.data", "")}"));
@@ -406,7 +412,29 @@ namespace Enderlook.Unity.Toolset.Drawers
                         propertyName = selected.serializedProperty.displayName;
                     EditorGUILayout.LabelField(PROPERTY_CONTENT, new GUIContent(propertyName));
 
+                    if (selected.serializedProperty.propertyType == SerializedPropertyType.ObjectReference)
+                    {
+                        object obj = selected.serializedProperty.objectReferenceValue;
+                        if (obj != null)
+                        {
+                            if (!(obj is Transform transform))
+                            {
+                                if (obj is Component component)
+                                    transform = component.transform;
+                                else if (obj is GameObject gameObject)
+                                    transform = gameObject.transform;
+                                else
+                                    goto drawProperty;
+                            }
+
+                            transform.position = EditorGUILayout.Vector3Field(RELATIVE_POSITION_CONTENT, transform.position);
+                            goto afterDrawProperty;
+                        }
+                    }
+
+                drawProperty:
                     EditorGUILayout.PropertyField(selected.serializedProperty, RELATIVE_POSITION_CONTENT);
+                afterDrawProperty:
 
                     Vector3 reference = GetReference(selected.serializedProperty, selected.drawVectorRelativeToTransform.reference);
                     Vector3? absolutePosition_ = ToAbsolutePosition(selected.serializedProperty, reference);
@@ -431,6 +459,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                 }
                 finally
                 {
+                    EditorGUILayout.EndScrollView();
                     if (EditorGUI.EndChangeCheck() && selected != default)
                         selected.serializedProperty.serializedObject.ApplyModifiedProperties();
                     GUILayout.EndArea();
