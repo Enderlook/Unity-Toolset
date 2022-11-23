@@ -14,7 +14,8 @@ namespace Enderlook.Unity.Toolset.Drawers
     [InitializeOnLoad]
     internal static class DrawVectorRelativeToTransformEditor
     {
-        private const string MENU_NAME = "Enderlook/Toolset/Enable Draw Vector Relative To Transform";
+        private const string MENU_NAME_DRAW = "Enderlook/Toolset/Draw Vector Relative To Transform/Enable Visualization";
+        private const string MENU_NAME_EDIT = "Enderlook/Toolset/Draw Vector Relative To Transform/Enable Scene GUI Editing";
 
         private static readonly Handles.CapFunction HANDLE_CAP = Handles.SphereHandleCap;
 
@@ -35,25 +36,38 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         private static bool showButton;
 
-        private static bool enableFeature;
+        private static bool enableVisualization;
+        private static bool enableGUI;
 
         private static Vector3 scrollPosition;
 
         static DrawVectorRelativeToTransformEditor()
         {
             SceneView.duringSceneGui += RenderSceneGUI;
-            enableFeature = EditorPrefs.GetBool(MENU_NAME, true);
-            EditorApplication.delayCall += () => SetFeature(enableFeature);
+            enableVisualization = EditorPrefs.GetBool(MENU_NAME_DRAW, true);
+            enableGUI = EditorPrefs.GetBool(MENU_NAME_EDIT, true);
+            EditorApplication.delayCall += () => SetFeature(enableVisualization, enableGUI);
         }
 
-        [MenuItem(MENU_NAME)]
-        private static void ToggleFeatureButton() => SetFeature(!enableFeature);
+        [MenuItem(MENU_NAME_DRAW)]
+        private static void ToggleVisualize() => SetFeature(!enableVisualization, enableGUI);
 
-        private static void SetFeature(bool enabled)
+        [MenuItem(MENU_NAME_DRAW)]
+        private static void ToggleGUI() => SetFeature(enableVisualization, !enableGUI);
+
+        [MenuItem(MENU_NAME_DRAW, true)]
+        private static bool ToggleGUIValidation() => enableVisualization;
+
+        private static void SetFeature(bool visualization, bool gui)
         {
-            enableFeature = enabled;
-            Menu.SetChecked(MENU_NAME, enabled);
-            EditorPrefs.SetBool(MENU_NAME, enabled);
+            enableVisualization = visualization;
+            enableGUI = gui;
+            Menu.SetChecked(MENU_NAME_DRAW, visualization);
+            EditorPrefs.SetBool(MENU_NAME_DRAW, visualization);
+            Menu.SetChecked(MENU_NAME_EDIT, gui);
+            EditorPrefs.SetBool(MENU_NAME_EDIT, gui);
+            if (!gui)
+                showButton = false;
         }
 
         private static Vector3 DrawHandle(Vector3 position, bool usePositionHandle)
@@ -346,10 +360,10 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         private static void RenderSceneGUI(SceneView sceneview)
         {
-            if (!enableFeature)
+            if (!enableVisualization)
                 return;
 
-            if (Event.current != null)
+            if (enableGUI && Event.current != null)
             {
                 if (Event.current.type == EventType.KeyDown && Event.current.control)
                 {
