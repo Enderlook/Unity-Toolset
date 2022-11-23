@@ -8,7 +8,7 @@ namespace Enderlook.Unity.Toolset
 {
     internal static class UnityObjectContextMenu
     {
-        [MenuItem("Assets/Enderlook/Extract Sub-Assets")]
+        [MenuItem("Assets/Enderlook/Toolset/Extract Sub-Asset")]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by Unity.")]
         private static void ExtractSubAsset()
         {
@@ -19,7 +19,7 @@ namespace Enderlook.Unity.Toolset
             }
         }
 
-        [MenuItem("Assets/Enderlook/Extract Sub-Assets", true)]
+        [MenuItem("Assets/Enderlook/Toolset/Extract Sub-Asset", true)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Used by Unity.")]
         private static bool ExtractSubAssetValidator()
         {
