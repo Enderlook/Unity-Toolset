@@ -15,7 +15,7 @@ namespace Enderlook.Unity.Toolset
             foreach (UnityObject selection in Selection.objects)
             {
                 UnityObject subAsset = selection;
-                AssetDatabaseHelper.ExtractSubAsset(ref subAsset);
+                AssetDatabaseHelper.ExtractSubAsset(subAsset);
             }
         }
 

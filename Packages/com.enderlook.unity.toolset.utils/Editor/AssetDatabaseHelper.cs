@@ -310,10 +310,9 @@ namespace Enderlook.Unity.Toolset.Utils
         /// <summary>
         /// Extract a sub asset from an asset file to <paramref name="newPath"/>.
         /// </summary>
-        /// <param name="subAsset">Sub asset to extract. Can't be main asset.</param>
+        /// <param name="subAsset">Sub asset to extract. Can't be main asset, otherwise <paramref name="subAsset"/>, otherwise nothing happens.</param>
         /// <param name="newPath">Path to new asset file.</param>
-        /// <returns>New sub asset. <see langword="null"/> if <paramref name="subAsset"/> was a main asset.</returns>
-        public static UnityObject ExtractSubAsset(UnityObject subAsset, string newPath)
+        public static void ExtractSubAsset(UnityObject subAsset, string newPath)
         {
             if (subAsset == null) Helper.ThrowArgumentNullException_SubAsset();
             if (newPath is null) Helper.ThrowArgumentNullException_NewPath();
@@ -322,28 +321,16 @@ namespace Enderlook.Unity.Toolset.Utils
             string path = AssetDatabase.GetAssetPath(subAsset);
             if (AssetDatabase.LoadMainAssetAtPath(path) != subAsset)
             {
-                UnityObject newAsset = UnityObject.Instantiate(subAsset);
-                AssetDatabase.RemoveObjectFromAsset(subAsset);
-                AssetDatabase.CreateAsset(newAsset, newPath);
-                AssetDatabase.SaveAssets();
-                AssetDatabase.Refresh();
-                return newAsset;
+                if (!string.IsNullOrEmpty(AssetDatabase.ExtractAsset(subAsset, newPath)))
+                {
+                    // AssetDatabase.ExtractAsset only works with a subset of asset types.
+
+                    AssetDatabase.RemoveObjectFromAsset(subAsset);
+                    AssetDatabase.CreateAsset(subAsset, newPath);
+                    AssetDatabase.SaveAssets();
+                    AssetDatabase.Refresh();
+                }
             }
-            return null;
-        }
-
-        /// <summary>
-        /// Extract a sub asset from an asset file to <paramref name="newPath"/>.<br/>
-        /// </summary>
-        /// <param name="subAsset">Sub asset to extract. Can't be main asset, otherwise <paramref name="subAsset"/> becomes <see langword="null"/>.</param>
-        /// <param name="newPath">Path to new asset file.</param>
-        public static void ExtractSubAsset(ref UnityObject subAsset, string newPath)
-        {
-            if (subAsset == null) Helper.ThrowArgumentNullException_SubAsset();
-            if (newPath is null) Helper.ThrowArgumentNullException_NewPath();
-            if (newPath.Length == 0) Helper.ThrowArgumentException_NewPathCannotBeEmpty();
-
-            subAsset = ExtractSubAsset(subAsset, newPath);
         }
 
         /// <summary>
@@ -351,12 +338,12 @@ namespace Enderlook.Unity.Toolset.Utils
         /// </summary>
         /// <param name="subAsset">Sub asset to extract. Can't be main asset, otherwise <paramref name="subAsset"/> becomes <see langword="null"/>.</param>
         /// <returns>New sub asset path, if fail this path is invalid.</returns>
-        public static string ExtractSubAsset(ref UnityObject subAsset)
+        public static string ExtractSubAsset(UnityObject subAsset)
         {
             if (subAsset == null) Helper.ThrowArgumentNullException_SubAsset();
 
             string path = $"{string.Concat(AssetDatabase.GetAssetPath(subAsset).Split('.').Reverse().Skip(1).Reverse())} {subAsset.name}.asset";
-            ExtractSubAsset(ref subAsset, path);
+            ExtractSubAsset(subAsset, path);
             return path;
         }
 
