@@ -95,7 +95,7 @@ namespace Enderlook.Unity.Toolset.Utils
         /// It automatically add "Assets/" to the <paramref name="path"/> if it doesn't have.
         /// </summary>
         /// <param name="objectToAdd">Asset to add.</param>
-        /// <param name="path">Path to save file</param>
+        /// <param name="path">Path to save file.</param>
         /// <param name="createIfNotExist">If <see language="true"/> it will create the asset if it doesn't exist.</param>
         /// <return>Path to created or modified file.</return>
         public static string AddObjectToAsset(UnityObject objectToAdd, string path, bool createIfNotExist = false)
@@ -128,7 +128,7 @@ namespace Enderlook.Unity.Toolset.Utils
         /// It automatically add "Assets/" to the <paramref name="path"/> if it doesn't have.
         /// </summary>
         /// <param name="objectsToAdd">Objects to add to asset to add.</param>
-        /// <param name="path">Path to save file</param>
+        /// <param name="path">Path to save file.</param>
         /// <param name="createIfNotExist">If <see language="true"/> it will create the asset if it doesn't exist.</param>
         /// <return>Path to created or modified file.</return>
         public static string AddObjectToAsset(IEnumerable<UnityObject> objectsToAdd, string path, bool createIfNotExist = false)
