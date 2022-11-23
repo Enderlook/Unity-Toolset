@@ -19,7 +19,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
     internal class PostCompilingAssembliesHelper
     {
 #pragma warning disable CS0649
-        private const string EDITOR_CONFIGURATION_NAME = "Enderlook/Toolset/Checking/Mode";
+        private const string EDITOR_CONFIGURATION_NAME = MENU_NAME + "Mode";
         private const string MENU_NAME = "Enderlook/Toolset/Checking/";
         private const string MENU_NAME_REFRESH = MENU_NAME + "Refresh";
         private const string MENU_NAME_DISABLED = MENU_NAME + "Disabled";
