@@ -374,21 +374,36 @@ namespace Enderlook.Unity.Toolset.Drawers
                     showButton = false;
             }
 
-            foreach ((SerializedProperty serializedProperty, MemberInfo memberInfo, DrawVectorRelativeToTransformAttribute drawVectorRelativeToTransform, Editor editor) in PropertyDrawerHelper.FindAllSerializePropertiesInActiveEditorWithTheAttribute<DrawVectorRelativeToTransformAttribute>())
+            foreach (Editor editor in ActiveEditorTracker.sharedTracker.activeEditors)
             {
-                serializedProperty.serializedObject.Update();
-                Vector3 reference = GetReference(serializedProperty, drawVectorRelativeToTransform.reference);
+                SerializedProperty serializedProperty = editor.serializedObject.GetIterator();
+                while (serializedProperty.Next(true))
+                {
+                    // Used to skip missing components.
+                    if (serializedProperty.serializedObject.targetObject == null)
+                        continue;
+                    // Used to catch all properties with errors, such as Unity-related fields that aren't as (like those fields which starts with `m_`)
+                    if (!serializedProperty.TryGetMemberInfo(out MemberInfo memberInfo))
+                        continue;
+                    if (!(memberInfo.GetCustomAttribute(typeof(DrawVectorRelativeToTransformAttribute), true) is DrawVectorRelativeToTransformAttribute attribute))
+                        continue;
 
-                if (serializedProperty.isArray)
-                    for (int i = 0; i < serializedProperty.arraySize; i++)
+                    serializedProperty.serializedObject.Update();
+                    Vector3 reference = GetReference(serializedProperty, attribute.reference);
+
+                    if (serializedProperty.isArray)
                     {
-                        SerializedProperty item = serializedProperty.GetArrayElementAtIndex(i);
-                        RenderSingleSerializedProperty(item, drawVectorRelativeToTransform, reference, memberInfo);
+                        for (int i = 0; i < serializedProperty.arraySize; i++)
+                        {
+                            SerializedProperty item = serializedProperty.GetArrayElementAtIndex(i);
+                            RenderSingleSerializedProperty(item, attribute, reference, memberInfo);
+                        }
                     }
-                else
-                    RenderSingleSerializedProperty(serializedProperty, drawVectorRelativeToTransform, reference, memberInfo);
+                    else
+                        RenderSingleSerializedProperty(serializedProperty, attribute, reference, memberInfo);
 
-                serializedProperty.serializedObject.ApplyModifiedProperties();
+                    serializedProperty.serializedObject.ApplyModifiedProperties();
+                }
             }
 
             TryDrawPanel();
