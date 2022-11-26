@@ -129,11 +129,18 @@ namespace Enderlook.Unity.Toolset.Drawers
             imagePosition = ImagePosition.ImageOnly
         };
 
+        private bool isMain;
+
         protected internal override bool RequestMain => true;
+
+        protected internal override void IsMain(bool isMain) => this.isMain = isMain;
 
 #pragma warning disable CS0162
         protected internal override void OnGUI(Rect position, SerializedProperty property, GUIContent label, bool includeChildren)
         {
+            if (!isMain)
+                return;
+
             Type type = property.serializedObject.targetObject.GetType();
             if (!typeof(UnityEngine.Object).IsAssignableFrom(type))
             {
@@ -284,6 +291,9 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         protected internal override float GetPropertyHeight(SerializedProperty property, GUIContent label, bool includeChildren)
         {
+            if (!isMain)
+                return base.GetPropertyHeight(property, label, includeChildren);
+
             float totalHeight = EditorGUIUtility.singleLineHeight;
 
             if (property.objectReferenceValue == null)
