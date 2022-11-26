@@ -10,27 +10,34 @@ using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Drawers
 {
-
-    [CustomStackablePropertyDrawer(typeof(ExpandableAttribute), true)]
-    internal sealed class ExpandableDrawer : FoldoutDrawer
+    [CustomStackablePropertyDrawer(typeof(InlineAttribute), true)]
+    internal sealed class InlineDrawer : FoldoutDrawer
     {
-        protected override bool HAS_FOLDOUT => true;
+        protected override bool HAS_FOLDOUT => false;
 
-        protected override ButtonDisplayMode SHOW_OPEN_IN_WINDOW_BUTTON => ButtonDisplayMode.Inline;
+        protected override ButtonDisplayMode SHOW_OPEN_IN_WINDOW_BUTTON => ButtonDisplayMode.None;
 
-        protected override bool SHOW_SCRIPT_FIELD => true;
+        protected override bool SHOW_SCRIPT_FIELD => false;
 
-        protected override BoxColorMode BOX_COLOR => BoxColorMode.Darker;
+        protected override BoxColorMode BOX_COLOR => BoxColorMode.None;
 
-        protected override int INDENT_WIDTH => 8; // TODO: This is wrong.
+        protected override int INDENT_WIDTH => 0;
 
-        protected override bool SHOW_FIELD => true;
+        protected override bool SHOW_FIELD
+        {
+            get
+            {
+                if (!FieldInfo.FieldType.IsArrayOrList(out Type elementType))
+                    elementType = FieldInfo.FieldType;
+                return typeof(UnityEngine.Object).IsAssignableFrom(elementType);
+            }
+        }
 
         protected override DrawMode CanDraw(SerializedProperty property, bool log, out string textBoxMessage)
         {
             textBoxMessage = null;
             Type type = property.GetPropertyType();
-            if (!typeof(UnityEngine.Object).IsAssignableFrom(type))
+            if (type.IsPrimitive)
             {
 #if UNITY_2020_1_OR_NEWER
                 MemberInfo member = property.GetMemberInfo();
@@ -53,9 +60,9 @@ namespace Enderlook.Unity.Toolset.Drawers
                 }
 #endif
                 if (log)
-                    Debug.LogError($"{nameof(ExpandableAttribute)} can only be used on types assignables to {typeof(UnityEngine.Object)}, or array or lists of types whose element types are assignables to it. Property '{property.name}' from '{property.GetParentTargetObject()}' (path '{property.propertyPath}') is of type {type}.");
+                    Debug.LogError($"{nameof(InlineAttribute)} can not be used on types that are primitive, or array or lists of types whose element types are. Property '{property.name}' from '{property.GetParentTargetObject()}' (path '{property.propertyPath}') is of type {type}.");
 
-                textBoxMessage = $"{nameof(ExpandableAttribute)} can only be used on types assignables to {typeof(UnityEngine.Object)}, or array or lists of types whose element types are assignables to it. Property '{property.name}' is of type {type}.";
+                textBoxMessage = $"{nameof(InlineAttribute)} can not be used on types that are primitive, or array or lists of types whose element types are. Property '{property.name}' is of type {type}.";
                 return DrawMode.DrawError;
             }
 

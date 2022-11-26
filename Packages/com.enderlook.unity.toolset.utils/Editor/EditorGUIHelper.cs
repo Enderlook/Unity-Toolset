@@ -79,11 +79,12 @@ namespace Enderlook.Unity.Toolset.Utils
         {
             // https://answers.unity.com/questions/550829/how-to-add-a-script-field-in-custom-inspector.html
             EditorGUI.BeginDisabledGroup(true);
-            object target = Convert.ChangeType(source.target, source.target.GetType());
+            Type targetType = source.target.GetType();
+            object target = Convert.ChangeType(source.target, targetType);
             MonoScript script;
-            if (source.target.GetType().IsSubclassOf(typeof(MonoBehaviour)))
+            if (targetType.IsSubclassOf(typeof(MonoBehaviour)))
                 script = MonoScript.FromMonoBehaviour((MonoBehaviour)target);
-            else if (source.target.GetType().IsSubclassOf(typeof(ScriptableObject)))
+            else if (targetType.IsSubclassOf(typeof(ScriptableObject)))
                 script = MonoScript.FromScriptableObject((ScriptableObject)target);
             else
             {
@@ -91,6 +92,32 @@ namespace Enderlook.Unity.Toolset.Utils
                 Throw();
             }
             EditorGUILayout.ObjectField("Script", script, typeof(MonoScript), false);
+            EditorGUI.EndDisabledGroup();
+
+            void Throw() => throw new InvalidCastException($"Only support {typeof(MonoBehaviour)} or {typeof(ScriptableObject)}");
+        }
+
+        /// <summary>
+        /// Draw the grey script field of the target script of this object.
+        /// </summary>
+        /// <param name="source">Object whose target script field will be draw.</param>
+        internal static void DrawScriptField(Rect position, UnityEngine.Object source)
+        {
+            // https://answers.unity.com/questions/550829/how-to-add-a-script-field-in-custom-inspector.html
+            EditorGUI.BeginDisabledGroup(true);
+            Type sourceType = source.GetType();
+            object target = Convert.ChangeType(source, sourceType);
+            MonoScript script;
+            if (sourceType.IsSubclassOf(typeof(MonoBehaviour)))
+                script = MonoScript.FromMonoBehaviour((MonoBehaviour)target);
+            else if (sourceType.IsSubclassOf(typeof(ScriptableObject)))
+                script = MonoScript.FromScriptableObject((ScriptableObject)target);
+            else
+            {
+                EditorGUI.EndDisabledGroup();
+                Throw();
+            }
+            EditorGUI.ObjectField(position, "Script", script, typeof(MonoScript), false);
             EditorGUI.EndDisabledGroup();
 
             void Throw() => throw new InvalidCastException($"Only support {typeof(MonoBehaviour)} or {typeof(ScriptableObject)}");
