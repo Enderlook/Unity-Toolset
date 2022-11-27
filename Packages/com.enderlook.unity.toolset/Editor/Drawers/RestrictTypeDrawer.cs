@@ -14,8 +14,6 @@ namespace Enderlook.Unity.Toolset.Drawers
     [CustomStackablePropertyDrawer(typeof(RestrictTypeAttribute))]
     internal sealed class RestrictTypeDrawer : StackablePropertyDrawer
     {
-        private static GUIContent guiContent;
-
         private const int MODE_FIRST_TIME = 0;
         private const int MODE_NOT_DRAWN = 1;
         private const int MODE_DRAWN = 2;
@@ -72,11 +70,13 @@ namespace Enderlook.Unity.Toolset.Drawers
 
             float SetHeight(string message)
             {
-                GUIContent gui = Interlocked.Exchange(ref guiContent, null) ?? new GUIContent();
-                gui.text = message;
-                height = GUI.skin.box.CalcHeight(gui, position.width);
-                gui.text = null;
-                guiContent = gui;
+                GUIContent gui = GUIContentHelper.RentGUIContent();
+                {
+                    gui.text = message;
+                    height = GUI.skin.box.CalcHeight(gui, position.width);
+                    gui.text = null;
+                }
+                GUIContentHelper.ReturnGUIContent(gui);
                 return height;
             }
         }

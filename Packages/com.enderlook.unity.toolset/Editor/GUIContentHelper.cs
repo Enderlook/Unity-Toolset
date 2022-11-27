@@ -17,7 +17,27 @@ namespace Enderlook.Unity.Toolset
     public static class GUIContentHelper
     {
         private const ExhaustiveBindingFlags BindingFlags = ExhaustiveBindingFlags.Instance | ExhaustiveBindingFlags.Static;
-        private static GUIContent staticContent;
+        private static GUIContent tmpGUIContent;
+
+        /// <summary>
+        /// Rent a <see cref="GUIContent"/> for immediate usage and discard.
+        /// </summary>
+        /// <returns>Rented instance.</returns>
+        internal static GUIContent RentGUIContent()
+        {
+            GUIContent tmp = Interlocked.Exchange(ref tmpGUIContent, null) ?? new GUIContent();
+            return tmp;
+        }
+
+        /// <summary>
+        /// Returns a rented <see cref="GUIContent"/>.
+        /// </summary>
+        /// <param name="guiContent">Returned instance.</param>
+        internal static void ReturnGUIContent(GUIContent guiContent)
+        {
+            Debug.Assert(string.IsNullOrEmpty(guiContent.text) || string.IsNullOrEmpty(guiContent.tooltip) || guiContent.image != null);
+            tmpGUIContent = guiContent;
+        }
 
         internal static void UseGUIContent(LabelAttribute attribute, SerializedProperty property, ref GUIContent label, bool throwOnError)
         {
@@ -151,12 +171,15 @@ namespace Enderlook.Unity.Toolset
         public static string GetDisplayName(this SerializedProperty property)
         {
             if (property is null) ThrowHelper.ThrowArgumentNullExceptionProperty();
-            GUIContent content = Interlocked.Exchange(ref staticContent, null) ?? new GUIContent();
-            SetGUIContent(property, ref content, true);
-            string name = content.text;
-            content.text = null;
-            content.tooltip = null;
-            staticContent = content;
+            string name;
+            GUIContent content = RentGUIContent();
+            {
+                SetGUIContent(property, ref content, true);
+                name = content.text;
+                content.text = null;
+                content.tooltip = null;
+            }
+            ReturnGUIContent(content);
             return name;
         }
 
@@ -170,12 +193,15 @@ namespace Enderlook.Unity.Toolset
         public static string GetTooltip(this SerializedProperty property)
         {
             if (property is null) ThrowHelper.ThrowArgumentNullExceptionProperty();
-            GUIContent content = Interlocked.Exchange(ref staticContent, null) ?? new GUIContent();
-            SetGUIContent(property, ref content, true);
-            string tooltip = content.tooltip;
-            content.text = null;
-            content.tooltip = null;
-            staticContent = content;
+            string tooltip;
+            GUIContent content = RentGUIContent();
+            {
+                SetGUIContent(property, ref content, true);
+                tooltip = content.tooltip;
+                content.text = null;
+                content.tooltip = null;
+                ReturnGUIContent(content);
+            }
             return tooltip;
         }
     }

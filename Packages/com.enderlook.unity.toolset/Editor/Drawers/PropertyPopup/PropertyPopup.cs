@@ -32,7 +32,6 @@ namespace Enderlook.Unity.Toolset.Drawers
             imagePosition = ImagePosition.ImageOnly
         };
 
-        private static GUIContent tmpContent;
         private static Type[] tmpType;
 
         private readonly string modeProperty;
@@ -279,12 +278,15 @@ namespace Enderlook.Unity.Toolset.Drawers
 
             float NotFoundName()
             {
-                GUIContent guiContent = Interlocked.Exchange(ref tmpContent, null) ?? new GUIContent();
-                guiContent.text = string.Format(NOT_FOUND_NAME, modeProperty);
-                float width = EditorGUIUtility.currentViewWidth - EditorGUIUtility.labelWidth - popupStyle.fixedWidth - popupStyle.margin.right;
-                float height = GUI.skin.box.CalcHeight(guiContent, width);
-                guiContent.text = null;
-                tmpContent = guiContent;
+                float height;
+                GUIContent guiContent = GUIContentHelper.RentGUIContent();
+                {
+                    guiContent.text = string.Format(NOT_FOUND_NAME, modeProperty);
+                    float width = EditorGUIUtility.currentViewWidth - EditorGUIUtility.labelWidth - popupStyle.fixedWidth - popupStyle.margin.right;
+                    height = GUI.skin.box.CalcHeight(guiContent, width);
+                    guiContent.text = null;
+                }
+                GUIContentHelper.ReturnGUIContent(guiContent);
                 GetLogger(property)
                     .Append(" not found serialized property, field or property (with get and set method) named ")
                     .Append(property.propertyPath)
@@ -297,12 +299,15 @@ namespace Enderlook.Unity.Toolset.Drawers
 
             float NotFoundValue()
             {
-                GUIContent guiContent = Interlocked.Exchange(ref tmpContent, null) ?? new GUIContent();
-                guiContent.text = string.Format(NOT_FOUND_OPTION, property.propertyPath, modeProperty, value);
-                float width = EditorGUIUtility.currentViewWidth - EditorGUIUtility.labelWidth - popupStyle.fixedWidth - popupStyle.margin.right;
-                float height = GUI.skin.box.CalcHeight(guiContent, width);
-                guiContent.text = null;
-                tmpContent = guiContent;
+                float height;
+                GUIContent guiContent = GUIContentHelper.RentGUIContent();
+                {
+                    guiContent.text = string.Format(NOT_FOUND_OPTION, property.propertyPath, modeProperty, value);
+                    float width = EditorGUIUtility.currentViewWidth - EditorGUIUtility.labelWidth - popupStyle.fixedWidth - popupStyle.margin.right;
+                    height = GUI.skin.box.CalcHeight(guiContent, width);
+                    guiContent.text = null;
+                }
+                GUIContentHelper.ReturnGUIContent(guiContent);
                 GetLogger(property)
                     .Append(" not found any option which satisfy ")
                     .Append(property.propertyPath)
