@@ -54,6 +54,21 @@ namespace Enderlook.Unity.Toolset.Utils
         {
             // https://docs.unity3d.com/Manual/script-Serialization.html
 
+#if UNITY_2020_1_OR_NEWER
+            if (type.IsGenericParameter)
+            {
+                GenericParameterAttributes attributes = type.GenericParameterAttributes;
+                Type[] constrains = type.GetGenericParameterConstraints();
+                foreach (Type type_ in constrains)
+                {
+                    if (typeof(Delegate).IsAssignableFrom(type_)
+                        || (type_.IsSealed && !type_.IsDefined(typeof(SerializableAttribute))))
+                        return false;
+                }
+                return true;
+            }
+#endif
+
             if (type.IsArray)
             {
                 if (type.GetArrayRank() > 1)
