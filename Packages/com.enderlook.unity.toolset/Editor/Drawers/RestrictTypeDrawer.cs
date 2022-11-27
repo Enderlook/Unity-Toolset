@@ -22,9 +22,6 @@ namespace Enderlook.Unity.Toolset.Drawers
         private float height;
         private string message;
 
-        private static int i = 1;
-        private int id = Interlocked.Increment(ref i);
-
         protected internal override bool RequestMain => true;
 
         protected internal override void OnGUI(Rect position, SerializedProperty property, GUIContent label, bool includeChildren)
