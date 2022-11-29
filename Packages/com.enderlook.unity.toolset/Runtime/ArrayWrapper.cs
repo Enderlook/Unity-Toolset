@@ -1,3 +1,4 @@
+#if UNITY_2020_1_OR_NEWER
 using Enderlook.Unity.Toolset.Attributes;
 
 using System;
@@ -58,3 +59,4 @@ public struct ArrayWrapper<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator ArrayWrapper<T>(T[] source) => new ArrayWrapper<T>(source);
 }
+#endif

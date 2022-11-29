@@ -391,17 +391,17 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
             Replace<Action<MethodInfo>>(ref dict, ref bag.executeOnEachMethodOfTypes);
             Replace<Action>(ref dict, ref bag.executeOnce);
 
-            void Replace<T>(ref Dictionary<int, object> dict, ref Dictionary<int, object> source)
+            void Replace<T>(ref Dictionary<int, object> dict_, ref Dictionary<int, object> source)
                 where T : Delegate
             {
                 // TODO: On .Net Standard 2.1 we can use .EnsureCapacity() to avoid reallocations.
                 foreach (KeyValuePair<int, object> kvp in source)
                 {
                     Debug.Assert(kvp.Value is List<T>);
-                    dict[kvp.Key] = Delegate.Combine(Unsafe.As<List<T>>(kvp.Value).ToArray());
+                    dict_[kvp.Key] = Delegate.Combine(Unsafe.As<List<T>>(kvp.Value).ToArray());
                 }
-                (dict, source) = (source, dict);
-                dict.Clear();
+                (dict_, source) = (source, dict_);
+                dict_.Clear();
             }
 
 #if UNITY_2020_1_OR_NEWER

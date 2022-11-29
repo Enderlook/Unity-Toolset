@@ -1,4 +1,5 @@
-﻿using Enderlook.Unity.Toolset.Attributes;
+﻿#if UNITY_2020_1_OR_NEWER
+using Enderlook.Unity.Toolset.Attributes;
 
 using System;
 using System.Collections.Generic;
@@ -60,3 +61,4 @@ public struct ListWrapper<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator ListWrapper<T>(List<T> source) => new ListWrapper<T>(source);
 }
+#endif

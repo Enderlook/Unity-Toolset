@@ -100,8 +100,8 @@ namespace Enderlook.Unity.Toolset.Windows
                         total += assembly.GetTypes().Length;
                     Progress.Report(id, 0, total);
 
-                    StrongBox<(int Current, bool HasErrors)> box = new StrongBox<(int Current, bool HasErrors)>();
 #endif
+                    StrongBox<(int Current, bool HasErrors)> box = new StrongBox<(int Current, bool HasErrors)>();
                     // TODO: On .Net Standard 2.1 use initialCapacity.
                     HashSet<KeyValuePair<Type, Type>> result = new HashSet<KeyValuePair<Type, Type>>();
 
@@ -143,14 +143,14 @@ namespace Enderlook.Unity.Toolset.Windows
 #endif
                             if (root.IsAssignableFrom(type))
                             {
-                                Type result = type;
+                                Type result_ = type;
 
                                 while (true)
                                 {
-                                    Type baseType = result.BaseType;
+                                    Type baseType = result_.BaseType;
                                     if (root.IsAssignableFrom(baseType))
                                     {
-                                        KeyValuePair<Type, Type> item = new KeyValuePair<Type, Type>(baseType, result);
+                                        KeyValuePair<Type, Type> item = new KeyValuePair<Type, Type>(baseType, result_);
                                         if (!set.Contains(item))
                                         {
                                             set.Add(item);
@@ -161,7 +161,7 @@ namespace Enderlook.Unity.Toolset.Windows
                                     // TODO: In .Net Standard 2.1 use .TryPop.
                                     if (stack.Count == 0)
                                         break;
-                                    result = stack.Pop();
+                                    result_ = stack.Pop();
                                 }
                             }
                         }

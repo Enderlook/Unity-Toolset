@@ -288,14 +288,14 @@ namespace Enderlook.Unity.Toolset.Utils
                     return default;
 
                 ReadOnlySpan<char> propertyPath_ = source.propertyPath.AsSpan();
-                int i = 0;
+                int k = 0;
                 for (int j = 0; j < propertyPath_.Length; j++)
                 {
                     if (propertyPath_[j] == '.')
                     {
                         if (propertyPath_.Slice(j).StartsWith(".Array.data[".AsSpan()))
                             j += ".Array.data[".Length;
-                        else if (++i == take)
+                        else if (++k == take)
                             return propertyPath_.Slice(0, j).ToString();
                     }
                 }
@@ -1135,7 +1135,11 @@ namespace Enderlook.Unity.Toolset.Utils
                     underlyingType = Enum.GetUnderlyingType(typeof(T));
                 else if (typeof(T).IsValueType)
                     underlyingType = typeof(T);
+#if UNITY_2020_1_OR_NEWER
                 else if (!(newValue is null))
+#else
+                else if (newValue != default)
+#endif
                     underlyingType = newValue.GetType();
                 else
                 {

@@ -313,7 +313,7 @@ namespace Enderlook.Unity.Toolset.Drawers
             {
                 field.NextVisible(true);
                 while (field.NextVisible(false))
-                    DrawNested(ref fieldRect, field, ref previousHeigth);
+                    DrawNested(ref fieldRect);
             }
             else
             {
@@ -324,7 +324,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                     if (!field.propertyPath.StartsWith(path))
                         break;
 
-                    DrawNested(ref fieldRect, field, ref previousHeigth);
+                    DrawNested(ref fieldRect);
                 }
                 while (field.NextVisible(false));
             }
@@ -334,15 +334,15 @@ namespace Enderlook.Unity.Toolset.Drawers
             if (EditorGUI.EndChangeCheck())
                 targetObject.ApplyModifiedProperties();
 
-            void DrawNested(ref Rect fieldRect, SerializedProperty field, ref float previousHeigth)
+            void DrawNested(ref Rect fieldRect_)
             {
-                fieldRect.y += previousHeigth + EditorGUIUtility.standardVerticalSpacing;
+                fieldRect_.y += previousHeigth + EditorGUIUtility.standardVerticalSpacing;
                 float totalHeight = EditorGUI.GetPropertyHeight(field, true);
-                fieldRect.height = previousHeigth = totalHeight;
+                fieldRect_.height = previousHeigth = totalHeight;
 
                 try
                 {
-                    EditorGUI.PropertyField(fieldRect, field, true);
+                    EditorGUI.PropertyField(fieldRect_, field, true);
                 }
                 catch (StackOverflowException)
                 {
@@ -352,7 +352,7 @@ namespace Enderlook.Unity.Toolset.Drawers
 
                 // TODO: maybe this could be done more efficiently.
                 if (field.isExpanded)
-                    fieldRect.y += totalHeight - EditorGUI.GetPropertyHeight(field, false);
+                    fieldRect_.y += totalHeight - EditorGUI.GetPropertyHeight(field, false);
             }
         }
 

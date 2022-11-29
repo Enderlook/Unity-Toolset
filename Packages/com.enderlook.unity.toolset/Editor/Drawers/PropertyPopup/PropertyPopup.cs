@@ -68,10 +68,10 @@ namespace Enderlook.Unity.Toolset.Drawers
                 }
                 @lock.ReadEnd();
                 if (!found)
-                    comparer = Create(type);
+                    comparer = Create();
                 return comparer;
 
-                static IEqualityComparer Create(Type type)
+                IEqualityComparer Create()
                 {
                     Type[] array = Interlocked.Exchange(ref tmpType, null) ?? new Type[1];
                     ref Type slot = ref array[0];
@@ -79,16 +79,16 @@ namespace Enderlook.Unity.Toolset.Drawers
                     Type comparerType = typeof(EqualityComparer<>).MakeGenericType(slot);
                     slot = null;
                     tmpType = array;
-                    IEqualityComparer comparer = (IEqualityComparer)comparerType
+                    IEqualityComparer comparer_ = (IEqualityComparer)comparerType
                         .GetProperty(nameof(EqualityComparer<object>.Default))
                         .GetValue(null);
                     @lock.WriteBegin();
                     {
                         if (!comparers.ContainsKey(type))
-                            comparers.Add(type, comparer);
+                            comparers.Add(type, comparer_);
                     }
                     @lock.WriteEnd();
-                    return comparer;
+                    return comparer_;
                 }
             }
         }
