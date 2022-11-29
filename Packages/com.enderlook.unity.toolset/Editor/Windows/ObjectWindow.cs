@@ -101,7 +101,7 @@ namespace Enderlook.Unity.Toolset.Windows
                     Progress.Report(id, 0, total);
 
 #endif
-                    StrongBox<(int Current, bool HasErrors)> box = new StrongBox<(int Current, bool HasErrors)>();
+                    StrongBox<(int Current, bool HasErrors, int Lock)> box = new StrongBox<(int Current, bool HasErrors, int Lock)>();
                     // TODO: On .Net Standard 2.1 use initialCapacity.
                     HashSet<KeyValuePair<Type, Type>> result = new HashSet<KeyValuePair<Type, Type>>();
 
@@ -120,7 +120,7 @@ namespace Enderlook.Unity.Toolset.Windows
                         {
                             loadedTypes = exception.Types.Where(e => e != null);
 
-                            lock (box)
+                            while (Interlocked.Exchange(ref box.Value.Lock, 1) == 1) ;
                             {
                                 if (!box.Value.HasErrors)
                                 {
@@ -128,6 +128,7 @@ namespace Enderlook.Unity.Toolset.Windows
                                     Debug.LogError($"While getting Types from loaded assemblies in {nameof(ObjectWindow)} the following exceptions occurred:");
                                 }
                             }
+                            box.Value.Lock = 0;
 
                             foreach (Exception e in exception.LoaderExceptions)
                                 Debug.LogError($"{assembly.FullName}: {e.Message}.");
