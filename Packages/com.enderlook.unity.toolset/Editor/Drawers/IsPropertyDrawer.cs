@@ -11,7 +11,7 @@ namespace Enderlook.Unity.Toolset.Drawers
     [CustomStackablePropertyDrawer(typeof(IsPropertyAttribute))]
     internal sealed class IsPropertyDrawer : StackablePropertyDrawer
     {
-        private static readonly Regex BACKING_FIELD_REGEX = new Regex("^<(.*)>K__Backing Field", RegexOptions.Compiled);
+        private static readonly Regex BACKING_FIELD_REGEX = new Regex("^<(.*)>k__Backing Field$", RegexOptions.Compiled);
 
         protected internal override void BeforeGetPropertyHeight(ref SerializedProperty property, ref GUIContent label, ref bool includeChildren, ref bool visible)
         {
