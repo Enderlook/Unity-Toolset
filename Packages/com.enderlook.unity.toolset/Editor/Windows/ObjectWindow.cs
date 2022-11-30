@@ -40,6 +40,7 @@ namespace Enderlook.Unity.Toolset.Windows
         private static List<Type> tmpList;
 
         private static ILookup<Type, Type> derivedTypes;
+        private static readonly Guid guid = Guid.NewGuid();
         private static BackgroundTask derivedTypesTask;
 
         private SerializedProperty property;
@@ -74,17 +75,14 @@ namespace Enderlook.Unity.Toolset.Windows
         [DidReloadScripts]
         private static void InitializeDerivedTypes()
         {
-            derivedTypesTask = BackgroundTask.Enqueue(
+            derivedTypesTask = BackgroundTask.Enqueue(guid,
 #if UNITY_2020_1_OR_NEWER
-                token => Progress.Start("Object Window Initialization", "Enqueued process..."),
+                Progress.Start("Object Window Initialization", "Enqueued process..."),
                 (id, token) =>
 #else
                 token =>
 #endif
                 {
-                    if (token.IsCancellationRequested)
-                        goto cancelled;
-
 #if UNITY_2020_1_OR_NEWER
                     Progress.SetDescription(id, null);
 #endif
@@ -97,7 +95,11 @@ namespace Enderlook.Unity.Toolset.Windows
 #if UNITY_2020_1_OR_NEWER
                     int total = 0;
                     foreach (Assembly assembly in assemblies)
+                    {
+                        if (token.IsCancellationRequested)
+                            return;
                         total += assembly.GetTypes().Length;
+                    }
                     Progress.Report(id, 0, total);
 
 #endif
@@ -108,7 +110,9 @@ namespace Enderlook.Unity.Toolset.Windows
                     // By using multithreading we can speed up large workflows around a 60% from 5.5s to 3.5s.
                     // However, we can't use a ConcurrentBag to stores keys because that slowdown the code in a factor of x3 (from 5.5s to 17.2s).
 
-                    Parallel.For(0, assemblies.Length, (int i) =>
+                    ParallelOptions options = new ParallelOptions();
+                    options.CancellationToken = token;
+                    Parallel.For(0, assemblies.Length, options, (int i) =>
                     {
                         Assembly assembly = assemblies[i];
                         IEnumerable<Type> loadedTypes;
@@ -131,7 +135,12 @@ namespace Enderlook.Unity.Toolset.Windows
                             box.Value.Lock = 0;
 
                             foreach (Exception e in exception.LoaderExceptions)
+                            {
+                                if (token.IsCancellationRequested)
+                                    return;
+
                                 Debug.LogError($"{assembly.FullName}: {e.Message}.");
+                            }
                         }
 
                         Stack<Type> stack = new Stack<Type>();
@@ -139,6 +148,8 @@ namespace Enderlook.Unity.Toolset.Windows
                         HashSet<KeyValuePair<Type, Type>> set = new HashSet<KeyValuePair<Type, Type>>();
                         foreach (Type type in loadedTypes)
                         {
+                            if (token.IsCancellationRequested)
+                                return;
 #if UNITY_2020_1_OR_NEWER
                             Progress.Report(id, Interlocked.Increment(ref box.Value.Current), total);
 #endif
@@ -148,6 +159,9 @@ namespace Enderlook.Unity.Toolset.Windows
 
                                 while (true)
                                 {
+                                    if (token.IsCancellationRequested)
+                                        return;
+
                                     Type baseType = result_.BaseType;
                                     if (root.IsAssignableFrom(baseType))
                                     {
@@ -172,15 +186,6 @@ namespace Enderlook.Unity.Toolset.Windows
                     });
 
                     derivedTypes = result.ToLookup(KEY_SELECTOR, ELEMENT_SELECTOR);
-
-#if UNITY_2020_1_OR_NEWER
-                    Progress.Finish(id);
-                    return;
-                cancelled:
-                    Progress.Finish(id, Progress.Status.Canceled);
-#else
-                cancelled:;
-#endif
                 });
         }
 

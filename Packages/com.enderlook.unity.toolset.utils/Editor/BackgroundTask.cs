@@ -1,13 +1,15 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using Enderlook.Collections.LowLevel;
+
+using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-using UnityEditor;
-using UnityEditor.Callbacks;
-
 using UnityEngine;
+
+#if UNITY_2020_1_OR_NEWER
+using Progress = UnityEditor.Progress;
+#endif
 
 namespace Enderlook.Unity.Toolset.Utils
 {
@@ -17,68 +19,39 @@ namespace Enderlook.Unity.Toolset.Utils
         private static readonly Action<CancellationToken> EmptyInitialization = e => { };
 #endif
 
-        private static CancellationTokenSource source;
-        private static BlockingCollection<BackgroundTask> collection;
+        private static int globalLock;
+        private static RawQueue<BackgroundTask> queue = RawQueue<BackgroundTask>.Create();
+        private static bool hasThread;
 
 #if UNITY_2020_1_OR_NEWER
-        private int id;
+        private readonly int id;
         private Action<int, CancellationToken> action;
 #else
         private Action<CancellationToken> action;
 #endif
+        private CancellationTokenSource source;
+        private Guid guid;
+        private ManualResetEventSlim slim;
         private bool completed;
 
 #if UNITY_2020_1_OR_NEWER
-        public BackgroundTask(int id, Action<int, CancellationToken> action)
+        public BackgroundTask(Guid guid, int id, Action<int, CancellationToken> action)
         {
             this.id = id;
 #else
-        public BackgroundTask(Action<CancellationToken> action)
+        public BackgroundTask(Guid guid, Action<CancellationToken> action)
         {
 #endif
+            this.guid = guid;
             this.action = action;
         }
 
-        [DidReloadScripts(-1)]
-        private static void Execute()
+        private static void Lock()
         {
-            source?.Cancel();
-            collection?.CompleteAdding();
-            collection = new BlockingCollection<BackgroundTask>();
-            source = new CancellationTokenSource();
-            Task.Factory.StartNew(() =>
-            {
-                while (true)
-                {
-                    BackgroundTask task = collection.Take();
-#if UNITY_2020_1_OR_NEWER
-                    Action<int, CancellationToken> action = Interlocked.Exchange(ref task.action, null);
-#else
-                    Action<CancellationToken> action = Interlocked.Exchange(ref task.action, null);
-#endif
-                    if (!(action is null))
-                    {
-                        try
-                        {
-#if UNITY_2020_1_OR_NEWER
-                            action.Invoke(task.id, source.Token);
-#else
-                            action.Invoke(source.Token);
-#endif
-                        }
-                        catch (Exception exception)
-                        {
-#if UNITY_2020_1_OR_NEWER
-                            Progress.Finish(task.id, Progress.Status.Failed);
-#endif
-                            if (!(exception is ThreadAbortException))
-                                Debug.LogException(exception);
-                        }
-                        task.completed = true;
-                    }
-                }
-            }, TaskCreationOptions.LongRunning);
+            while (Interlocked.Exchange(ref globalLock, 1) == 1) ;
         }
+
+        private static void Unlock() => globalLock = 0;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void EnsureExecute()
@@ -90,66 +63,156 @@ namespace Enderlook.Unity.Toolset.Utils
 
             void SlowPath()
             {
-#if UNITY_2020_1_OR_NEWER
-                Action<int, CancellationToken> action = Interlocked.Exchange(ref this.action, null);
-#else
-                Action< CancellationToken> action = Interlocked.Exchange(ref this.action, null);
-#endif
-                if (!(action is null))
+                if (!Execute())
                 {
-                    try
-                    {
-#if UNITY_2020_1_OR_NEWER
-                        action.Invoke(id, source.Token);
-#else
-                        action.Invoke(source.Token);
-#endif
-                    }
-                    catch (Exception exception)
-                    {
-#if UNITY_2020_1_OR_NEWER
-                        Progress.Finish(id, Progress.Status.Failed);
-#endif
-                        Debug.LogException(exception);
-                    }
-                    completed = true;
-                }
-                else
-                {
-                    int sleep = 0;
+                    slim = new ManualResetEventSlim();
                     while (!completed)
-                    {
-                        sleep = Math.Max(sleep + 5, 50);
-                        Thread.Sleep(sleep);
-                    }
+                        slim.Wait(100);
+                    slim = null;
                 }
             }
         }
 
-#if !UNITY_2020_1_OR_NEWER
-        public static BackgroundTask Enqueue(Action<CancellationToken> action)
-            => Enqueue(EmptyInitialization, action);
-#endif
+        private void Cancel()
+        {
+            if (completed)
+                return;
 
 #if UNITY_2020_1_OR_NEWER
-        public static BackgroundTask Enqueue(Func<CancellationToken, int> initialization, Action<int, CancellationToken> action)
+            Action<int, CancellationToken> action = Interlocked.Exchange(ref this.action, null);
 #else
-        public static BackgroundTask Enqueue(Action<CancellationToken> initialization, Action<CancellationToken> action)
+            Action<CancellationToken> action = Interlocked.Exchange(ref this.action, null);
+#endif
+            if (action is null)
+            {
+                while (source is null || !completed) ;
+                source?.Cancel();
+            }
+#if UNITY_2020_1_OR_NEWER
+            else
+                Progress.Finish(id, Progress.Status.Canceled);
+#endif
+        }
+
+        private bool Execute()
+        {
+#if UNITY_2020_1_OR_NEWER
+            Action<int, CancellationToken> action = Interlocked.Exchange(ref this.action, null);
+#else
+            Action<CancellationToken> action = Interlocked.Exchange(ref this.action, null);
+#endif
+            if (!(action is null))
+            {
+                source = new CancellationTokenSource();
+                Exception exception_ = null;
+                try
+                {
+#if UNITY_2020_1_OR_NEWER
+                    action.Invoke(id, source.Token);
+#else
+                    action.Invoke(source.Token);
+#endif
+                }
+                catch (Exception exception)
+                {
+                    exception_ = exception;
+                }
+                completed = true;
+
+                if (exception_ is null)
+                {
+#if UNITY_2020_1_OR_NEWER
+                    Progress.Report(id, 1f);
+                    if (source?.IsCancellationRequested ?? false)
+                        Progress.Finish(id, Progress.Status.Canceled);
+                    else
+                        Progress.Finish(id, Progress.Status.Succeeded);
+#endif
+                }
+                else
+                {
+                    if (exception_ is ThreadAbortException)
+                    {
+#if UNITY_2020_1_OR_NEWER
+                        Progress.Finish(id, Progress.Status.Canceled);
+#endif
+                    }
+                    else
+                    {
+                        Debug.LogException(exception_);
+#if UNITY_2020_1_OR_NEWER
+                        Progress.Finish(id, Progress.Status.Failed);
+#endif
+                    }
+                }
+
+                if (!(slim is null))
+                    slim.Set();
+
+                source = null;
+
+                return true;
+            }
+
+            return false;
+        }
+
+#if UNITY_2020_1_OR_NEWER
+        public static BackgroundTask Enqueue(Guid guid, int progressId, Action<int, CancellationToken> action)
+#else
+        public static BackgroundTask Enqueue(Guid guid, Action<CancellationToken> action)
 #endif
         {
-            if (source is null || collection is null) Throw();
-
 #if UNITY_2020_1_OR_NEWER
-            int id = initialization(source.Token);
-            BackgroundTask task = new BackgroundTask(id, action);
+            BackgroundTask task = new BackgroundTask(guid, progressId, action);
 #else
-            initialization(source.Token);
-            BackgroundTask task = new BackgroundTask(action);
+            BackgroundTask task = new BackgroundTask(guid, action);
 #endif
-            collection.Add(task);
+            bool hasThread_;
+            Lock();
+            {
+                // If the same task is enqueued twice, cancel the old one.
+                foreach (BackgroundTask item in queue)
+                {
+                    if (item.guid == guid)
+                    {
+                        item.Cancel();
+                        break;
+                    }
+                }
+
+                queue.Enqueue(task);
+
+                hasThread_ = hasThread;
+                hasThread = true;
+            }
+            Unlock();
+
+            if (!hasThread_)
+                MakeThread();
+
             return task;
 
-            void Throw() => throw new InvalidOperationException("Script has not reloaded yet");
+            void MakeThread() => Task.Factory.StartNew(() =>
+            {
+                while (true)
+                {
+                    BackgroundTask task_;
+                    bool found;
+                    Lock();
+                    {
+                        found = queue.TryDequeue(out task_);
+                        if (!found)
+                            hasThread = false;
+                    }
+                    Unlock();
+
+                    if (!found)
+                        break;
+
+                    task_.Execute();
+                }
+            }, TaskCreationOptions.LongRunning);
         }
     }
 }

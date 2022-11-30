@@ -33,11 +33,10 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
 
         private const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
 
+        private static readonly Guid guid = Guid.NewGuid();
+
         private readonly Container bag = new Container();
 
-#if UNITY_2020_1_OR_NEWER
-        private readonly int progressId;
-#endif
         private readonly CancellationToken token;
 
 #if UNITY_2020_1_OR_NEWER
@@ -77,37 +76,20 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
                 ExecuteAnalysis();
         }
 
-#if UNITY_2020_1_OR_NEWER
-        public PostCompilingAssembliesHelper(int progressId, CancellationToken token)
-        {
-            this.progressId = progressId;
-#else
-        public PostCompilingAssembliesHelper(CancellationToken token)
-        {
-#endif
-            this.token = token;
-        }
+        public PostCompilingAssembliesHelper(CancellationToken token) => this.token = token;
 
         private class Container
         {
             // TODO: Check if lazy initialization improves perfomance.
 
-            // object is Action<Type>
-            public Dictionary<int, object> executeOnEachTypeLessEnums = new Dictionary<int, object>();
-            // object is Action<Type>
-            public Dictionary<int, object> executeOnEachTypeEnum = new Dictionary<int, object>();
-            // object is Action<MemberInfo>
-            public Dictionary<int, object> executeOnEachMemberOfTypes = new Dictionary<int, object>();
-            // object is Action<FieldInfo>
-            public Dictionary<int, object> executeOnEachSerializableByUnityFieldOfTypes = new Dictionary<int, object>();
-            // object is Action<FieldInfo>
-            public Dictionary<int, object> executeOnEachNonSerializableByUnityFieldOfTypes = new Dictionary<int, object>();
-            // object is Action<PropertyInfo>
-            public Dictionary<int, object> executeOnEachPropertyOfTypes = new Dictionary<int, object>();
-            // object is Action<MethodInfo>
-            public Dictionary<int, object> executeOnEachMethodOfTypes = new Dictionary<int, object>();
-            // object is Action
-            public Dictionary<int, object> executeOnce = new Dictionary<int, object>();
+            public readonly Dictionary<int, List<Action<Type>>> executeOnEachTypeLessEnums = new Dictionary<int, List<Action<Type>>>();
+            public readonly Dictionary<int, List<Action<Type>>> executeOnEachTypeEnum = new Dictionary<int, List<Action<Type>>>();
+            public readonly Dictionary<int, List<Action<MemberInfo>>> executeOnEachMemberOfTypes = new Dictionary<int, List<Action<MemberInfo>>>();
+            public readonly Dictionary<int, List<Action<FieldInfo>>> executeOnEachSerializableByUnityFieldOfTypes = new Dictionary<int, List<Action<FieldInfo>>>();
+            public readonly Dictionary<int, List<Action<FieldInfo>>> executeOnEachNonSerializableByUnityFieldOfTypes = new Dictionary<int, List<Action<FieldInfo>>>();
+            public readonly Dictionary<int, List<Action<PropertyInfo>>> executeOnEachPropertyOfTypes = new Dictionary<int, List<Action<PropertyInfo>>>();
+            public readonly Dictionary<int, List<Action<MethodInfo>>> executeOnEachMethodOfTypes = new Dictionary<int, List<Action<MethodInfo>>>();
+            public readonly Dictionary<int, List<Action>> executeOnce = new Dictionary<int, List<Action>>();
 
             public readonly List<Type> enumTypes = new List<Type>();
             public readonly List<Type> nonEnumTypes = new List<Type>();
@@ -134,77 +116,51 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
             // Unsafe code must be executed in main thread.
             Assembly[] assemblies = checkMode == CHECK_ENABLED_ALL ? AppDomain.CurrentDomain.GetAssemblies() : AssembliesHelper.GetAllAssembliesOfPlayerAndEditorAssemblies().ToArray();
 
-            BackgroundTask.Enqueue(
+            BackgroundTask.Enqueue(guid,
 #if UNITY_2020_1_OR_NEWER
-                _ => Progress.Start("Execute Post Compiling Checkings", "Enqueued process..."),
+                Progress.Start("Execute Post Compiling Checkings", "Enqueued process..."),
                 (id, token) =>
 #else
                 token =>
 #endif
                 {
                     if (token.IsCancellationRequested)
-                        goto cancelled;
+                        return;
 
 #if UNITY_2020_1_OR_NEWER
                     Progress.SetDescription(id, "Ensure that Enderlook attributes are being used correctly.");
-                    PostCompilingAssembliesHelper self = new PostCompilingAssembliesHelper(id, token);
-                    int scanId = Progress.Start("Process Assemblies", parentId: id);
-                    int analysisId = Progress.Start("Execute Analysis", parentId: id);
-#else
-                    PostCompilingAssembliesHelper self = new PostCompilingAssembliesHelper(token);
 #endif
 
+                    PostCompilingAssembliesHelper self = new PostCompilingAssembliesHelper(token);
+
 #if UNITY_2020_1_OR_NEWER
-                    self.ScanAssemblies(scanId, assemblies);
+                    self.ScanAssemblies(id, assemblies);
 #else
                     self.ScanAssemblies(assemblies);
 #endif
 
                     if (token.IsCancellationRequested)
-                    {
-#if UNITY_2020_1_OR_NEWER
-                        Progress.Finish(scanId, Progress.Status.Canceled);
-#endif
-                        goto cancelled2;
-                    }
+                        return;
 
 #if UNITY_2020_1_OR_NEWER
-                    Progress.Finish(scanId);
                     Progress.Report(id, .5f);
-#endif
-
-#if UNITY_2020_1_OR_NEWER
-                    self.ExecuteCallbacks(analysisId);
+                    self.ExecuteCallbacks(id);
+                    Progress.Report(id, .9f);
 #else
                     self.ExecuteCallbacks();
-#endif
-
-                    if (token.IsCancellationRequested)
-                        goto cancelled2;
-
-#if UNITY_2020_1_OR_NEWER
-                    Progress.Finish(analysisId);
-                    Progress.Finish(id);
-                    return;
-                cancelled2:
-                    Progress.Finish(analysisId, Progress.Status.Canceled);
-                cancelled:;
-                    Progress.Finish(id, Progress.Status.Canceled);
-#else
-                cancelled2:
-                cancelled:;
 #endif
                 }
             );
         }
 
 #if UNITY_2020_1_OR_NEWER
-        private void ScanAssemblies(int id, Assembly[] assemblies)
+        private void ScanAssemblies(int parentId, Assembly[] assemblies)
 #else
         private void ScanAssemblies(Assembly[] assemblies)
 #endif
         {
 #if UNITY_2020_1_OR_NEWER
+            int id = Progress.Start("Process Assemblies", parentId: parentId);
             int total = 0;
             foreach (Assembly assembly in assemblies)
             {
@@ -215,8 +171,8 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
             }
             Progress.Report(id, 0, 2);
 
-            int currentId = Progress.Start("Scan Assemblies", parentId: id);
-            Progress.Report(currentId, 0, total);
+            int scanId = Progress.Start("Scan Assemblies", parentId: id);
+            Progress.Report(scanId, 0, total);
 #endif
 
             // Sharing collections and using Interlocked.Exchange as synchronization per collection decreases perfomances by 23%.
@@ -239,7 +195,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
                 if (assembly.IsDefined(typeof(DoNotInspectAttribute)))
                 {
 #if UNITY_2020_1_OR_NEWER
-                    Progress.Report(currentId, Interlocked.Add(ref current, assembly.GetTypes().Length), total);
+                    Progress.Report(scanId, Interlocked.Add(ref current, assembly.GetTypes().Length), total);
 #endif
                     return;
                 }
@@ -250,7 +206,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
                         return;
 
 #if UNITY_2020_1_OR_NEWER
-                    Progress.Report(currentId, Interlocked.Increment(ref current), total);
+                    Progress.Report(scanId, Interlocked.Increment(ref current), total);
 #endif
 
                     if (classType.IsDefined(typeof(DoNotInspectAttribute)))
@@ -300,7 +256,7 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
             });
 
 #if UNITY_2020_1_OR_NEWER
-            Progress.Finish(currentId, token.IsCancellationRequested ? Progress.Status.Canceled : Progress.Status.Succeeded);
+            Progress.Finish(scanId, token.IsCancellationRequested ? Progress.Status.Canceled : Progress.Status.Succeeded);
             Progress.Report(id, 1, 2);
 #endif
 
@@ -308,8 +264,8 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
                 goto end;
 
 #if UNITY_2020_1_OR_NEWER
-            currentId = Progress.Start("Merge Scans", parentId: id);
-            Progress.Report(currentId, 0, containers.Length);
+            int mergeId = Progress.Start("Merge Scans", parentId: id);
+            Progress.Report(mergeId, 0, containers.Length);
 #endif
 
             int enumTypesCount = 0;
@@ -346,71 +302,118 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
             // NOTE: Each nested loop could be executed in parallel from other nested loops.
             for (int i = 0; i < containers.Length; i++)
             {
+                Container c = containers[i];
+
+                foreach (KeyValuePair<int, List<Action<Type>>> kvp in c.executeOnEachTypeLessEnums)
+                {
+                    if (token.IsCancellationRequested)
+                        goto end;
+
+                    SubscribeConcurrent(bag.executeOnEachTypeLessEnums, kvp.Value, kvp.Key);
+                }
+
+                foreach (KeyValuePair<int, List<Action<Type>>> kvp in c.executeOnEachTypeEnum)
+                {
+                    if (token.IsCancellationRequested)
+                        goto end;
+
+                    SubscribeConcurrent(bag.executeOnEachTypeEnum, kvp.Value, kvp.Key);
+                }
+
+                foreach (KeyValuePair<int, List<Action<MemberInfo>>> kvp in c.executeOnEachMemberOfTypes)
+                {
+                    if (token.IsCancellationRequested)
+                        goto end;
+
+                    SubscribeConcurrent(bag.executeOnEachMemberOfTypes, kvp.Value, kvp.Key);
+                }
+
+                foreach (KeyValuePair<int, List<Action<FieldInfo>>> kvp in c.executeOnEachSerializableByUnityFieldOfTypes)
+                {
+                    if (token.IsCancellationRequested)
+                        goto end;
+
+                    SubscribeConcurrent(bag.executeOnEachSerializableByUnityFieldOfTypes, kvp.Value, kvp.Key);
+                }
+
+                foreach (KeyValuePair<int, List<Action<FieldInfo>>> kvp in c.executeOnEachNonSerializableByUnityFieldOfTypes)
+                {
+                    if (token.IsCancellationRequested)
+                        goto end;
+
+                    SubscribeConcurrent(bag.executeOnEachNonSerializableByUnityFieldOfTypes, kvp.Value, kvp.Key);
+                }
+
+                foreach (KeyValuePair<int, List<Action<PropertyInfo>>> kvp in c.executeOnEachPropertyOfTypes)
+                {
+                    if (token.IsCancellationRequested)
+                        goto end;
+
+                    SubscribeConcurrent(bag.executeOnEachPropertyOfTypes, kvp.Value, kvp.Key);
+                }
+
+                foreach (KeyValuePair<int, List<Action<MethodInfo>>> kvp in c.executeOnEachMethodOfTypes)
+                {
+                    if (token.IsCancellationRequested)
+                        goto end;
+                    SubscribeConcurrent(bag.executeOnEachMethodOfTypes, kvp.Value, kvp.Key);
+                }
+
+                foreach (KeyValuePair<int, List<Action>> kvp in c.executeOnce)
+                {
+                    if (token.IsCancellationRequested)
+                        goto end;
+                    SubscribeConcurrent(bag.executeOnce, kvp.Value, kvp.Key);
+                }
+
                 if (token.IsCancellationRequested)
                     goto end;
 
-                Container c = containers[i];
-
-                foreach (KeyValuePair<int, object> kvp in c.executeOnEachTypeLessEnums)
-                    SubscribeConcurrent<Action<Type>>(bag.executeOnEachTypeLessEnums, kvp.Value, kvp.Key);
-                foreach (KeyValuePair<int, object> kvp in c.executeOnEachTypeEnum)
-                    SubscribeConcurrent<Action<Type>>(bag.executeOnEachTypeEnum, kvp.Value, kvp.Key);
-                foreach (KeyValuePair<int, object> kvp in c.executeOnEachMemberOfTypes)
-                    SubscribeConcurrent<Action<MemberInfo>>(bag.executeOnEachMemberOfTypes, kvp.Value, kvp.Key);
-                foreach (KeyValuePair<int, object> kvp in c.executeOnEachSerializableByUnityFieldOfTypes)
-                    SubscribeConcurrent<Action<FieldInfo>>(bag.executeOnEachSerializableByUnityFieldOfTypes, kvp.Value, kvp.Key);
-                foreach (KeyValuePair<int, object> kvp in c.executeOnEachNonSerializableByUnityFieldOfTypes)
-                    SubscribeConcurrent<Action<FieldInfo>>(bag.executeOnEachNonSerializableByUnityFieldOfTypes, kvp.Value, kvp.Key);
-                foreach (KeyValuePair<int, object> kvp in c.executeOnEachPropertyOfTypes)
-                    SubscribeConcurrent<Action<PropertyInfo>>(bag.executeOnEachPropertyOfTypes, kvp.Value, kvp.Key);
-                foreach (KeyValuePair<int, object> kvp in c.executeOnEachMethodOfTypes)
-                    SubscribeConcurrent<Action<MethodInfo>>(bag.executeOnEachMethodOfTypes, kvp.Value, kvp.Key);
-                foreach (KeyValuePair<int, object> kvp in c.executeOnce)
-                    SubscribeConcurrent<Action>(bag.executeOnce, kvp.Value, kvp.Key);
-
                 bag.enumTypes.AddRange(c.enumTypes);
+
+                if (token.IsCancellationRequested)
+                    goto end;
+
                 bag.nonEnumTypes.AddRange(c.nonEnumTypes);
+
+                if (token.IsCancellationRequested)
+                    goto end;
+
                 bag.memberInfos.AddRange(c.memberInfos);
+
+                if (token.IsCancellationRequested)
+                    goto end;
+
                 bag.fieldInfosNonSerializableByUnity.AddRange(c.fieldInfosNonSerializableByUnity);
+
+                if (token.IsCancellationRequested)
+                    goto end;
+
                 bag.fieldInfosSerializableByUnity.AddRange(c.fieldInfosSerializableByUnity);
+
+                if (token.IsCancellationRequested)
+                    goto end;
+
                 bag.propertyInfos.AddRange(c.propertyInfos);
+
+                if (token.IsCancellationRequested)
+                    goto end;
+
                 bag.methodInfos.AddRange(c.methodInfos);
 
 #if UNITY_2020_1_OR_NEWER
-                Progress.Report(currentId, i, containers.Length);
+                Progress.Report(mergeId, i, containers.Length);
 #endif
             }
 
-            Dictionary<int, object> dict = new Dictionary<int, object>(bag.executeOnEachTypeLessEnums.Count);
-            Replace<Action<Type>>(ref dict, ref bag.executeOnEachTypeLessEnums);
-            Replace<Action<Type>>(ref dict, ref bag.executeOnEachTypeEnum);
-            Replace<Action<MemberInfo>>(ref dict, ref bag.executeOnEachMemberOfTypes);
-            Replace<Action<FieldInfo>>(ref dict, ref bag.executeOnEachSerializableByUnityFieldOfTypes);
-            Replace<Action<FieldInfo>>(ref dict, ref bag.executeOnEachNonSerializableByUnityFieldOfTypes);
-            Replace<Action<PropertyInfo>>(ref dict, ref bag.executeOnEachPropertyOfTypes);
-            Replace<Action<MethodInfo>>(ref dict, ref bag.executeOnEachMethodOfTypes);
-            Replace<Action>(ref dict, ref bag.executeOnce);
-
-            void Replace<T>(ref Dictionary<int, object> dict_, ref Dictionary<int, object> source)
-                where T : Delegate
-            {
-                // TODO: On .Net Standard 2.1 we can use .EnsureCapacity() to avoid reallocations.
-                foreach (KeyValuePair<int, object> kvp in source)
-                {
-                    Debug.Assert(kvp.Value is List<T>);
-                    dict_[kvp.Key] = Delegate.Combine(Unsafe.As<List<T>>(kvp.Value).ToArray());
-                }
-                (dict_, source) = (source, dict_);
-                dict_.Clear();
-            }
-
 #if UNITY_2020_1_OR_NEWER
-            Progress.Finish(currentId, token.IsCancellationRequested ? Progress.Status.Canceled : Progress.Status.Succeeded);
+            Progress.Finish(mergeId, token.IsCancellationRequested ? Progress.Status.Canceled : Progress.Status.Succeeded);
             Progress.Report(id, 2, 2);
 #endif
 
         end:;
 #if UNITY_2020_1_OR_NEWER
+            Progress.Finish(id, token.IsCancellationRequested ? Progress.Status.Canceled : Progress.Status.Succeeded);
             current = 0;
 #endif
         }
@@ -506,12 +509,13 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
         }
 
 #if UNITY_2020_1_OR_NEWER
-        private void ExecuteCallbacks(int id)
+        private void ExecuteCallbacks(int parentId)
 #else
         private void ExecuteCallbacks()
 #endif
         {
 #if UNITY_2020_1_OR_NEWER
+            int id = Progress.Start("Execute Analysis", parentId: parentId);
             int total = bag.executeOnce.Count;
 #endif
             HashSet<int> keys = new HashSet<int>();
@@ -589,10 +593,22 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
                 () => ExecuteLoop(bag.executeOnEachMethodOfTypes, bag.methodInfos),
                 () =>
                 {
-                    if (bag.executeOnce.TryGetValue(order, out object action))
+                    if (bag.executeOnce.TryGetValue(order, out List<Action> actions_))
                     {
-                        Debug.Assert(action is Action);
-                        Unsafe.As<Action>(action)();
+                        foreach (Action action in actions_)
+                        {
+                            if (token.IsCancellationRequested)
+                                break;
+
+                            try
+                            {
+                                action();
+                            }
+                            catch (Exception e)
+                            {
+                                Debug.LogException(e);
+                            }
+                        }
 #if UNITY_2020_1_OR_NEWER
                         Progress.Report(id, Interlocked.Increment(ref current), total);
 #endif
@@ -617,20 +633,29 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
             current = 0;
 #endif
 
-            void ExecuteLoop<T>(Dictionary<int, object> callbacks, List<T> values)
+            void ExecuteLoop<T>(Dictionary<int, List<Action<T>>> callbacks, List<T> values)
             {
-                if (callbacks.TryGetValue(order, out object action))
+                if (callbacks.TryGetValue(order, out List<Action<T>> actions_))
                 {
-                    if (token.IsCancellationRequested)
+                    if (actions_.Count == 0)
                         return;
 
-                    Debug.Assert(action is Action<T>);
                     foreach (T element in values)
                     {
-                        if (token.IsCancellationRequested)
-                            return;
+                        foreach (Action<T> action in actions_)
+                        {
+                            if (token.IsCancellationRequested)
+                                break;
 
-                        Unsafe.As<Action<T>>(action)(element);
+                            try
+                            {
+                                action(element);
+                            }
+                            catch (Exception e) when (!(e is ThreadAbortException))
+                            {
+                                Debug.LogException(e);
+                            }
+                        }
 
 #if UNITY_2020_1_OR_NEWER
                         Progress.Report(id, Interlocked.Increment(ref current), total);
@@ -641,16 +666,20 @@ namespace Enderlook.Unity.Toolset.Checking.PostCompiling
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void SubscribeConcurrent<T>(Dictionary<int, object> dictionary, T action, int order)
-            where T : Delegate
+        private static void SubscribeConcurrent<T>(Dictionary<int, List<T>> dictionary, T action, int order)
         {
-            if (dictionary.TryGetValue(order, out object list))
-            {
-                Debug.Assert(list is List<T>);
-                Unsafe.As<List<T>>(list).Add(action);
-            }
+            if (!dictionary.TryGetValue(order, out List<T> list))
+                dictionary.Add(order, list = new List<T>());
+            list.Add(action);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void SubscribeConcurrent<T>(Dictionary<int, List<T>> dictionary, List<T> actions, int order)
+        {
+            if (dictionary.TryGetValue(order, out List<T> list))
+                list.AddRange(actions);
             else
-                dictionary.Add(order, new List<T>() { action });
+                dictionary.Add(order, actions);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

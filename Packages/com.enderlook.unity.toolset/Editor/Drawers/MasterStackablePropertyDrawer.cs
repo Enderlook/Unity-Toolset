@@ -19,6 +19,7 @@ namespace Enderlook.Unity.Toolset.Drawers
 
         private static readonly Comparison<StackablePropertyDrawer> ORDER_SELECTOR = (a, b) => (a.Attribute?.order ?? 0).CompareTo(b.Attribute?.order ?? 0);
         private static readonly Dictionary<Type, (Type Drawer, bool UseForChildren)> drawersMap = new Dictionary<Type, (Type Drawer, bool UseForChildren)>();
+        private static readonly Guid guid = Guid.NewGuid();
         private static BackgroundTask task;
 
         private List<StackablePropertyDrawer> Drawers;
@@ -27,17 +28,14 @@ namespace Enderlook.Unity.Toolset.Drawers
         [DidReloadScripts]
         private static void Reset()
         {
-            task = BackgroundTask.Enqueue(
+            task = BackgroundTask.Enqueue(guid,
 #if UNITY_2020_1_OR_NEWER
-                _ => Progress.Start($"Initialize {typeof(MasterStackablePropertyDrawer)}", "Enqueued process..."),
+                Progress.Start($"Initialize {typeof(MasterStackablePropertyDrawer)}", "Enqueued process..."),
                 (id, token) =>
 #else
                 token =>
 #endif
                 {
-                    if (token.IsCancellationRequested)
-                        goto cancelled;
-
 #if UNITY_2020_1_OR_NEWER
                     Progress.SetDescription(id, null);
 #endif
@@ -47,7 +45,11 @@ namespace Enderlook.Unity.Toolset.Drawers
 #if UNITY_2020_1_OR_NEWER
                     int total = 0;
                     foreach (Assembly assembly in assemblies)
+                    {
+                        if (token.IsCancellationRequested)
+                            return;
                         total += assembly.GetTypes().Length;
+                    }
                     Progress.Report(id, 0, total);
 
                     int current = 0;
@@ -55,30 +57,23 @@ namespace Enderlook.Unity.Toolset.Drawers
                     foreach (Assembly assembly in assemblies)
                     {
                         if (token.IsCancellationRequested)
-                            goto cancelled;
-
+                            return;
                         foreach (Type type in assembly.GetTypes())
                         {
                             if (token.IsCancellationRequested)
-                                goto cancelled;
-
+                                return;
 #if UNITY_2020_1_OR_NEWER
                             Progress.Report(id, current++, total);
 #endif
 
                             foreach (CustomStackablePropertyDrawerAttribute attribute in type.GetCustomAttributes<CustomStackablePropertyDrawerAttribute>())
+                            {
+                                if (token.IsCancellationRequested)
+                                    return;
                                 drawersMap.Add(attribute.Type, (type, attribute.UseForChildren));
+                            }
                         }
                     }
-
-#if UNITY_2020_1_OR_NEWER
-                    Progress.Finish(id);
-                    return;
-                cancelled:
-                    Progress.Finish(id, Progress.Status.Canceled);
-#else
-                cancelled:;
-#endif
                 }
             );
         }
@@ -89,6 +84,8 @@ namespace Enderlook.Unity.Toolset.Drawers
             if (!(drawers is null))
                 return drawers;
 
+            if (task is null)
+                Reset();
             task.EnsureExecute();
 
             if (drawersMap is null)
