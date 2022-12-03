@@ -10,7 +10,6 @@ using UnityEngine;
 
 namespace Enderlook.Unity.Toolset.Drawers
 {
-
     [CustomStackablePropertyDrawer(typeof(ExpandableAttribute), true)]
     internal sealed class ExpandableDrawer : FoldoutDrawer
     {
