@@ -1,6 +1,6 @@
 {
   "name": "com.enderlook.unity.toolset.checking",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "displayName": "Enderlook Unity Toolset Checking",
   "description": "Analizes assemblies to check if Enderlook attributes are used correctly.",
   "unity": "2019.2",
@@ -9,7 +9,7 @@
     "editor"
   ],
   "dependencies": {
-	"com.enderlook.unity.toolset.utils": "https://github.com/Enderlook/Unity-Toolset.git?path=Packages/com.enderlook.unity.toolset.utils#com.enderlook.unity.toolset.utils/v0.6.1"
+	"com.enderlook.unity.toolset.utils": "https://github.com/Enderlook/Unity-Toolset.git?path=Packages/com.enderlook.unity.toolset.utils#com.enderlook.unity.toolset.utils/v0.7.0"
   },
   "author": {
     "name": "Enderlook",
