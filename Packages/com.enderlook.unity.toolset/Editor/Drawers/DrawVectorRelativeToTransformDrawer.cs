@@ -15,7 +15,9 @@ namespace Enderlook.Unity.Toolset.Drawers
     internal static class DrawVectorRelativeToTransformEditor
     {
         private const string MENU_NAME_DRAW = "Enderlook/Toolset/Draw Vector Relative To Transform/Enable Visualization";
+        private const string MENU_NAME_DRAW_CONFIG = "Enderlook/Toolset/DrawVectorRelativeToTransform/EnableVisualization";
         private const string MENU_NAME_EDIT = "Enderlook/Toolset/Draw Vector Relative To Transform/Enable Scene GUI Editing";
+        private const string MENU_NAME_EDIT_CONFIG = "Enderlook/Toolset/DrawVectorRelativeToTransform/EnableSceneGUIEditing";
 
         private static readonly Handles.CapFunction HANDLE_CAP = Handles.SphereHandleCap;
 
@@ -44,18 +46,18 @@ namespace Enderlook.Unity.Toolset.Drawers
         static DrawVectorRelativeToTransformEditor()
         {
             SceneView.duringSceneGui += RenderSceneGUI;
-            enableVisualization = EditorPrefs.GetBool(MENU_NAME_DRAW, true);
-            enableGUI = EditorPrefs.GetBool(MENU_NAME_EDIT, true);
+            enableVisualization = EditorPrefs.GetBool(MENU_NAME_DRAW_CONFIG, true);
+            enableGUI = EditorPrefs.GetBool(MENU_NAME_EDIT_CONFIG, true);
             EditorApplication.delayCall += () => SetFeature(enableVisualization, enableGUI);
         }
 
         [MenuItem(MENU_NAME_DRAW)]
         private static void ToggleVisualize() => SetFeature(!enableVisualization, enableGUI);
 
-        [MenuItem(MENU_NAME_DRAW)]
+        [MenuItem(MENU_NAME_EDIT)]
         private static void ToggleGUI() => SetFeature(enableVisualization, !enableGUI);
 
-        [MenuItem(MENU_NAME_DRAW, true)]
+        [MenuItem(MENU_NAME_EDIT, true)]
         private static bool ToggleGUIValidation() => enableVisualization;
 
         private static void SetFeature(bool visualization, bool gui)
@@ -63,9 +65,9 @@ namespace Enderlook.Unity.Toolset.Drawers
             enableVisualization = visualization;
             enableGUI = gui;
             Menu.SetChecked(MENU_NAME_DRAW, visualization);
-            EditorPrefs.SetBool(MENU_NAME_DRAW, visualization);
+            EditorPrefs.SetBool(MENU_NAME_DRAW_CONFIG, visualization);
             Menu.SetChecked(MENU_NAME_EDIT, gui);
-            EditorPrefs.SetBool(MENU_NAME_EDIT, gui);
+            EditorPrefs.SetBool(MENU_NAME_EDIT_CONFIG, gui);
             if (!gui)
                 showButton = false;
         }
