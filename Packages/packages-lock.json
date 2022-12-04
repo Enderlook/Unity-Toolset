@@ -7,14 +7,178 @@
       "dependencies": {},
       "hash": "d4fc38c92fb139b4184912f20556ab27a3b519fa"
     },
+    "com.enderlook.collections-extensions": {
+      "version": "file:.com.enderlook.collections-extensions@0.2.0",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
+    "com.enderlook.collections.low_level": {
+      "version": "file:.com.enderlook.collections.low_level@0.8.0",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.system.memory": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.system.memory#com.system.memory/v4.5.4",
+        "com.enderlook.collections-extensions": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.collections-extensions#com.enderlook.collections-extensions/v0.2.0"
+      }
+    },
+    "com.enderlook.collections.pooled": {
+      "version": "file:.com.enderlook.collections.pooled@0.4.0",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.system.memory": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.system.memory#com.system.memory/v4.5.4",
+        "com.enderlook.collections-extensions": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.collections-extensions#com.enderlook.collections-extensions/v0.2.0"
+      }
+    },
+    "com.enderlook.collections.pooled.low_level": {
+      "version": "file:.com.enderlook.collections.pooled.low_level@0.3.0",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.system.memory": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.system.memory#com.system.memory/v4.5.4",
+        "com.enderlook.collections-extensions": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.collections-extensions#com.enderlook.collections-extensions/v0.2.0"
+      }
+    },
+    "com.enderlook.collections.priority": {
+      "version": "file:.com.enderlook.collections.priority@0.1.0",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.system.memory": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.system.memory#com.system.memory/v4.5.4"
+      }
+    },
+    "com.enderlook.collections.spatial": {
+      "version": "file:.com.enderlook.collections.spatial@0.1.0",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.system.memory": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.system.memory#com.system.memory/v4.5.4"
+      }
+    },
+    "com.enderlook.mathematics": {
+      "version": "file:.com.enderlook.mathematics@0.2.0",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.enderlook.net_compatibility": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.net_compatibility#com.enderlook.net_compatibility/v0.6.1"
+      }
+    },
+    "com.enderlook.net_compatibility": {
+      "version": "file:.com.enderlook.net_compatibility@0.6.2",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.system.memory": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.system.memory#com.system.memory/v4.5.4"
+      }
+    },
+    "com.enderlook.pools": {
+      "version": "file:.com.enderlook.pools@0.2.3",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.system.runtime.compiler_services.unsafe": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.system.runtime.compiler_services.unsafe#com.system.runtime.compiler_services.unsafe/v4.5.3"
+      }
+    },
+    "com.enderlook.threading": {
+      "version": "file:.com.enderlook.threading@0.2.0",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.system.runtime.compiler_services.unsafe": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.system.runtime.compiler_services.unsafe#com.system.runtime.compiler_services.unsafe/v4.5.3"
+      }
+    },
+    "com.enderlook.unity.async": {
+      "version": "file:.com.enderlook.unity.async@0.2.5",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.enderlook.unity.threading": "https://github.com/Enderlook/Unity-Threading.git?/path=Packages/com.enderlook.unity.threading#com.enderlook.unity.threading/v0.7.7",
+        "com.system.threading.tasks.extensions": "https://github.com/Enderlook/Unity-Net-Packages?path=Packages/com.system.threading.tasks.extensions#com.system.threading.tasks.extensions/v4.5.4"
+      }
+    },
+    "com.enderlook.unity.audio_manager": {
+      "version": "file:.com.enderlook.unity.audio_manager@0.5.0",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.enderlook.unity.toolset": "https://github.com/Enderlook/Unity-Toolset.git?path=Packages/com.enderlook.unity.toolset#com.enderlook.unity.toolset/v0.7.0"
+      }
+    },
+    "com.enderlook.unity.coroutines": {
+      "version": "file:.com.enderlook.unity.coroutines@0.3.5",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.enderlook.threading": "https://github.com/Enderlook/Unity-Net-Packages?path=Packages/com.enderlook.threading#com.enderlook.threading/v0.2.0",
+        "com.enderlook.unity.threading": "https://github.com/Enderlook/Unity-Threading.git?/path=Packages/com.enderlook.unity.threading#com.enderlook.unity.threading/v0.7.7",
+        "com.enderlook.unity.toolset.utils": "https://github.com/Enderlook/Unity-Toolset.git?path=Packages/com.enderlook.unity.toolset.utils#com.enderlook.unity.toolset.utils/v0.",
+        "com.system.threading.tasks.extensions": "https://github.com/Enderlook/Unity-Net-Packages?path=Packages/com.system.threading.tasks.extensions#com.system.threading.tasks.extensions/v4.5.4"
+      }
+    },
+    "com.enderlook.unity.jobs": {
+      "version": "file:.com.enderlook.unity.jobs@0.1.5",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.enderlook.collections.low_level": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.collections.low_level#com.enderlook.collections.low_level/v0.8.0",
+        "com.enderlook.unity.threading": "https://github.com/Enderlook/Unity-Threading.git?/path=Packages/com.enderlook.unity.threading#com.enderlook.unity.threading/v0.7.7",
+        "com.enderlook.unity.toolset.utils": "https://github.com/Enderlook/Unity-Toolset.git?path=Packages/com.enderlook.unity.toolset.utils#com.enderlook.unity.toolset.utils/v0.7.0"
+      }
+    },
+    "com.enderlook.unity.pathfinding": {
+      "version": "file:.com.enderlook.unity.pathfinding@0.1.1",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.enderlook.collections.priority": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.collections.priority#com.enderlook.collections.priority/v0.1.0",
+        "com.enderlook.collections.pooled": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.collections.pooled#com.enderlook.collections.pooled/v0.4.0",
+        "com.enderlook.collections.pooled.low_level": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.collections.pooled.low_level#com.enderlook.collections.pooled.low_level/v0.3.0",
+        "com.enderlook.collections.spatial": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.collections.spatial#com.enderlook.collections.spatial/v0.1.0",
+        "com.enderlook.net_compatibility": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.net_compatibility#com.enderlook.net_compatibility/v0.6.2",
+        "com.enderlook.mathematics": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.mathematics#com.enderlook.mathematics/v0.2.0",
+        "com.enderlook.threading": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.threading#com.enderlook.threading/v0.2.0",
+        "com.enderlook.pools": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.pools#com.enderlook.pools/v0.2.3",
+        "com.enderlook.unity.threading": "https://github.com/Enderlook/Unity-Threading.git?path=Packages/com.enderlook.unity.threading#com.enderlook.unity.threading/v0.7.6",
+        "com.enderlook.unity.jobs": "https://github.com/Enderlook/Unity-Threading.git?path=Packages/com.enderlook.unity.jobs#com.enderlook.unity.jobs/v0.1.4",
+        "com.enderlook.unity.async": "https://github.com/Enderlook/Unity-Threading.git?path=Packages/com.enderlook.unity.async#com.enderlook.unity.async/v0.2.4",
+        "com.enderlook.unity.toolset": "https://github.com/Enderlook/Unity-Toolset.git?path=Packages/com.enderlook.unity.toolset#com.enderlook.unity.toolset/v0.7.0",
+        "com.enderlook.unity.utils.math": "https://github.com/Enderlook/Unity-Extras.git?path=Packages/com.enderlook.unity.utils.math#com.enderlook.unity.utils.math/v0.1.0",
+        "com.enderlook.unity.utils": "https://github.com/Enderlook/Unity-Extras.git?path=Packages/com.enderlook.unity.utils#com.enderlook.unity.utils/v0.1.0",
+        "com.system.threading.tasks.extensions": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.system.threading.tasks.extensions#com.system.threading.tasks.extensions/v0.1.0"
+      }
+    },
+    "com.enderlook.unity.threading": {
+      "version": "file:.com.enderlook.unity.threading@0.7.7",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.enderlook.collections.low_level": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.collections.low_level#com.enderlook.collections.low_level/v0.8.0",
+        "com.enderlook.pools": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.pools#com.enderlook.pools/v0.2.3",
+        "com.system.runtime.compiler_services.unsafe": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.runtime.compiler_services.unsafe#com.runtime.compiler_services.unsafe/v4.5.3"
+      }
+    },
+    "com.enderlook.unity.tmp": {
+      "version": "file:com.enderlook.unity.tmp",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.enderlook.unity.audio_manager": "https://github.com/Enderlook/Unity-Audio-Manager.git?path=Packages/com.enderlook.unity.audio_manager#com.enderlook.unity.audio_manager/v0.5.0",
+        "com.enderlook.unity.threading": "https://github.com/Enderlook/Unity-Threading.git?/path=Packages/com.enderlook.unity.threading#com.enderlook.unity.threading/v0.7.7",
+        "com.enderlook.unity.async": "https://github.com/Enderlook/Unity-Threading.git?/path=Packages/com.enderlook.unity.async#com.enderlook.unity.async/v0.2.5",
+        "com.enderlook.unity.jobs": "https://github.com/Enderlook/Unity-Threading.git?/path=Packages/com.enderlook.unity.jobs#com.enderlook.unity.jobs/v0.1.5",
+        "com.enderlook.unity.coroutines": "https://github.com/Enderlook/Unity-Threading.git?/path=Packages/com.enderlook.unity.coroutines#com.enderlook.unity.coroutines/v0.3.5",
+        "com.enderlook.unity.pathfinding": "https://github.com/Enderlook/Unity-Pathfinding.git?/path=Packages/com.enderlook.unity.pathfinding#com.enderlook.unity.pathfinding/v0.1.1"
+      }
+    },
     "com.enderlook.unity.toolset": {
       "version": "file:com.enderlook.unity.toolset",
       "depth": 0,
       "source": "embedded",
       "dependencies": {
         "com.system.memory": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.system.memory#com.system.memory/v4.5.4",
-        "com.enderlook.unity.toolset.checking": "https://github.com/Enderlook/Unity-Toolset.git?path=Packages/com.enderlook.unity.toolset.checking#com.enderlook.unity.toolset.checking/v0.2.1",
-        "com.enderlook.unity.toolset.utils": "https://github.com/Enderlook/Unity-Toolset.git?path=Packages/com.enderlook.unity.toolset.utils#com.enderlook.unity.toolset.utils/v0.6.0"
+        "com.enderlook.unity.toolset.checking": "https://github.com/Enderlook/Unity-Toolset.git?path=Packages/com.enderlook.unity.toolset.checking#com.enderlook.unity.toolset.checking/v0.2.3",
+        "com.enderlook.unity.toolset.utils": "https://github.com/Enderlook/Unity-Toolset.git?path=Packages/com.enderlook.unity.toolset.utils#com.enderlook.unity.toolset.utils/v0.7.0"
       }
     },
     "com.enderlook.unity.toolset.checking": {
@@ -22,7 +186,7 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.enderlook.unity.toolset.utils": "https://github.com/Enderlook/Unity-Toolset.git?path=Packages/com.enderlook.unity.toolset.utils#com.enderlook.unity.toolset.utils/v0.6.0"
+        "com.enderlook.unity.toolset.utils": "https://github.com/Enderlook/Unity-Toolset.git?path=Packages/com.enderlook.unity.toolset.utils#com.enderlook.unity.toolset.utils/v0.7.0"
       }
     },
     "com.enderlook.unity.toolset.utils": {
@@ -30,8 +194,23 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.system.runtime.compiler_services.unsafe": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.system.runtime.compiler_services.unsafe#com.system.runtime.compiler_services.unsafe/v4.5.3"
+        "com.system.runtime.compiler_services.unsafe": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.system.runtime.compiler_services.unsafe#com.system.runtime.compiler_services.unsafe/v4.5.3",
+        "com.enderlook.collections.low_level": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.collections.low_level#com.enderlook.collections.low_level/v0.8.0"
       }
+    },
+    "com.enderlook.unity.utils": {
+      "version": "file:.com.enderlook.unity.utils@0.1.0",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.enderlook.net_compatibility": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.net_compatibility#com.enderlook.net_compatibility/v0.5.0"
+      }
+    },
+    "com.enderlook.unity.utils.math": {
+      "version": "file:.com.enderlook.unity.utils.math@0.1.0",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
     },
     "com.system.buffers": {
       "version": "file:.com.system.buffers@4.5.1",
@@ -53,6 +232,14 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {}
+    },
+    "com.system.threading.tasks.extensions": {
+      "version": "file:.com.system.threading.tasks.extensions@4.5.4",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.system.runtime.compiler_services.unsafe": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.system.runtime.compiler_services.unsafe#com.system.runtime.compiler_services.unsafe/v4.5.3"
+      }
     },
     "com.unity.collab-proxy": {
       "version": "1.15.4",

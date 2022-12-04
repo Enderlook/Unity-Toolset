@@ -6,24 +6,9 @@
             "url": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.utils#com.enderlook.utils/v0.1.0"
         },
         {
-            "name": "com.enderlook.unity.utils",
-            "hash": "844af26083e3dd795eb060d96c65af8c4d2e9363",
-            "url": "https://github.com/Enderlook/Unity-Extras.git?path=Packages/com.enderlook.unity.utils#com.enderlook.unity.utils/v0.1.0"
-        },
-        {
-            "name": "com.enderlook.net_compatibility",
-            "hash": "7be4e4fc8ac7bdf16bd89d10c453b180bc466381",
-            "url": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.net_compatibility#com.enderlook.net_compatibility/v0.5.0"
-        },
-        {
             "name": "com.enderlook.enumerables",
             "hash": "2b0f7f8944afa518c4ef1aacc89d67b41ebe1720",
             "url": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.enumerables#com.enderlook.enumerables/v1.0.1"
-        },
-        {
-            "name": "com.enderlook.unity.utils.math",
-            "hash": "deb2912770d197ad206aebf417c0d1332605a945",
-            "url": "https://github.com/Enderlook/Unity-Extras.git?path=Packages/com.enderlook.unity.utils.math#com.enderlook.unity.utils.math/v0.1.0"
         },
         {
             "name": "com.system.runtime.compiler_services.unsafe",
@@ -39,6 +24,76 @@
             "name": "com.system.buffers",
             "hash": "842c2cae1b41589606841297c3cc49d09fc73648",
             "url": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.system.buffers#com.system.buffers/v4.5.1"
+        },
+        {
+            "name": "com.system.threading.tasks.extensions",
+            "hash": "57b64eece04ab26d1704661895393891263cedc8",
+            "url": "https://github.com/Enderlook/Unity-Net-Packages?path=Packages/com.system.threading.tasks.extensions#com.system.threading.tasks.extensions/v4.5.4"
+        },
+        {
+            "name": "com.enderlook.threading",
+            "hash": "3873b822b18c29fe2a57a0cad498b6be87566075",
+            "url": "https://github.com/Enderlook/Unity-Net-Packages?path=Packages/com.enderlook.threading#com.enderlook.threading/v0.2.0"
+        },
+        {
+            "name": "com.enderlook.net_compatibility",
+            "hash": "57b2cc84fef6bb673788a0bae9072c845c12978c",
+            "url": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.net_compatibility#com.enderlook.net_compatibility/v0.6.2"
+        },
+        {
+            "name": "com.enderlook.mathematics",
+            "hash": "7051edcd9fa9e08e86c829db491716086111eb73",
+            "url": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.mathematics#com.enderlook.mathematics/v0.2.0"
+        },
+        {
+            "name": "com.enderlook.pools",
+            "hash": "2787e19547ee88bae705ff3d7af24d83b8267789",
+            "url": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.pools#com.enderlook.pools/v0.2.3"
+        },
+        {
+            "name": "com.enderlook.unity.utils.math",
+            "hash": "deb2912770d197ad206aebf417c0d1332605a945",
+            "url": "https://github.com/Enderlook/Unity-Extras.git?path=Packages/com.enderlook.unity.utils.math#com.enderlook.unity.utils.math/v0.1.0"
+        },
+        {
+            "name": "com.enderlook.unity.utils",
+            "hash": "844af26083e3dd795eb060d96c65af8c4d2e9363",
+            "url": "https://github.com/Enderlook/Unity-Extras.git?path=Packages/com.enderlook.unity.utils#com.enderlook.unity.utils/v0.1.0"
+        },
+        {
+            "name": "com.enderlook.collections",
+            "hash": "99a7eb97a2b36d439d274f78ccd5d62b69f08ff7",
+            "url": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.collections#com.enderlook.collections/v0.1.0"
+        },
+        {
+            "name": "com.enderlook.collections.low_level",
+            "hash": "bd3b9e2bebc0e725a2b89b8f5b10629a1eb7d7c2",
+            "url": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.collections.low_level#com.enderlook.collections.low_level/v0.8.0"
+        },
+        {
+            "name": "com.enderlook.collections.pooled",
+            "hash": "782f0215e894f80216f6fa306d8c4ffd64a5a8c3",
+            "url": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.collections.pooled#com.enderlook.collections.pooled/v0.4.0"
+        },
+        {
+            "name": "com.enderlook.collections.pooled.low_level",
+            "hash": "75fd38e18a52ede9551bc6f1cf2c839ea1049e54",
+            "url": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.collections.pooled.low_level#com.enderlook.collections.pooled.low_level/v0.3.0"
+        },
+        {
+            "name": "com.enderlook.collections.spatial",
+            "hash": "7099a87db9b4788310e8aa7fc0649c2c7363b3e3",
+            "url": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.collections.spatial#com.enderlook.collections.spatial/v0.1.0"
+        },
+        {
+            "name": "com.enderlook.collections-extensions",
+            "hash": "9d96de3aa25bacbfbb1d6b12fb115f69728cb6a0",
+            "url": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.collections-extensions#com.enderlook.collections-extensions/v0.2.0"
+        },
+        {
+            "name": "com.enderlook.collections.priority",
+            "hash": "779256944d4e8ebfb79bea18da93afb1ac0e7aa9",
+            "url": "https://github.com/Enderlook/Unity-Net-Packages.git?path=Packages/com.enderlook.collections.priority#com.enderlook.collections.priority/v0.1.0"
         }
     ]
 }
