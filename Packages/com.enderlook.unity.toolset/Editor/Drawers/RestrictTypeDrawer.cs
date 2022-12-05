@@ -56,7 +56,7 @@ namespace Enderlook.Unity.Toolset.Drawers
                     message = null;
             }
 
-            if (!(message is null))
+            if (!(message is null) && property.objectReferenceValue == null)
             {
                 float height = SetHeight(message);
                 Rect box = new Rect(position.x, position.y + position.height, position.width, height);
