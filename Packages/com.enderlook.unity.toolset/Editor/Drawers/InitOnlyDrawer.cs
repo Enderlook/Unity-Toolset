@@ -11,13 +11,13 @@ namespace Enderlook.Unity.Toolset.Drawers
     {
         protected internal override void BeforeOnGUI(ref Rect position, ref SerializedProperty property, ref GUIContent label, ref bool includeChildren, ref bool visible)
         {
-            if (Application.isPlaying)
+            if (Application.IsPlaying(property.serializedObject.targetObject))
                 EditorGUI.BeginDisabledGroup(true);
         }
 
         protected internal override void AfterOnGUI(Rect position, SerializedProperty property, GUIContent label, bool includeChildren, bool visible)
         {
-            if (Application.isPlaying)
+            if (Application.IsPlaying(property.serializedObject.targetObject))
                 EditorGUI.EndDisabledGroup();
         }
     }
