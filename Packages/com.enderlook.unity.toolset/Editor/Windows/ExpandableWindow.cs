@@ -3,6 +3,7 @@
 using System;
 
 using UnityEditor;
+using UnityEditor.UIElements;
 
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -12,9 +13,6 @@ namespace Enderlook.Unity.Toolset.Windows
     internal sealed class ExpandableWindow : EditorWindow
     {
         private static readonly GUIContent CONTEXT_PROPERTY_MENU = new GUIContent("Open in Window", "Open the Expandable Window");
-
-        // Cached scriptable object editor
-        private Editor editor;
 
         private SerializedProperty property;
 
@@ -47,19 +45,23 @@ namespace Enderlook.Unity.Toolset.Windows
             rootVisualElement.schedule.Execute(() =>
             {
                 titleContent = new GUIContent("Expandable Window " + property.displayName);
-                Add();
 
-                void Add()
+                GUIContent gui = property.GetGUIContent();
+                ObjectField field = new ObjectField(gui.text);
                 {
-                    if (editor == null)
-                        Editor.CreateCachedEditor(property.objectReferenceValue, null, ref editor);
-
-                    // Check again because it may not be created by the Editor.CreateChachedEditor
-                    if (editor != null)
-                        rootVisualElement.Add(new IMGUIContainer(() => editor.DrawDefaultInspector()));
-                    else
-                        rootVisualElement.schedule.Execute(Add);
+                    field.tooltip = gui.tooltip;
+                    field.BindProperty(property);
+                    field.SetEnabled(false);
                 }
+                rootVisualElement.Add(field);
+
+                Editor editor = null;
+                IMGUIContainer imgui = new IMGUIContainer(() =>
+                {
+                    Editor.CreateCachedEditor(property.objectReferenceValue, null, ref editor);
+                    editor.DrawDefaultInspector();
+                });
+                rootVisualElement.Add(imgui);
             });
         }
     }
