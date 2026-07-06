@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 
 using UnityEditor;
-using UnityEditor.Experimental.SceneManagement;
 
 using UnityEngine;
 
@@ -168,7 +167,11 @@ namespace Enderlook.Unity.Toolset.Utils
                 if (string.IsNullOrEmpty(path) && gameObject != null)
                 {
                     // Check if it's in a prefab file
-                    PrefabStage prefabStage = PrefabStageUtility.GetPrefabStage(gameObject);
+#if UNITY_2021_2_OR_NEWER
+                    UnityEditor.SceneManagement.PrefabStage prefabStage = UnityEditor.SceneManagement.PrefabStageUtility.GetPrefabStage(gameObject);
+#else
+                    UnityEditor.Experimental.SceneManagementPrefabStage prefabStage = UnityEditor.Experimental.SceneManagement.PrefabStageUtility.GetPrefabStage(gameObject);
+#endif
                     if (!(prefabStage is null))
                         // Object was in a prefab
 #if UNITY_2020_1_OR_NEWER

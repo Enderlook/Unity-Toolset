@@ -79,7 +79,11 @@ namespace Enderlook.Unity.Toolset.Drawers
 
             return usePositionHandle
                 ? Handles.PositionHandle(position, Quaternion.identity)
+#if UNITY_2022_2_OR_NEWER
+                : Handles.FreeMoveHandle(position/*APIUpdater: , Quaternion.identity*/, GetSize(position), Vector2.one, HANDLE_CAP);
+#else
                 : Handles.FreeMoveHandle(position, Quaternion.identity, GetSize(position), Vector2.one, HANDLE_CAP);
+#endif
         }
 
         private const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;

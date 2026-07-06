@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 using UnityEditor;
 using UnityEditor.Callbacks;
-using UnityEditor.UIElements;
+
 
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -124,7 +124,10 @@ namespace Enderlook.Unity.Toolset.Windows
                         {
                             loadedTypes = exception.Types.Where(e => e != null);
 
-                            while (Interlocked.Exchange(ref box.Value.Lock, 1) == 1) ;
+                            while (Interlocked.Exchange(ref box.Value.Lock, 1) == 1)
+#pragma warning disable CS0642 // Posible instrucción vacía errónea
+                                ;
+#pragma warning restore CS0642 // Posible instrucción vacía errónea
                             {
                                 if (!box.Value.HasErrors)
                                 {
@@ -211,7 +214,13 @@ namespace Enderlook.Unity.Toolset.Windows
             if (gatherFromAssets)
                 found = Resources.FindObjectsOfTypeAll(property.GetPropertyType());
             else
+            {
+#if UNITY_2023_1_OR_NEWER
+                found = FindObjectsByType(property.GetPropertyType(), FindObjectsSortMode.None);
+#else
                 found = FindObjectsOfType(property.GetPropertyType());
+#endif
+            }
 
             if (!(restrictTypeAttribute is null))
                 found = found.Where(e => restrictTypeAttribute.CheckIfTypeIsAllowed(e.GetType()));
@@ -262,7 +271,11 @@ namespace Enderlook.Unity.Toolset.Windows
             if (index == -1)
                 index = 0;
             list.selectedIndex = index;
+#if UNITY_2021_2_OR_NEWER
+            list.Rebuild();
+#else
             list.Refresh();
+#endif
         }
 
         private void SetAllowedTypesToInstantiate()
@@ -502,8 +515,13 @@ namespace Enderlook.Unity.Toolset.Windows
 
 #if UNITY_2020_1_OR_NEWER
                 Action<IEnumerable<object>> callback = _ => Check(nameField.value);
+#if UNITY_2022_1_OR_NEWER
+                list.itemsChosen += callback;
+                list.selectionChanged += callback;
+#else
                 list.onItemsChosen += callback;
                 list.onSelectionChange += callback;
+#endif
 #else
                 list.onItemChosen += _ => Check(nameField.value);
                 list.onSelectionChanged += _ => Check(nameField.value);
@@ -588,7 +606,14 @@ namespace Enderlook.Unity.Toolset.Windows
                         list.selectionType = SelectionType.Single;
                         list.style.flexGrow = 1;
                         list.selectedIndex = elements.Count - 1;
-#if UNITY_2020_1_OR_NEWER
+#if UNITY_2022_1_OR_NEWER
+                        list.itemsChosen += e =>
+                        {
+                            property.SetValue((UnityObject)e.First());
+                            propertyField.Set(property.GetValue<UnityObject>());
+                            property.serializedObject.ApplyModifiedProperties();
+                        };
+#elif UNITY_2020_1_OR_NEWER
                         list.onItemsChosen += e =>
                         {
                             property.SetValue((UnityObject)e.First());
@@ -615,11 +640,23 @@ namespace Enderlook.Unity.Toolset.Windows
                 {
                     selectedField.style.display = DisplayStyle.None;
 
-#if UNITY_2020_1_OR_NEWER
+#if UNITY_2022_1_OR_NEWER
+                    list.selectionChanged += e =>
+                    {
+                        UnityObject objectReferenceValue = (UnityObject)e.FirstOrDefault();
+                        if (objectReferenceValue == null)
+                        {
+                            selectedField.Set(objectReferenceValue);
+                            selectedField.style.display = DisplayStyle.Flex;
+                        }
+                        else
+                            selectedField.style.display = DisplayStyle.None;
+                    };
+#elif UNITY_2020_1_OR_NEWER
                     list.onSelectionChange += e =>
                     {
                         UnityObject objectReferenceValue = (UnityObject)e.FirstOrDefault();
-                        if (objectReferenceValue is null)
+                        if (objectReferenceValue == null)
                         {
                             selectedField.Set(objectReferenceValue);
                             selectedField.style.display = DisplayStyle.Flex;
