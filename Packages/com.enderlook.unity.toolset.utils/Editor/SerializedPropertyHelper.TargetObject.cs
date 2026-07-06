@@ -393,7 +393,7 @@ namespace Enderlook.Unity.Toolset.Utils
 #if UNITY_2019_3_OR_NEWER
                     case SerializedPropertyType.ManagedReference:
 #if UNITY_2021_2_OR_NEWER
-                        return source.managedReferenceValue;
+                        return (T)source.managedReferenceValue;
 #endif
 #endif
                     case SerializedPropertyType.Gradient:
@@ -544,7 +544,7 @@ namespace Enderlook.Unity.Toolset.Utils
                         return (T)(object)(decimal)source.doubleValue;
 #if UNITY_2021_1_OR_NEWER
                     if (typeof(T) == typeof(Hash128) && propertyType == SerializedPropertyType.Hash128)
-                        return (Hash128)(object)source.hash128Value;
+                        return (T)(object)source.hash128Value;
 #endif
                     return Fallback();
                 }
@@ -680,7 +680,7 @@ namespace Enderlook.Unity.Toolset.Utils
 #if UNITY_2019_3_OR_NEWER
                     case SerializedPropertyType.ManagedReference:
 #if UNITY_2021_2_OR_NEWER
-                        return source.managedReferenceValue;
+                        return (T)source.managedReferenceValue;
 #endif
 #endif
                     case SerializedPropertyType.Gradient:
